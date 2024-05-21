@@ -27,7 +27,7 @@ export default function RootLayout({
 				appearance={{
 					layout: {
 						socialButtonsVariant: "auto",
-						logoImageUrl: "/logo.jpg",
+						logoImageUrl: "/icons/logo.jpg",
 					},
 				}}
 			>

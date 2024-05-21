@@ -25,7 +25,7 @@ const Sidebar = () => {
 									href={item.route}
 									key={item.label}
 									className={`flex gap-4 items-center p-4 rounded-lg justify-center lg:justify-start 
-							group hover:bg-blue-1  ${isActive && "bg-blue-1"}`}
+							group hover:bg-blue-1  ${isActive && "bg-blue-1 text-white"}`}
 								>
 									<Image
 										src={item.imgURL}
