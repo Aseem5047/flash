@@ -56,9 +56,9 @@ export async function POST(req: Request) {
 			"svix-timestamp": svix_timestamp,
 			"svix-signature": svix_signature,
 		}) as WebhookEvent;
-	} catch (err) {
+	} catch (err: any) {
 		console.error("Error verifying webhook:", err);
-		return new Response("Error occurred", {
+		return new Response(`Error occurred: ${err.message}`, {
 			status: 400,
 		});
 	}
@@ -125,10 +125,13 @@ export async function POST(req: Request) {
 		}
 
 		return new Response("Unhandled event type", { status: 400 });
-	} catch (err) {
+	} catch (err: any) {
 		console.error("Error handling event:", err);
-		return new Response("Error occurred while processing event", {
-			status: 500,
-		});
+		return new Response(
+			`Error occurred while processing event: ${err.message}`,
+			{
+				status: 500,
+			}
+		);
 	}
 }
