@@ -26,13 +26,22 @@ export async function POST(req: Request) {
 
 	// If there are no headers, error out
 	if (!svix_id || !svix_timestamp || !svix_signature) {
-		return new Response("Error occured -- no svix headers", {
+		console.error("Missing svix headers");
+		return new Response("Error occurred -- no svix headers", {
 			status: 400,
 		});
 	}
 
 	// Get the body
-	const payload = await req.json();
+	let payload;
+	try {
+		payload = await req.json();
+	} catch (err) {
+		console.error("Error parsing request body:", err);
+		return new Response("Error occurred -- invalid JSON", {
+			status: 400,
+		});
+	}
 	const body = JSON.stringify(payload);
 
 	// Create a new Svix instance with your secret.
@@ -49,73 +58,77 @@ export async function POST(req: Request) {
 		}) as WebhookEvent;
 	} catch (err) {
 		console.error("Error verifying webhook:", err);
-		return new Response("Error occured", {
+		return new Response("Error occurred", {
 			status: 400,
 		});
 	}
 
-	// Do something with the payload
-	// For this guide, you simply log the payload to the console
-	const { id } = evt.data;
-	const eventType = evt.type;
-	console.log(`Webhook with and ID of ${id} and type of ${eventType}`);
+	// Log the event details
+	console.log(`Received event with ID: ${evt.data.id} and type: ${evt.type}`);
 	console.log("Webhook body:", body);
 
-	if (eventType === "user.created") {
-		const { id, image_url, first_name, last_name, username, phone_numbers } =
-			evt.data;
+	// Handle the event
+	try {
+		if (evt.type === "user.created") {
+			const { id, image_url, first_name, last_name, username, phone_numbers } =
+				evt.data;
 
-		const user = {
-			clerkId: id,
-			username: username!,
-			firstName: first_name!,
-			lastName: last_name!,
-			photo: image_url,
-			phone: phone_numbers[0].phone_number,
-			role: "client",
-			bio: "",
-		};
+			const user = {
+				clerkId: id,
+				username: username!,
+				firstName: first_name!,
+				lastName: last_name!,
+				photo: image_url,
+				phone: phone_numbers[0]?.phone_number || "",
+				role: "client",
+				bio: "",
+			};
 
-		const newUser = await createUser(user);
-		console.log(user, newUser);
+			const newUser = await createUser(user);
 
-		if (newUser) {
-			await clerkClient.users.updateUserMetadata(id, {
-				publicMetadata: {
-					userId: newUser._id,
-					role: "client",
-				},
-				unsafeMetadata: {
-					bio: "",
-				},
-			});
+			if (newUser) {
+				await clerkClient.users.updateUserMetadata(id, {
+					publicMetadata: {
+						userId: newUser._id,
+						role: "client",
+					},
+					unsafeMetadata: {
+						bio: "",
+					},
+				});
+			}
+
+			return NextResponse.json({ message: "OK", user: newUser });
 		}
 
-		return NextResponse.json({ message: "OK", user: newUser });
+		if (evt.type === "user.updated") {
+			const { id, image_url, first_name, last_name, username } = evt.data;
+
+			const user = {
+				firstName: first_name!,
+				lastName: last_name!,
+				username: username!,
+				photo: image_url!,
+			};
+
+			const updatedUser = await updateUser(id, user);
+
+			return NextResponse.json({ message: "OK", user: updatedUser });
+		}
+
+		if (evt.type === "user.deleted") {
+			const { id } = evt.data;
+
+			const deletedUser = await deleteUser(id!);
+
+			return NextResponse.json({ message: "OK", user: deletedUser });
+		}
+
+		return new Response("Unhandled event type", { status: 400 });
+	} catch (err) {
+		console.error("Error handling event:", err);
+		return new Response("Error occurred while processing event", {
+			status: 500,
+		});
 	}
-
-	if (eventType === "user.updated") {
-		const { id, image_url, first_name, last_name, username } = evt.data;
-
-		const user = {
-			firstName: first_name!,
-			lastName: last_name!,
-			username: username!,
-			photo: image_url!,
-		};
-
-		const updatedUser = await updateUser(id, user);
-
-		return NextResponse.json({ message: "OK", user: updatedUser });
-	}
-
-	if (eventType === "user.deleted") {
-		const { id } = evt.data;
-
-		const deletedUser = await deleteUser(id!);
-
-		return NextResponse.json({ message: "OK", user: deletedUser });
-	}
-
-	return new Response("", { status: 200 });
 }

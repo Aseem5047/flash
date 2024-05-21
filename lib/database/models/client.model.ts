@@ -9,7 +9,6 @@ const ClientSchema = new Schema({
 	lastName: { type: String },
 	photo: { type: String, required: true },
 	role: { type: String, required: true },
-	themeSelected: { type: String },
 	bio: { type: String },
 });
 
