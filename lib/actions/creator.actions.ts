@@ -47,11 +47,11 @@ export async function getUsers() {
 	}
 }
 
-export async function updateUser(userId: string, user: UpdateCreatorParams) {
+export async function updateUser(userI: string, user: UpdateCreatorParams) {
 	try {
 		await connectToDatabase();
 
-		const updatedUser = await Creator.findOneAndUpdate({ userId }, user, {
+		const updatedUser = await Creator.findOneAndUpdate({ userI }, user, {
 			new: true,
 		});
 
@@ -78,12 +78,12 @@ export async function updateTheme(userId: any, otherDetails: any) {
 	}
 }
 
-export async function deleteUser(userId: string) {
+export async function deleteUser(userI: string) {
 	try {
 		await connectToDatabase();
 
 		// Find user to delete
-		const userToDelete = await Creator.findOne({ userId });
+		const userToDelete = await Creator.findOne({ userI });
 
 		if (!userToDelete) {
 			throw new Error("User not found");
