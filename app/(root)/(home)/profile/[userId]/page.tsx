@@ -57,7 +57,7 @@ const UserProfilePage = () => {
 					alt="profile picture"
 					width={24}
 					height={24}
-					className="rounded-full min-w-24 lg:min-w-32 max-w-40 "
+					className="rounded-full w-full min-w-24 lg:min-w-32 max-w-40 "
 				/>
 
 				<div className="flex flex-col items-center lg:items-start justify-center gap-2">

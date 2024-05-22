@@ -23,12 +23,18 @@ export type UpdateUserParams = {
 };
 
 export type CreateCreatorParams = {
+	_id?: string;
 	firstName?: string;
 	lastName?: string;
 	username: string;
 	photo: string;
 	phone: any;
 	role: string;
+	profession: string;
+	themeSelected: string;
+	videoRate: string;
+	audioRate: string;
+	chatRate: string;
 	bio?: string;
 };
 
@@ -40,5 +46,10 @@ export type UpdateCreatorParams = {
 	phone?: string;
 	photo: string;
 	role: string;
+	profession: string;
+	themeSelected: string;
+	videoRate: string;
+	audioRate: string;
+	chatRate: string;
 	bio?: string;
 };

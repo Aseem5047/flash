@@ -21,6 +21,7 @@
 		"@radix-ui/react-tooltip": "^1.0.7",
 		"@types/redis": "^4.0.11",
 		"axios": "^1.7.0",
+		"bcryptjs": "^2.4.3",
 		"class-variance-authority": "^0.7.0",
 		"clsx": "^2.1.1",
 		"dotenv": "^16.4.5",

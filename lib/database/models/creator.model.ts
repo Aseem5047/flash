@@ -8,7 +8,11 @@ const CreatorSchema = new Schema({
 	lastName: { type: String },
 	photo: { type: String, required: true },
 	role: { type: String, required: true },
+	profession: { type: String, required: true },
 	themeSelected: { type: String },
+	videoRate: { type: String, required: true },
+	audioRate: { type: String, required: true },
+	chatRate: { type: String, required: true },
 	bio: { type: String },
 });
 
