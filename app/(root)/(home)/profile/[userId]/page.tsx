@@ -65,10 +65,12 @@ const UserProfilePage = () => {
 					<div className="grid grid-cols-[2fr_1fr] items-center w-full">
 						<div className="flex flex-col items-start justify-center">
 							<span className="text-lg font-semibold capitalize">
-								{userData?.fullName}
+								{userData?.fullName?.length === 0
+									? "Welcome User"
+									: userData.fullName}
 							</span>
-							<span className="text-xs font-semibold">
-								{userData?.username}
+							<span className="text-sm text-blue-1 font-semibold">
+								@{userData?.username}
 							</span>
 						</div>
 
@@ -88,7 +90,7 @@ const UserProfilePage = () => {
 								: "text-ellipsis overflow-hidden whitespace-nowrap max-w-[600px]"
 						}`}
 						onClick={() =>
-							userData?.bio?.length !== 0 || userData?.bio !== "undefined"
+							userData?.bio
 								? setShowFullDesc((prev) => !prev)
 								: setEditData((prev) => !prev)
 						}

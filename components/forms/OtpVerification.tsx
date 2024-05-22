@@ -24,7 +24,7 @@ const OtpVerification: React.FC = () => {
 
 	const verifyOTP = async () => {
 		try {
-			const response = await axios.post("/api/v1/verify-otp", {
+			await axios.post("/api/v1/verify-otp", {
 				phone,
 				otp,
 				token,

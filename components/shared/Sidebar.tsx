@@ -65,7 +65,7 @@ const Sidebar = () => {
 					/>
 					<div className="flex flex-col items-start justify-center max-lg:hidden">
 						<span className="text-lg font-semibold capitalize">
-							{user?.fullName}
+							{user?.fullName || "Hey User"}
 						</span>
 						<span className="text-sm font-semibold">{user?.username}</span>
 					</div>

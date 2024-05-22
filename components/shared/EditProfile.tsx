@@ -136,7 +136,7 @@ const EditProfile = ({
 								<Input
 									placeholder="Edit First Name"
 									{...field}
-									className="border-none  focus-visible:ring-0 focus-visible:ring-offset-0 hover:opacity-80"
+									className="input-field"
 								/>
 							</FormControl>
 
@@ -154,7 +154,7 @@ const EditProfile = ({
 								<Input
 									placeholder="Edit Last Name"
 									{...field}
-									className="border-none  focus-visible:ring-0 focus-visible:ring-offset-0 hover:opacity-80"
+									className="input-field"
 								/>
 							</FormControl>
 
@@ -172,7 +172,7 @@ const EditProfile = ({
 								<Input
 									placeholder="Edit your Username"
 									{...field}
-									className="border-none  focus-visible:ring-0 focus-visible:ring-offset-0 hover:opacity-80"
+									className="input-field"
 								/>
 							</FormControl>
 
@@ -191,7 +191,7 @@ const EditProfile = ({
 							</FormLabel>
 							<FormControl>
 								<Textarea
-									className="border-none  focus-visible:ring-0 focus-visible:ring-offset-0 hover:opacity-80 max-h-32"
+									className="textarea max-h-32"
 									placeholder="Tell us a little bit about yourself"
 									{...field}
 								/>
@@ -205,7 +205,7 @@ const EditProfile = ({
 				/>
 
 				<Button
-					className="bg-blue-1 hover:opacity-80 w-3/4 mx-auto"
+					className="bg-blue-1 hover:opacity-80 w-3/4 mx-auto text-white"
 					type="submit"
 				>
 					Update Details
