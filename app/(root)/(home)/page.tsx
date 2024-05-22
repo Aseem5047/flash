@@ -4,11 +4,11 @@ import OtpVerification from "@/components/forms/OtpVerification";
 import CreatorCard from "@/components/shared/CreatorCard";
 import Loader from "@/components/shared/Loader";
 import { getUsers } from "@/lib/actions/creator.actions";
-import { CreateCreatorParams } from "@/types";
+import { creatorUser } from "@/types";
 import React, { useEffect, useState } from "react";
 
 const HomePage = () => {
-	const [creators, setCreators] = useState<CreateCreatorParams[]>([]);
+	const [creators, setCreators] = useState<creatorUser[]>([]);
 	useEffect(() => {
 		try {
 			const getCreators = async () => {
@@ -28,7 +28,7 @@ const HomePage = () => {
 	return (
 		<section className="flex size-full flex-col gap-5 ">
 			<CreatorCard creators={creators} />
-			<OtpVerification />
+			{/* <OtpVerification /> */}
 		</section>
 	);
 };

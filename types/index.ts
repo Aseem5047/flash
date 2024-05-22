@@ -22,6 +22,23 @@ export type UpdateUserParams = {
 	role?: string;
 };
 
+export type creatorUser = {
+	_id: string;
+	firstName: string;
+	lastName: string;
+	username: string;
+	photo: string;
+	phone: string;
+	profession: string;
+	themeSelected: string;
+	gender: string;
+	dob: string;
+	bio: string;
+	videoRate: string;
+	audioRate: string;
+	chatRate: string;
+};
+
 export type CreateCreatorParams = {
 	_id?: string;
 	firstName?: string;
@@ -29,27 +46,28 @@ export type CreateCreatorParams = {
 	username: string;
 	photo: string;
 	phone: any;
-	role: string;
 	profession: string;
 	themeSelected: string;
-	videoRate: string;
-	audioRate: string;
-	chatRate: string;
+	gender?: string;
+	dob?: string;
 	bio?: string;
 };
 
 export type UpdateCreatorParams = {
+	_id?: string;
 	fullName?: string;
 	firstName?: string;
 	lastName?: string;
-	username: string;
+	username?: string;
 	phone?: string;
 	photo: string;
-	role: string;
-	profession: string;
-	themeSelected: string;
-	videoRate: string;
-	audioRate: string;
-	chatRate: string;
+	role?: string;
+	profession?: string;
+	themeSelected?: string;
+	videoRate?: string;
+	audioRate?: string;
+	chatRate?: string;
+	gender?: string;
+	dob?: string;
 	bio?: string;
 };

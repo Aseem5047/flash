@@ -7,12 +7,13 @@ const CreatorSchema = new Schema({
 	firstName: { type: String },
 	lastName: { type: String },
 	photo: { type: String, required: true },
-	role: { type: String, required: true },
 	profession: { type: String, required: true },
 	themeSelected: { type: String },
 	videoRate: { type: String, required: true },
 	audioRate: { type: String, required: true },
 	chatRate: { type: String, required: true },
+	gender: { type: String },
+	dob: { type: String },
 	bio: { type: String },
 });
 

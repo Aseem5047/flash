@@ -1,11 +1,9 @@
 import React from "react";
-import { CreateCreatorParams } from "@/types";
-import Image from "next/image";
+import { creatorUser } from "@/types";
 
 interface CreatorCardProps {
-	creators: CreateCreatorParams[];
+	creators: creatorUser[];
 }
-
 const CreatorCard = ({ creators }: CreatorCardProps) => {
 	return (
 		<section className="flex items-start justify-start h-full overflow-scroll no-scrollbar">

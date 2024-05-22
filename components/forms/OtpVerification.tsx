@@ -62,7 +62,7 @@ const OtpVerification: React.FC = () => {
 	}, []);
 
 	return (
-		<div className="flex flex-col items-start justify-center gap-4">
+		<div className="flex flex-col items-center justify-center gap-4 w-full">
 			<div className="flex gap-4 items-center">
 				<input
 					type="text"
@@ -79,7 +79,7 @@ const OtpVerification: React.FC = () => {
 					Request OTP
 				</Button>
 			</div>
-			<div className="flex gap-4 items-center">
+			<div className="flex flex-wrap gap-4 items-center justify-center">
 				<input
 					type="text"
 					value={otp}
@@ -88,7 +88,7 @@ const OtpVerification: React.FC = () => {
 					className="bg-gray-200 px-4 py-[0.75rem] rounded-lg outline-none text-blue-1"
 				/>
 
-				<div className="flex flex-wrap gap-4 items-center">
+				<div className="flex gap-4 items-center">
 					<Button
 						className="text-white hover:opacity-80 bg-blue-1"
 						size="lg"
