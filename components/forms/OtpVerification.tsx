@@ -88,7 +88,7 @@ const OtpVerification: React.FC = () => {
 					className="bg-gray-200 px-4 py-[0.75rem] rounded-lg outline-none text-blue-1"
 				/>
 
-				<div className="flex gap-4 items-center">
+				<div className="flex flex-wrap gap-4 items-center">
 					<Button
 						className="text-white hover:opacity-80 bg-blue-1"
 						size="lg"

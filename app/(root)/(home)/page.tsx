@@ -7,7 +7,7 @@ import { getUsers } from "@/lib/actions/creator.actions";
 import { CreateCreatorParams } from "@/types";
 import React, { useEffect, useState } from "react";
 
-const page = () => {
+const HomePage = () => {
 	const [creators, setCreators] = useState<CreateCreatorParams[]>([]);
 	useEffect(() => {
 		try {
@@ -27,10 +27,10 @@ const page = () => {
 	if (!creators) return <Loader />;
 	return (
 		<section className="flex size-full flex-col gap-5 ">
-			{/* <OtpVerification /> */}
 			<CreatorCard creators={creators} />
+			<OtpVerification />
 		</section>
 	);
 };
 
-export default page;
+export default HomePage;
