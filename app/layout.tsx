@@ -5,8 +5,6 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 
-const inter = Inter({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
 	title: "Unite",
 	description:
@@ -15,6 +13,8 @@ export const metadata: Metadata = {
 		icon: "/icons/logo.jpg",
 	},
 };
+
+import "@smastrom/react-rating/style.css";
 
 export default function RootLayout({
 	children,
@@ -32,7 +32,7 @@ export default function RootLayout({
 				}}
 			>
 				<TooltipProvider>
-					<body className={`${inter.className}`}>
+					<body>
 						<Toaster />
 						{children}
 					</body>

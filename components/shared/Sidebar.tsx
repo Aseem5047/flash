@@ -37,7 +37,7 @@ const Sidebar = () => {
 										}`}
 									/>
 
-									<p className="text-lg font-semibold max-lg:hidden group-hover:text-white">
+									<p className="text-lg max-lg:hidden group-hover:text-white">
 										{item.label}
 									</p>
 								</Link>
@@ -64,10 +64,10 @@ const Sidebar = () => {
 						className="rounded-full w-full max-w-[44px]"
 					/>
 					<div className="flex flex-col items-start justify-center max-lg:hidden">
-						<span className="text-lg font-semibold capitalize">
+						<span className="text-lg capitalize">
 							{user?.fullName || "Hey User"}
 						</span>
-						<span className="text-sm font-semibold">{user?.username}</span>
+						<span className="text-xs text-blue-1">@{user?.username}</span>
 					</div>
 				</Link>
 			)}

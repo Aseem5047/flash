@@ -18,6 +18,9 @@ const config = {
 			},
 		},
 		extend: {
+			fontFamily: {
+				default: ["Helvetica", "sans-serif"],
+			},
 			colors: {
 				dark: {
 					1: "#1C1F2E",

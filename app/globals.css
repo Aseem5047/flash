@@ -46,6 +46,12 @@
 	height: 2.2rem;
 }
 
+@layer base {
+	body {
+		@apply !font-default;
+	}
+}
+
 @layer utilities {
 	.flex-center {
 		@apply flex justify-center items-center;
@@ -66,5 +72,25 @@
 	/* styles.css */
 	.dynamic-shadow {
 		box-shadow: 10px 10px 20px var(--shadow-color, rgba(0, 0, 0, 0.1));
+	}
+
+	/* styles/HappyClient.module.css */
+	.tilted-banner {
+		position: relative;
+		overflow: hidden;
+		padding: 2rem 0;
+	}
+
+	.tilted-banner::before {
+		content: "";
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: #00000025; /* Tailwind's blue-900 */
+		transform: rotate(-3deg);
+		transform-origin: bottom right;
+		z-index: -1;
 	}
 }
