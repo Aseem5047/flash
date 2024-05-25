@@ -27,9 +27,8 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		"isJoiningMeeting" | "isInstantMeeting" | undefined
 	>(undefined);
 	const [values, setValues] = useState(initialValues);
-	const [callDetail, setCallDetail] = useState<Call>();
 	const client = useStreamVideoClient();
-	const [isVideoCall, setIsVideoCall] = useState(true);
+	const [callType, setCallType] = useState("");
 	const { user } = useUser();
 	const { toast } = useToast();
 
@@ -38,22 +37,30 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		try {
 			const id = crypto.randomUUID();
 
-			const call = isVideoCall
-				? client.call("default", id)
-				: client.call("audio_room", id);
+			const call =
+				callType === "video"
+					? client.call("default", id)
+					: callType === "audio" && client.call("audio_room", id);
 
 			if (!call) throw new Error("Failed to create meeting");
 
-			// Extract expert's ID from the creator object
 			const expertId = String(creator._id);
 
 			const members: MemberRequest[] = [
-				{ user_id: String(user.publicMetadata.userId) },
-				{ user_id: "6650d35ae736527f808fbc8d" },
+				{
+					user_id: "6650d35ae736527f808fbc8d",
+					role: "admin",
+					custom: { name: String(creator.username) },
+				},
 			];
 
 			const startsAt = new Date(Date.now()).toISOString();
-			const description = "Expert's Meeting";
+			const description = `${
+				callType === "video"
+					? `Video Call With Expert ${creator.username}`
+					: `Audio Call With Expert ${creator.username}`
+			}`;
+
 			await call.getOrCreate({
 				data: {
 					starts_at: startsAt,
@@ -64,9 +71,8 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				},
 				ring: true,
 			});
-			setCallDetail(call);
 
-			router.push(`/meeting/${call.id}`);
+			window.location.href = `/meeting/${call.id}?reload=true`; // Include query parameter
 			toast({
 				title: "Meeting Created",
 			});
@@ -75,6 +81,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			toast({ title: "Failed to create Meeting" });
 		}
 	};
+
 	if (!client || !user) return <Loader />;
 
 	const theme = `5px 5px 5px 0px ${creator.themeSelected}`;
@@ -87,7 +94,10 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				style={{
 					boxShadow: theme,
 				}}
-				onClick={() => setMeetingState("isJoiningMeeting")}
+				onClick={() => {
+					setMeetingState("isInstantMeeting");
+					setCallType("video");
+				}}
 			>
 				<div
 					className={`flex gap-4 items-center font-semibold`}
@@ -108,8 +118,8 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 					boxShadow: theme,
 				}}
 				onClick={() => {
-					setMeetingState("isJoiningMeeting");
-					setIsVideoCall(false);
+					setMeetingState("isInstantMeeting");
+					setCallType("audio");
 				}}
 			>
 				<div
@@ -130,10 +140,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				style={{
 					boxShadow: theme,
 				}}
-				onClick={() => {
-					setMeetingState("isJoiningMeeting");
-					setIsVideoCall(false);
-				}}
+				onClick={() => setMeetingState("isJoiningMeeting")}
 			>
 				<div
 					className={`flex gap-4 items-center font-semibold`}
@@ -145,24 +152,6 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				<span className="text-xs tracking-widest">
 					Rs. {creator.chatRate}/Min
 				</span>
-			</div>
-
-			{/* Instant Meeting */}
-			<div
-				className="callOptionContainer"
-				style={{
-					boxShadow: theme,
-				}}
-				onClick={() => setMeetingState("isInstantMeeting")}
-			>
-				<div
-					className={`flex gap-4 items-center font-semibold`}
-					style={{ color: creator.themeSelected }}
-				>
-					{alert}
-					Instant Meeting
-				</div>
-				<span className="text-xs tracking-widest">Rs. 500/Min</span>
 			</div>
 
 			<MeetingModal
@@ -183,9 +172,9 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			<MeetingModal
 				isOpen={meetingState === "isInstantMeeting"}
 				onClose={() => setMeetingState(undefined)}
-				title="Start an Instant Meeting"
+				title="Request will be sent to Expert"
 				className="text-center"
-				buttonText="Start Meeting"
+				buttonText="Start Session"
 				handleClick={createMeeting}
 			/>
 		</div>

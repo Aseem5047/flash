@@ -1,17 +1,21 @@
 import React, { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCalls, CallingState } from "@stream-io/video-react-sdk";
 import MyIncomingCallUI from "./MyIncomingCallUI";
-import MyOutgoingCallUI from "./MyOutgoingCallUI";
+// import MyOutgoingCallUI from "./MyOutgoingCallUI";
 
 const MyCallUI = () => {
 	const router = useRouter();
 	const calls = useCalls();
+	const pathname = usePathname();
+	let hide = pathname.includes("/meeting");
 
 	useEffect(() => {
 		// Add event listeners for call state changes
 		calls.forEach((call) => {
-			const handleCallEnded = () => router.push("/");
+			const handleCallEnded = () => {
+				router.push("/");
+			};
 			call.on("call.ended", handleCallEnded);
 			call.on("call.rejected", handleCallEnded);
 
@@ -30,35 +34,39 @@ const MyCallUI = () => {
 			call.state.callingState === CallingState.RINGING
 	);
 
-	// Filter outgoing ringing calls
-	const outgoingCalls = calls.filter(
-		(call) =>
-			call.isCreatedByMe === true &&
-			call.state.callingState === CallingState.RINGING
-	);
+	// // Filter outgoing ringing calls
+	// const outgoingCalls = calls.filter(
+	// 	(call) =>
+	// 		call.isCreatedByMe === true &&
+	// 		call.state.callingState === CallingState.RINGING
+	// );
 
 	// Handle incoming call UI
 	const [incomingCall] = incomingCalls;
-	if (incomingCall) {
+	if (incomingCall && !hide) {
 		return (
 			<div className="bg-white p-4 shadow-lg rounded-md">
 				<MyIncomingCallUI
 					call={incomingCall}
-					onAccept={() => router.push(`/meeting/${incomingCall.id}`)}
+					onAccept={() => router.push(`/meeting/creator/${incomingCall.id}`)}
 				/>
 			</div>
 		);
 	}
 
 	// Handle outgoing call UI
-	const [outgoingCall] = outgoingCalls;
-	if (outgoingCall) {
-		return (
-			<div className="bg-white p-4 shadow-lg rounded-md">
-				<MyOutgoingCallUI call={outgoingCall} />
-			</div>
-		);
-	}
+	// const [outgoingCall] = outgoingCalls;
+	// if (outgoingCall) {
+	// 	return (
+	// 		<div className="bg-white p-4 shadow-lg rounded-md">
+	// 			<MyOutgoingCallUI call={outgoingCall} />
+	// 		</div>
+	// 	);
+	// }
+
+	<div className="bg-white p-4 shadow-lg rounded-md">
+		<MyIncomingCallUI call={incomingCall} onAccept={() => {}} />
+	</div>;
 
 	return null; // No ringing calls
 };

@@ -3,12 +3,7 @@
 import { tokenProvider } from "@/lib/actions/stream.actions";
 import Loader from "@/components/shared/Loader";
 import { useUser } from "@clerk/nextjs";
-import {
-	RingingCall,
-	RingingCallControls,
-	StreamVideo,
-	StreamVideoClient,
-} from "@stream-io/video-react-sdk";
+import { StreamVideo, StreamVideoClient } from "@stream-io/video-react-sdk";
 import { ReactNode, useEffect, useState } from "react";
 
 const API_KEY = process.env.NEXT_PUBLIC_STREAM_API_KEY;

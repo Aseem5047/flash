@@ -122,7 +122,7 @@ const UserReviews = ({ theme }: any) => {
 							>
 								{arrowLeft}
 							</button>
-							<div className="flex gap-2 items-center max-w-[75%] py-2 overflow-x-scroll no-scrollbar">
+							<div className="flex gap-2 items-center max-w-[50%] md:max-w-[75%] py-2 overflow-x-scroll no-scrollbar">
 								{feedbacks.map((_, index) => (
 									<button
 										key={index}
