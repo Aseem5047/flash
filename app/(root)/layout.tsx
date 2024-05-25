@@ -1,11 +1,20 @@
-import StreamVideoProvider from "@/providers/streamClientProvider";
-import React, { ReactNode } from "react";
+"use client";
 
-const RootLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
+import React, { ReactNode } from "react";
+import StreamVideoProvider from "@/providers/streamClientProvider";
+import MyCallUI from "@/components/meeting/MyCallUI";
+
+const RootLayout = ({ children }: { children: ReactNode }) => {
 	return (
-		<main>
-			<StreamVideoProvider>{children}</StreamVideoProvider>
-		</main>
+		<StreamVideoProvider>
+			<div className="relative min-h-screen">
+				{/* MyCallUI positioned at the top right */}
+				<div className="absolute top-4 right-4 z-50">
+					<MyCallUI />
+				</div>
+				{children}
+			</div>
+		</StreamVideoProvider>
 	);
 };
 

@@ -29,7 +29,10 @@ const MeetingPage = () => {
 	// get more info about custom call type:  https://getstream.io/video/docs/react/guides/configuring-call-types/
 	const notAllowed =
 		call.type === "invited" &&
-		(!user || !call.state.members.find((m: any) => m.user.id === user.id));
+		(!user ||
+			!call.state.members.find(
+				(m: any) => m.user.id === user.publicMetadata.userId
+			));
 
 	if (notAllowed)
 		return <Alert title="You are not allowed to join this meeting" />;

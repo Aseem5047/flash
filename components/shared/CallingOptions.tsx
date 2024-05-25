@@ -11,6 +11,7 @@ import { Call, useStreamVideoClient } from "@stream-io/video-react-sdk";
 import { useUser } from "@clerk/nextjs";
 import { Input } from "../ui/input";
 import MeetingModal from "../meeting/MeetingModal";
+import { MemberRequest } from "@stream-io/video-react-sdk";
 
 interface CallingOptions {
 	creator: creatorUser;
@@ -36,21 +37,35 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		if (!client || !user) return;
 		try {
 			const id = crypto.randomUUID();
+
 			const call = isVideoCall
 				? client.call("default", id)
 				: client.call("audio_room", id);
+
 			if (!call) throw new Error("Failed to create meeting");
+
+			// Extract expert's ID from the creator object
+			const expertId = String(creator._id);
+
+			const members: MemberRequest[] = [
+				{ user_id: String(user.publicMetadata.userId) },
+				{ user_id: "6650d35ae736527f808fbc8d" },
+			];
+
 			const startsAt = new Date(Date.now()).toISOString();
-			const description = "Instant Meeting";
+			const description = "Expert's Meeting";
 			await call.getOrCreate({
 				data: {
 					starts_at: startsAt,
+					members: members,
 					custom: {
 						description,
 					},
 				},
+				ring: true,
 			});
 			setCallDetail(call);
+
 			router.push(`/meeting/${call.id}`);
 			toast({
 				title: "Meeting Created",
@@ -60,7 +75,6 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			toast({ title: "Failed to create Meeting" });
 		}
 	};
-
 	if (!client || !user) return <Loader />;
 
 	const theme = `5px 5px 5px 0px ${creator.themeSelected}`;
