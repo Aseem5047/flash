@@ -8,6 +8,7 @@ import {
 } from "@stream-io/video-react-sdk";
 import { Alert } from "../ui/alert";
 import { Button } from "../ui/button";
+import { ParticipantsPreview } from "./ParticipantsPreview";
 
 const MeetingSetup = ({
 	setIsSetupComplete,
@@ -67,6 +68,8 @@ const MeetingSetup = ({
 				/>
 				Join with mic and camera off
 			</label>
+
+			<ParticipantsPreview />
 
 			<div className="flex gap-4 items-center justify-center">
 				<Button

@@ -1,13 +1,13 @@
 "use client";
 
 import React from "react";
-import { alert, audio, chat, video } from "@/constants/icons";
+import { audio, chat, video } from "@/constants/icons";
 import { creatorUser } from "@/types";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "../ui/use-toast";
 import Loader from "../shared/Loader";
-import { Call, useStreamVideoClient } from "@stream-io/video-react-sdk";
+import { useStreamVideoClient } from "@stream-io/video-react-sdk";
 import { useUser } from "@clerk/nextjs";
 import { Input } from "../ui/input";
 import MeetingModal from "../meeting/MeetingModal";

@@ -1,8 +1,8 @@
 import React from "react";
 import { creatorUser } from "@/types";
-import UserReviews from "./UserReviews";
-import CallingOptions from "./CallingOptions";
+import CallingOptions from "../calls/CallingOptions";
 import CreatorDetails from "./CreatorDetails";
+import UserReviews from "./UserReviews";
 
 interface CreatorCardProps {
 	creator: creatorUser;

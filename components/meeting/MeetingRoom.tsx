@@ -20,7 +20,7 @@ import {
 	DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import EndCallButton from "../shared/EndCallButton";
+import EndCallButton from "../calls/EndCallButton";
 import Loader from "../shared/Loader";
 
 type CallLayoutType = "grid" | "speaker-left" | "speaker-right";

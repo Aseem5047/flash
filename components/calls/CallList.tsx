@@ -2,7 +2,7 @@
 
 import { Call, CallRecording } from "@stream-io/video-react-sdk";
 
-import Loader from "./Loader";
+import Loader from "../shared/Loader";
 import { useGetCalls } from "@/hooks/useGetCalls";
 
 import { useEffect, useState } from "react";
@@ -12,8 +12,6 @@ import Link from "next/link";
 import Image from "next/image";
 
 const CallList = ({ type }: { type: "ended" | "upcoming" | "recordings" }) => {
-	const router = useRouter();
-	const pathname = usePathname();
 	const { endedCalls, upcomingCalls, callRecordings, isLoading } =
 		useGetCalls();
 	const [recordings, setRecordings] = useState<CallRecording[]>([]);
@@ -74,7 +72,7 @@ const CallList = ({ type }: { type: "ended" | "upcoming" | "recordings" }) => {
 	return (
 		<div
 			className={`grid grid-cols-1 ${
-				calls && calls.length > 0 && "lg:grid-cols-2 xl:grid-cols-3"
+				calls && calls.length > 0 && "xl:grid-cols-2 3xl:grid-cols-3"
 			}  items-center justify-center gap-5 w-full h-full text-white`}
 		>
 			{calls && calls.length > 0 ? (
@@ -97,21 +95,7 @@ const CallList = ({ type }: { type: "ended" | "upcoming" | "recordings" }) => {
 							(meeting as Call).state?.startsAt?.toLocaleString() ||
 							(meeting as CallRecording).start_time?.toLocaleString()
 						}
-						isPreviousMeeting={type === "ended"}
-						link={
-							type === "recordings"
-								? (meeting as CallRecording).url
-								: `${process.env.NEXT_PUBLIC_BASE_URL}/meeting/${
-										(meeting as Call).id
-								  }`
-						}
-						buttonIcon1={type === "recordings" ? "/icons/play.svg" : undefined}
-						buttonText={type === "recordings" ? "Play" : "Start"}
-						handleClick={
-							type === "recordings"
-								? () => router.push(`${(meeting as CallRecording).url}`)
-								: () => router.push(`/meeting/${(meeting as Call).id}`)
-						}
+						callId={(meeting as Call).id}
 					/>
 				))
 			) : (

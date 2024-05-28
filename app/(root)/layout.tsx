@@ -3,7 +3,6 @@
 import React, { ReactNode } from "react";
 import StreamVideoProvider from "@/providers/streamClientProvider";
 import MyCallUI from "@/components/meeting/MyCallUI";
-import { usePathname } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 
 const RootLayout = ({ children }: { children: ReactNode }) => {

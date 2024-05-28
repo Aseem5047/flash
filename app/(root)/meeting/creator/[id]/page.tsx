@@ -4,12 +4,12 @@ import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { StreamCall, StreamTheme } from "@stream-io/video-react-sdk";
 import { useParams } from "next/navigation";
-import { Loader } from "lucide-react";
 
 import { useGetCallById } from "@/hooks/useGetCallById";
 import { Alert } from "@/components/ui/alert";
 import MeetingSetup from "@/components/meeting/MeetingSetup";
 import MeetingRoom from "@/components/meeting/MeetingRoom";
+import Loader from "@/components/shared/Loader";
 
 const MeetingPage = () => {
 	const { id } = useParams();

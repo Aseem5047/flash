@@ -1,4 +1,4 @@
-import CallList from "@/components/shared/CallList";
+import CallList from "@/components/calls/CallList";
 
 const PreviousPage = () => {
 	return (

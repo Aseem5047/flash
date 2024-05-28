@@ -26,7 +26,7 @@ export const useGetCalls = () => {
 						],
 					},
 				});
-				console.log("Calls ... ", calls);
+				// console.log("Calls ... ", calls);
 				setCalls(calls);
 			} catch (error) {
 				console.error(error);
