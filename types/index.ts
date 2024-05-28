@@ -72,9 +72,10 @@ export type UpdateCreatorParams = {
 };
 
 export interface CreateFeedbackParams {
-	creatorId?: string;
+	creatorId: string;
 	clientId: string;
 	rating: number;
 	feedbackText: string;
-	callId?: string;
+	callId: string;
+	createdAt: Date;
 }

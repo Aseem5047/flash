@@ -11,24 +11,30 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import { formatDateTime } from "@/lib/utils";
 
 const FeedbackCheck = ({ callId }: { callId: string }) => {
 	const [feedbackExists, setFeedbackExists] = useState<boolean | null>(null);
 	const { user } = useUser();
+
 	const [userFeedbacks, setUserFeedbacks] = useState<any[] | null>(null);
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
 
 	const checkFeedback = async () => {
-		try {
-			const response = await getCallFeedbacks(callId);
+		if (!callId) {
+			console.log("Error: CallId is not Valid.");
+			setFeedbackExists(false);
+			return;
+		}
 
-			// Check if feedbacks exist for the call
+		try {
+			const response = callId && (await getCallFeedbacks(callId));
+			console.log(response);
 			const hasFeedback = response.length > 0;
 			setFeedbackExists(hasFeedback);
 
-			// Filter feedbacks based on user ID
-			if (user) {
+			if (user && hasFeedback) {
 				const filteredFeedbacks = response
 					.map((feedback: any) => feedback.feedbacks)
 					.flat();
@@ -64,7 +70,7 @@ const FeedbackCheck = ({ callId }: { callId: string }) => {
 	}
 
 	return feedbackExists && userFeedbacks && userFeedbacks.length > 0 ? (
-		<div className="w-full flex items-center justify-start lg:justify-end">
+		<div className="w-full flex items-center justify-start md:justify-end">
 			<Dialog>
 				<DialogTrigger className="flex flex-col gap-1 items-start justify-start sm:justify-center">
 					<Rating
@@ -79,8 +85,8 @@ const FeedbackCheck = ({ callId }: { callId: string }) => {
 						{userFeedbacks[0].feedback}
 					</span>
 				</DialogTrigger>
-				<DialogContent className="bg-white">
-					<DialogHeader>
+				<DialogContent className="bg-white rounded-lg">
+					<DialogHeader className="flex flex-col items-start justify-center">
 						<DialogTitle>All Feedbacks</DialogTitle>
 						<DialogDescription>
 							Here are all the feedbacks for this call.
@@ -88,20 +94,48 @@ const FeedbackCheck = ({ callId }: { callId: string }) => {
 					</DialogHeader>
 					{userFeedbacks.map((feedback, feedbackIndex) => (
 						<div
-							className="flex flex-col gap-1 items-start justify-center sm:justify-center"
+							className="flex items-center justify-start -ml-2 w-full"
 							key={feedbackIndex}
 						>
-							<Rating
-								style={{ maxWidth: 180, fill: "white" }}
-								value={feedback.rating}
-								items={5}
-								spaceBetween="medium"
-								transition="zoom"
-								readOnly
-							/>
-							<span className="text-ellipsis overflow-hidden w-full max-w-[200px] whitespace-nowrap pl-2">
-								{feedback.feedback}
-							</span>
+							<div className="flex flex-col gap-1 items-start justify-center w-full">
+								<Rating
+									style={{ maxWidth: 180, fill: "white" }}
+									value={feedback.rating}
+									items={5}
+									spaceBetween="medium"
+									transition="zoom"
+									readOnly
+								/>
+								<div className="pl-2 flex flex-col items-start justify-center gap-2">
+									<span className="">
+										{feedback.feedback} Lorem, ipsum dolor sit amet consectetur
+										adipisicing elit. Quo iste ipsa ullam aliquam et aspernatur,
+										earum quae distinctio necessitatibus deserunt nesciunt,
+										consectetur optio provident debitis alias ad nihil adipisci
+										perferendis laborum obcaecati sit? Quaerat consequatur,
+										impedit provident eaque obcaecati quis.
+									</span>
+									<div className="flex items-center justify-start w-full gap-2">
+										<div className="flex items-center justify-start gap-2">
+											<Image
+												src={feedback.clientId.photo}
+												alt={feedback.clientId.username}
+												width={44}
+												height={44}
+												className="w-5 h-5 rounded-full"
+											/>
+
+											<span className="text-xs">
+												{feedback.clientId.username}
+											</span>
+										</div>
+										<span className="text-xs">|</span>
+										<span className="text-xs">
+											{formatDateTime(feedback.createdAt).dateTime}
+										</span>
+									</div>
+								</div>
+							</div>
 						</div>
 					))}
 					<UserFeedback

@@ -1,12 +1,9 @@
 "use client";
 
 import { Call, CallRecording } from "@stream-io/video-react-sdk";
-
 import Loader from "../shared/Loader";
 import { useGetCalls } from "@/hooks/useGetCalls";
-
 import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
 import MeetingCard from "../meeting/MeetingCard";
 import Link from "next/link";
 import Image from "next/image";
@@ -15,6 +12,45 @@ const CallList = ({ type }: { type: "ended" | "upcoming" | "recordings" }) => {
 	const { endedCalls, upcomingCalls, callRecordings, isLoading } =
 		useGetCalls();
 	const [recordings, setRecordings] = useState<CallRecording[]>([]);
+	const [callsCount, setCallsCount] = useState(6);
+
+	useEffect(() => {
+		const fetchRecordings = async () => {
+			try {
+				const callData = await Promise.all(
+					callRecordings?.map((meeting) => meeting.queryRecordings()) ?? []
+				);
+
+				const recordings = callData
+					.filter((call) => call.recordings.length > 0)
+					.flatMap((call) => call.recordings);
+
+				setRecordings(recordings);
+			} catch (error) {
+				console.log("Error retrieving Recordings", error);
+			}
+		};
+
+		if (type === "recordings") {
+			fetchRecordings();
+		}
+	}, [type, callRecordings]);
+
+	useEffect(() => {
+		const handleScroll = () => {
+			if (
+				window.innerHeight + window.scrollY >=
+				document.body.offsetHeight - 2
+			) {
+				setCallsCount((prevCount) => prevCount + 6);
+			}
+		};
+
+		window.addEventListener("scroll", handleScroll);
+		return () => {
+			window.removeEventListener("scroll", handleScroll);
+		};
+	}, []);
 
 	const getCalls = () => {
 		switch (type) {
@@ -42,41 +78,21 @@ const CallList = ({ type }: { type: "ended" | "upcoming" | "recordings" }) => {
 		}
 	};
 
-	useEffect(() => {
-		const fetchRecordings = async () => {
-			try {
-				const callData = await Promise.all(
-					callRecordings?.map((meeting) => meeting.queryRecordings()) ?? []
-				);
-
-				const recordings = callData
-					.filter((call) => call.recordings.length > 0)
-					.flatMap((call) => call.recordings);
-
-				setRecordings(recordings);
-			} catch (error) {
-				console.log("Error retrieving Recordings", error);
-			}
-		};
-
-		if (type === "recordings") {
-			fetchRecordings();
-		}
-	}, [type, callRecordings]);
-
 	if (isLoading) return <Loader />;
 
 	const calls = getCalls();
 	const noCallsMessage = getNoCallsMessage();
+	const visibleCalls = calls && calls.slice(0, callsCount);
 
 	return (
 		<div
 			className={`grid grid-cols-1 ${
 				calls && calls.length > 0 && "xl:grid-cols-2 3xl:grid-cols-3"
-			}  items-center justify-center gap-5 w-full h-full text-white`}
+			} items-center justify-center gap-5 w-full h-full text-white`}
 		>
 			{calls && calls.length > 0 ? (
-				calls.map((meeting: Call | CallRecording) => (
+				visibleCalls &&
+				visibleCalls.map((meeting: Call | CallRecording) => (
 					<MeetingCard
 						key={(meeting as Call).id}
 						icon={

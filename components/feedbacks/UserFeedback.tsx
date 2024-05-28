@@ -5,12 +5,11 @@ import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
 import { useUser } from "@clerk/nextjs";
 import { createFeedback } from "@/lib/actions/feedback.actions";
-import Loader from "../shared/Loader";
 import { useToast } from "../ui/use-toast";
 import { success } from "@/constants/icons";
+import { useGetCallById } from "@/hooks/useGetCallById";
 
 const UserFeedback = ({
-	creatorId,
 	callId,
 	checkFeedback,
 	isOpen,
@@ -18,8 +17,7 @@ const UserFeedback = ({
 	text,
 	buttonColor,
 }: {
-	creatorId?: string;
-	callId?: string;
+	callId: string;
 	checkFeedback: () => void;
 	isOpen: boolean;
 	onOpenChange: (isOpen: boolean) => void;
@@ -30,6 +28,7 @@ const UserFeedback = ({
 	const [feedbackMessage, setFeedbackMessage] = useState("");
 	const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 	const { toast } = useToast();
+	const { call, isCallLoading } = useGetCallById(String(callId));
 
 	const ratingItems = ["😒", "😞", "😑", "🙂", "😄"];
 	const { user } = useUser();
@@ -61,16 +60,17 @@ const UserFeedback = ({
 	};
 
 	const handleSubmitFeedback = async () => {
-		if (!user) return;
+		if (!user || !call) return;
 		try {
 			const userId = user.publicMetadata?.userId as string;
 
 			await createFeedback({
-				creatorId: creatorId,
+				creatorId: call.state.members[0].user_id,
 				clientId: userId,
 				rating: rating,
 				feedbackText: feedbackMessage,
 				callId: callId,
+				createdAt: new Date(),
 			});
 			setFeedbackSubmitted(true);
 		} catch (error: any) {
@@ -84,7 +84,24 @@ const UserFeedback = ({
 		}
 	};
 
-	if (!user) return <Loader />;
+	if (!user || isCallLoading)
+		return (
+			<div className="flex items-center space-x-4 w-full animate-pulse">
+				<div className="flex-1 space-y-4 py-1">
+					<div className="h-3 bg-slate-300 rounded w-3/4"></div>
+					<div className="space-y-3">
+						<div className="grid grid-cols-3 gap-4">
+							<div className="h-2 bg-slate-300 rounded col-span-2"></div>
+							<div className="h-2 bg-slate-300 rounded col-span-1"></div>
+						</div>
+						<div className="h-2 bg-slate-300 rounded w-full"></div>
+					</div>
+				</div>
+			</div>
+		);
+
+	// console.log(call?.state.members[0].user_id);
+
 	return (
 		<Sheet
 			open={isOpen}

@@ -22,12 +22,12 @@ const Navbar = () => {
 				<p className="text-[26px] font-extrabold  max-sm:hidden">UNITE</p>
 			</Link>
 
-			<div className="flex-between gap-3 text-white">
-				<SignedIn>
+			<SignedIn>
+				<div className="flex-between gap-3 text-white">
 					<UserButton afterSignOutUrl="/sign-in" />
 					<MobileNav />
-				</SignedIn>
-			</div>
+				</div>
+			</SignedIn>
 
 			<SignedOut>
 				<Button

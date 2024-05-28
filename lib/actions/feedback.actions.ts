@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { connectToDatabase } from "@/lib/database";
 import { handleError } from "@/lib/utils";
 import CallFeedbacks from "../database/models/callFeedbacks.model";
-import CreatorFeedbacks from "../database/models/creatorFeedbacks.model";
+import mongoose from "mongoose";
+import Client from "../database/models/client.model";
 
 export async function createFeedback({
 	creatorId,
@@ -12,65 +13,48 @@ export async function createFeedback({
 	rating,
 	feedbackText,
 	callId,
+	createdAt,
 }: {
-	creatorId?: string;
-	clientId: string; // Ensure clientId is string here
+	creatorId: string;
+	clientId: string;
 	rating: number;
 	feedbackText: string;
-	callId?: string;
+	callId: string;
+	createdAt: Date;
 }) {
 	try {
 		await connectToDatabase();
 
-		if (callId) {
-			// Handle call feedback
-			await CallFeedbacks.findOneAndUpdate(
-				{ callId },
-				{
-					$setOnInsert: {
-						callId: callId,
-					},
-					$push: {
-						feedbacks: {
-							clientId,
-							rating,
-							feedback: feedbackText,
-						},
-					},
-				},
-				{
-					upsert: true,
-					new: true,
-					setDefaultsOnInsert: true,
-				}
-			).exec();
-		} else if (creatorId) {
-			// Handle creator feedback
-			await CreatorFeedbacks.findOneAndUpdate(
-				{ creatorId },
-				{
-					$setOnInsert: {
-						creatorId: creatorId,
-					},
-					$push: {
-						feedbacks: {
-							clientId,
-							rating,
-							feedback: feedbackText,
-						},
-					},
-				},
-				{
-					upsert: true,
-					new: true,
-					setDefaultsOnInsert: true,
-				}
-			).exec();
-		} else {
-			throw new Error("Either creatorId or callId must be provided.");
+		if (callId && creatorId) {
+			const feedbackEntry = {
+				clientId,
+				rating,
+				feedback: feedbackText,
+				createdAt: createdAt, // Manually setting the createdAt field
+			};
+
+			console.log("Feedback Entry:", feedbackEntry); // Log feedbackEntry to verify the structure
+
+			const existingCallFeedback = await CallFeedbacks.findOne({
+				callId,
+			}).exec();
+
+			if (existingCallFeedback) {
+				existingCallFeedback.feedbacks.push(feedbackEntry);
+				const updateResult = await existingCallFeedback.save();
+				console.log("Update Result:", updateResult); // Log update result to check if the update was successful
+			} else {
+				const newCallFeedback = new CallFeedbacks({
+					callId,
+					creatorId,
+					feedbacks: [feedbackEntry],
+				});
+
+				const saveResult = await newCallFeedback.save();
+				console.log("Save Result:", saveResult); // Log save result to check if the save was successful
+			}
 		}
 
-		// Revalidate the path to ensure the data is fresh
 		revalidatePath("/path-to-revalidate");
 
 		return { success: true };
@@ -80,32 +64,33 @@ export async function createFeedback({
 		return { success: false, error: error.message };
 	}
 }
-
-export async function getCreatorFeedbacks(creatorId: string) {
+export async function getCallFeedbacks(callId?: string, creatorId?: string) {
 	try {
 		await connectToDatabase();
+		// Manually register the models if necessary
+		if (!mongoose.models.Client) {
+			mongoose.model("Client", Client.schema);
+		}
 
-		const feedbacks = await CreatorFeedbacks.find(
-			{ creatorId },
-			{ feedbacks: 1 }
-		).lean();
+		// console.log("Models registered:", mongoose.modelNames()); // Log registered models
 
-		// Return the feedbacks as JSON
-		return JSON.parse(JSON.stringify(feedbacks));
-	} catch (error: any) {
-		console.log(error);
-		return { success: false, error: error.message };
-	}
-}
+		// Ensure either callId or creatorId is provided
+		if (!callId && !creatorId) {
+			throw new Error("Either callId or creatorId must be provided.");
+		}
 
-export async function getCallFeedbacks(callId: string) {
-	try {
-		await connectToDatabase();
+		let query: any = {};
+		if (callId) {
+			query.callId = callId;
+		}
+		if (creatorId) {
+			query.creatorId = creatorId;
+		}
 
-		const feedbacks = await CallFeedbacks.find(
-			{ callId },
-			{ feedbacks: 1 }
-		).lean();
+		const feedbacks = await CallFeedbacks.find(query, { feedbacks: 1 })
+			.populate("creatorId")
+			.populate("feedbacks.clientId")
+			.lean();
 
 		// Return the feedbacks as JSON
 		return JSON.parse(JSON.stringify(feedbacks));

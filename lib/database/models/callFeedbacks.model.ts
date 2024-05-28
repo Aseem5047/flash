@@ -10,6 +10,7 @@ const FeedbackEntrySchema = new Schema(
 		},
 		rating: { type: Number, required: true },
 		feedback: { type: String, required: true },
+		createdAt: { type: Date, default: Date.now },
 	},
 	{ _id: false }
 );
@@ -21,6 +22,10 @@ const CallFeedbackSchema = new Schema(
 			type: String,
 			required: true,
 			unique: true, // Ensure callId is unique
+		},
+		creatorId: {
+			type: String,
+			required: true,
 		},
 		feedbacks: [FeedbackEntrySchema],
 	},
