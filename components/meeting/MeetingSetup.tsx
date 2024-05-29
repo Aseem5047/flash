@@ -103,7 +103,7 @@ const MeetingSetup = ({
 							<span className="text-lg text-blue-1">
 								{call.state.members[0].user.name}
 							</span>
-							<span className="text-xs">Session's Expert</span>
+							<span className="text-xs">Session&apos;s Expert</span>
 						</div>
 					</div>
 
@@ -136,7 +136,7 @@ const MeetingSetup = ({
 						/>
 						<div className="flex flex-col items-start justif-center">
 							<span className="text-lg text-blue-1">{user?.username}</span>
-							<span className="text-xs">Session's Client</span>
+							<span className="text-xs">Session&apos;s Client</span>
 						</div>
 					</div>
 
