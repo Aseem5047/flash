@@ -104,3 +104,31 @@ export interface UpdateCallParams {
 	startedAt?: Date;
 	endedAt?: Date;
 }
+
+export interface RegisterUserKycParams {
+	transactionId: string;
+	status: "auto_approved" | "auto_declined" | "needs_review";
+	details: {
+		fullName: string;
+		countrySelected: string;
+		dateOfBirth: string;
+		dateOfIssue: string;
+		selfieImage: string;
+		idFrontImage: string;
+		idBackImage: string;
+	};
+}
+
+export interface UpdateUserKycParams {
+	transactionId?: string;
+	status?: "auto_approved" | "auto_declined" | "needs_review";
+	details?: {
+		fullName?: string;
+		countrySelected?: string;
+		dateOfBirth?: string;
+		dateOfIssue?: string;
+		selfieImage?: string;
+		idFrontImage?: string;
+		idBackImage?: string;
+	};
+}

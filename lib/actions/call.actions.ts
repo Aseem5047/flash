@@ -41,18 +41,18 @@ export async function getCallById(callId: string) {
 	}
 }
 
-export async function updateUser(callId: string, user: UpdateCallParams) {
+export async function updateCall(callId: string, call: UpdateCallParams) {
 	try {
 		await connectToDatabase();
-		const updatedUser = await Call.findByIdAndUpdate(callId, user, {
+		const updatedCall = await Call.findByIdAndUpdate(callId, call, {
 			new: true,
 		});
 
-		if (!updatedUser) {
-			throw new Error("User not found");
+		if (!updatedCall) {
+			throw new Error("Call not found");
 		}
 
-		return updatedUser.toJSON(); // No need to stringify and parse
+		return updatedCall.toJSON(); // No need to stringify and parse
 	} catch (error) {
 		handleError(error); // Use handleError function for consistent error handling
 	}
