@@ -44,7 +44,7 @@ export async function getCallById(callId: string) {
 export async function updateCall(callId: string, call: UpdateCallParams) {
 	try {
 		await connectToDatabase();
-		const updatedCall = await Call.findByIdAndUpdate(callId, call, {
+		const updatedCall = await Call.findOneAndUpdate({ callId }, call, {
 			new: true,
 		});
 
