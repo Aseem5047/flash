@@ -31,6 +31,10 @@ const MyCallUI = () => {
 			};
 
 			const handleCallRejected = () => {
+				toast({
+					title: "Call Ended",
+					description: "The call was Rejected. Redirecting to HomePage...",
+				});
 				router.push("/");
 			};
 
@@ -66,7 +70,7 @@ const MyCallUI = () => {
 			<div className="bg-white p-4 shadow-lg rounded-md">
 				<MyIncomingCallUI
 					call={incomingCall}
-					onAccept={() => router.push(`/meeting/${incomingCall.id}`)}
+					onAccept={() => router.push(`/meeting/creator/${incomingCall.id}`)}
 				/>
 			</div>
 		);

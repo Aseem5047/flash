@@ -8,7 +8,7 @@ export async function createCall(call: RegisterCallParams) {
 		await connectToDatabase();
 
 		const newCall = await Call.create(call);
-		console.log(newCall);
+		// console.log(newCall);
 		return newCall.toJSON();
 	} catch (error) {
 		handleError(error);
