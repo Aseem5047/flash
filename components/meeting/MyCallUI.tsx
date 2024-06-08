@@ -56,7 +56,7 @@ const MyCallUI = () => {
 			call.state.callingState === CallingState.RINGING
 	);
 
-	// // Filter outgoing ringing calls
+	// Filter outgoing ringing calls
 	const outgoingCalls = calls.filter(
 		(call) =>
 			call.isCreatedByMe === true &&
