@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCalls, CallingState } from "@stream-io/video-react-sdk";
