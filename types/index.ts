@@ -113,6 +113,68 @@ export type UpdateCallParams = {
 	endedAt?: Date;
 };
 
+// app/razorpay.d.ts
+
+export interface RazorpayOptions {
+	key: string;
+	amount: number;
+	currency: string;
+	name: string;
+	description: string;
+	image: string;
+	order_id: string;
+	handler: (response: PaymentResponse) => void;
+	prefill: {
+		name: string;
+		email: string;
+		contact: string;
+		method: string;
+	};
+	notes: {
+		address: string;
+	};
+	theme: {
+		color: string;
+	};
+}
+
+export interface PaymentResponse {
+	razorpay_payment_id: string;
+	razorpay_order_id: string;
+	razorpay_signature: string;
+}
+
+export interface PaymentFailedResponse {
+	error: {
+		code: string;
+		description: string;
+		source: string;
+		step: string;
+		reason: string;
+		metadata: {
+			order_id: string;
+			payment_id: string;
+		};
+		data?: {
+			poa_front_dob?: string | null;
+			poi_imagePath?: string;
+			face_imagePath?: string;
+			digilocker_address?: string | null;
+			poa_backImagePath?: string;
+			poa_front_name?: string;
+			poi_name?: string;
+			poa_back_name?: string | null;
+			poa_front_idNumber?: string;
+			poa_back_idNumber?: string;
+			poa_back_dob?: string;
+			digilocker_idPhoto?: string | null;
+			poi_dob?: string;
+			poa_frontImagePath?: string;
+			digilocker_dob?: string | null;
+		};
+	};
+}
+
 // User Kyc Params
 
 export type RegisterUserKycParams = {
