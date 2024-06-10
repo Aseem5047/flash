@@ -4,8 +4,8 @@ import { Metadata } from "next";
 import React, { ReactNode } from "react";
 
 export const metadata: Metadata = {
-	title: "Unite",
-	description: "A workspace for your team, powered by Stream Chat and Clerk.",
+	title: "FlashCall",
+	description: "A workspace for your team, powered by Stream and Clerk.",
 	icons: {
 		icon: "/icons/logo.jpg",
 	},

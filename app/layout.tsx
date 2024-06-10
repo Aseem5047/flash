@@ -6,9 +6,9 @@ import { Toaster } from "@/components/ui/toaster";
 import "@stream-io/video-react-sdk/dist/css/styles.css";
 
 export const metadata: Metadata = {
-	title: "Unite",
+	title: "FlashCall",
 	description:
-		"A workspace for your team, powered by Stream Chat and authentication via Clerk.",
+		"A workspace for your team, powered by Stream and authentication via Clerk.",
 	icons: {
 		icon: "/icons/logo",
 	},

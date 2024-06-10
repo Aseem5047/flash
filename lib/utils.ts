@@ -1,6 +1,16 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+import Razorpay from "razorpay";
+
+const key_id = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+const key_secret = process.env.NEXT_PUBLIC_RAZORPAY_SECRET;
+
+export const razorpay = new Razorpay({
+	key_id: key_id!,
+	key_secret: key_secret,
+});
+
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
