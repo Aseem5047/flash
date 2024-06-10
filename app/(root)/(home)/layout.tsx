@@ -5,9 +5,9 @@ import React, { ReactNode } from "react";
 
 export const metadata: Metadata = {
 	title: "FlashCall",
-	description: "A workspace for your team, powered by Stream and Clerk.",
+	description: "A workspace for your team, powered by Stream Chat and Clerk.",
 	icons: {
-		icon: "/icons/logo.jpg",
+		icon: "/icons/logoDarkCircle.png",
 	},
 };
 

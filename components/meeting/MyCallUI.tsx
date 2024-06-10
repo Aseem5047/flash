@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCalls, CallingState } from "@stream-io/video-react-sdk";
@@ -58,7 +56,7 @@ const MyCallUI = () => {
 			call.state.callingState === CallingState.RINGING
 	);
 
-	// Filter outgoing ringing calls
+	// // Filter outgoing ringing calls
 	const outgoingCalls = calls.filter(
 		(call) =>
 			call.isCreatedByMe === true &&
