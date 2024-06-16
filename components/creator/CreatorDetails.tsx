@@ -8,6 +8,11 @@ interface CreatorDetailsProps {
 const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 	const pathname = usePathname();
 
+	useEffect(() => {
+		pathname.includes("/creator") &&
+			localStorage.setItem("currentCreator", JSON.stringify(creator));
+	}, [creator]);
+
 	return (
 		<>
 			<div className="flex flex-col items-center px-7 justify-center">

@@ -18,7 +18,7 @@ const MeetingCard = ({ icon, title, date, callId }: MeetingCardProps) => {
 	const pathname = usePathname();
 	return (
 		<section
-			className={`flex min-h-[258px] w-full flex-col justify-between rounded-[14px] px-5 py-8 xl:max-w-[568px] bg-blue-1 ${
+			className={`flex min-h-[258px] w-full flex-col justify-between rounded-[14px] px-5 py-8 xl:max-w-[568px] bg-green-1 ${
 				pathname.includes("/profile") && "mx-auto"
 			}`}
 		>

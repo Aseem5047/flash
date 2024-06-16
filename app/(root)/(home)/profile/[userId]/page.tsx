@@ -69,13 +69,13 @@ const UserProfilePage = () => {
 									? userData.username
 									: userData.fullName}
 							</span>
-							<span className="text-sm text-blue-1 font-semibold">
+							<span className="text-sm text-green-1 font-semibold">
 								@{userData?.username}
 							</span>
 						</div>
 
 						<Button
-							className="bg-blue-1 text-white"
+							className="bg-green-1 text-white"
 							onClick={() => setEditData((prev) => !prev)}
 						>
 							{editData ? "Close Details" : "Edit Details"}
@@ -84,7 +84,7 @@ const UserProfilePage = () => {
 
 					{/* user bio */}
 					<p
-						className={`font-semibold pt-4 cursor-pointer hover:text-blue-1 w-full no-scrollbar text-start ${
+						className={`font-semibold pt-4 cursor-pointer hover:text-green-1 w-full no-scrollbar text-start ${
 							showFullDesc
 								? "overflow-scroll max-h-[150px] pb-4"
 								: "text-ellipsis overflow-hidden whitespace-nowrap max-w-[600px]"

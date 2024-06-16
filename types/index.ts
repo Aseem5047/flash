@@ -23,6 +23,16 @@ export type UpdateUserParams = {
 	role?: string;
 };
 
+export type clientUser = {
+	_id: string;
+	firstName: string;
+	lastName: string;
+	username: string;
+	photo: string;
+	phone: string;
+	walletBalance: number;
+};
+
 // Creator Params
 
 export type creatorUser = {
@@ -227,3 +237,16 @@ export type WalletParams = {
 	userType: string;
 	amount: number;
 };
+
+// Call Transactions
+export interface RegisterCallTransactionParams {
+	callId: string;
+	amountPaid: number;
+	isDone?: boolean;
+}
+
+export interface UpdateCallTransactionParams {
+	callId: string;
+	amountPaid?: number;
+	isDone?: boolean;
+}

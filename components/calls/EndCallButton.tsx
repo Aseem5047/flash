@@ -1,44 +1,48 @@
 "use client";
 
-import { useCall, useCallStateHooks } from "@stream-io/video-react-sdk";
+import { useCall } from "@stream-io/video-react-sdk";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "../ui/button";
-import CallFeedback from "../feedbacks/CallFeedback";
 import { useToast } from "../ui/use-toast";
+import { useCallTimerContext } from "@/lib/context/CallTimerContext";
+
+import EndCallDecision from "./EndCallDecision";
+import { useUser } from "@clerk/nextjs";
 
 const EndCallButton = () => {
 	const call = useCall();
-	const router = useRouter();
-	const [showFeedback, setShowFeedback] = useState(false);
-	const { toast } = useToast();
-	if (!call)
+	const [showDialog, setShowDialog] = useState(false);
+	const { setAnyModalOpen, totalTimeUtilized } = useCallTimerContext();
+	const { user } = useUser();
+
+	if (!call) {
 		throw new Error(
 			"useStreamCall must be used within a StreamCall component."
 		);
-
-	const { useLocalParticipant } = useCallStateHooks();
-	const localParticipant = useLocalParticipant();
+	}
 
 	const isMeetingOwner =
-		localParticipant &&
-		call.state.createdBy &&
-		localParticipant.userId === call.state.createdBy.id;
-
-	if (!isMeetingOwner) return null;
+		user?.publicMetadata?.userId === call?.state?.createdBy?.id;
 
 	const endCall = async () => {
-		setShowFeedback(true); // Show the feedback form
+		setShowDialog(true); // Show the confirmation dialog
+		setAnyModalOpen(true);
 	};
 
-	const handleFeedbackClose = async () => {
-		setShowFeedback(false);
+	const handleDecisionDialog = async () => {
 		await call.endCall();
-		toast({
-			title: "Call Ended",
-			description: "The call Ended. Redirecting to HomePage...",
-		});
-		router.push("/"); // Redirect to the homepage
+		setShowDialog(false);
+		// isMeetingOwner && router.push(`/feedback/${call?.id}/${totalTimeUtilized}`);
+		// toast({
+		// 	title: "Call Ended",
+		// 	description: "The call Ended. Redirecting ...",
+		// });
+	};
+
+	const handleCloseDialog = () => {
+		setShowDialog(false);
+		setAnyModalOpen(false);
 	};
 
 	return (
@@ -49,11 +53,11 @@ const EndCallButton = () => {
 			>
 				End Call
 			</Button>
-			{showFeedback && (
-				<CallFeedback
-					callId={call.id}
-					isOpen={showFeedback}
-					onOpenChange={handleFeedbackClose}
+
+			{showDialog && (
+				<EndCallDecision
+					handleDecisionDialog={handleDecisionDialog}
+					setShowDialog={handleCloseDialog}
 				/>
 			)}
 		</>

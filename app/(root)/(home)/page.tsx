@@ -20,7 +20,6 @@ const HomePage = () => {
 				const response = await getUsers();
 				setCreators(response);
 			};
-
 			getCreators();
 		} catch (error) {
 			console.error(error);

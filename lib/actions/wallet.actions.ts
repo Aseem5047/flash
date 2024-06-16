@@ -1,9 +1,9 @@
 import { connectToDatabase } from "@/lib/database";
+import { WalletParams } from "@/types";
 import Client from "../database/models/client.model";
 import Creator from "../database/models/creator.model";
 import Transaction from "../database/models/transaction.model";
 import Wallet from "../database/models/wallet.models";
-import { WalletParams } from "@/types";
 
 export async function addMoney({ userId, userType, amount }: WalletParams) {
 	try {
@@ -14,29 +14,40 @@ export async function addMoney({ userId, userType, amount }: WalletParams) {
 			user = await Client.findById(userId);
 		} else if (userType === "Creator") {
 			user = await Creator.findById(userId);
+		} else {
+			throw new Error("Invalid user type");
 		}
 
 		if (!user) throw new Error("User not found");
 
-		user.walletBalance += amount;
+		// Ensure amount is a number
+		const numericAmount = Number(amount);
+		if (isNaN(numericAmount)) {
+			throw new Error("Amount must be a number");
+		}
+
+		// Increment the user's wallet balance
+		user.walletBalance = Number(user.walletBalance) + numericAmount;
 		await user.save();
 
+		// Update the Wallet collection
 		const wallet = await Wallet.findOneAndUpdate(
 			{ userId, userType },
-			{ $inc: { balance: amount } },
+			{ $inc: { balance: numericAmount } },
 			{ new: true, upsert: true }
 		);
 
-		const transaction = await Transaction.create({
+		// Create a transaction record
+		await Transaction.create({
 			userId,
 			userType,
-			amount,
+			amount: numericAmount,
 			type: "credit",
 		});
 
 		return JSON.parse(JSON.stringify(wallet));
 	} catch (error) {
-		console.log(error);
+		console.error("Error in addMoney:", error);
 		throw new Error("Error adding money");
 	}
 }
@@ -54,24 +65,37 @@ export async function processPayout({
 			user = await Client.findById(userId);
 		} else if (userType === "Creator") {
 			user = await Creator.findById(userId);
+		} else {
+			throw new Error("Invalid user type");
 		}
 
 		if (!user) throw new Error("User not found");
 		if (user.walletBalance < amount) throw new Error("Insufficient balance");
 
-		user.walletBalance -= amount;
+		// Ensure amount is a number
+		const numericAmount = Number(amount);
+		if (isNaN(numericAmount)) {
+			throw new Error("Amount must be a number");
+		}
+
+		// Decrement the user's wallet balance
+		user.walletBalance = Number(user.walletBalance) - numericAmount;
 		await user.save();
 
+		console.log("Wallet Balance: " + user.walletBalance);
+
+		// Update the Wallet collection
 		const wallet = await Wallet.findOneAndUpdate(
 			{ userId, userType },
-			{ $inc: { balance: -amount } },
+			{ $inc: { balance: -numericAmount } },
 			{ new: true, upsert: true }
 		);
 
-		const transaction = await Transaction.create({
+		// Create a transaction record
+		await Transaction.create({
 			userId,
 			userType,
-			amount,
+			amount: numericAmount,
 			type: "debit",
 		});
 
@@ -79,7 +103,7 @@ export async function processPayout({
 
 		return JSON.parse(JSON.stringify(wallet));
 	} catch (error) {
-		console.log(error);
+		console.error("Error in processPayout:", error);
 		throw new Error("Error processing payout");
 	}
 }
