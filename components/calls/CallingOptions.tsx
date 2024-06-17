@@ -87,7 +87,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 					user_id: "6668228bbad947e0e80b2b7f",
 					// user_id: "66681d96436f89b49d8b498b",
 					custom: { name: String(creator.username), type: "expert" },
-					role: "admin",
+					role: "call_member",
 				},
 				{
 					user_id: String(user?.publicMetadata?.userId),
@@ -108,7 +108,10 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 					? parseInt(creator?.videoRate, 10)
 					: parseInt(creator?.audioRate, 10);
 			let maxCallDuration = (walletBalance / ratePerMinute) * 60; // in seconds
-			maxCallDuration = maxCallDuration > 3600 ? 3600 : maxCallDuration;
+			maxCallDuration =
+				maxCallDuration > 3600 ? 3600 : Math.floor(maxCallDuration);
+
+			console.log(maxCallDuration, ratePerMinute);
 
 			await call.getOrCreate({
 				data: {
@@ -141,7 +144,8 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	};
 
 	const handleChat = async () => {
-		console.log(chatRef);
+		
+		// console.log(chatRef);
 		const chatRequestsRef = collection(db, "chatRequests");
 
 		try {
@@ -161,7 +165,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				const userChatsData = userChatsDocSnapshot.data();
 				const creatorChatsData = creatorChatsDocSnapshot.data();
 
-				console.log(userChatsData);
+				// console.log(userChatsData)
 
 				const existingChat =
 					userChatsData.chats.find(
@@ -188,17 +192,6 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				chatId: chatId,
 				createdAt: serverTimestamp(),
 			});
-
-			localStorage.setItem(
-				"user2",
-				JSON.stringify({
-					_id: "6668228bbad947e0e80b2b7f",
-					clientId: clientId,
-					fullName: "Aseem Gupta",
-					photo:
-						"https://img.clerk.com/eyJ0eXBlIjoiZGVmYXVsdCIsImlpZCI6Imluc18yZ3Y5REx5RkFsSVhIZTZUNUNFQ3FIZlozdVQiLCJyaWQiOiJ1c2VyXzJoUHZmcm1BZHlicUVmdjdyM09xa0w0WnVRRyIsImluaXRpYWxzIjoiQ0cifQ",
-				})
-			);
 
 			if (!userChatsDocSnapshot.exists()) {
 				await setDoc(userChatsDocRef, { chats: [] });
@@ -239,6 +232,19 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		const userChatsRef = collection(db, "userchats");
 		const chatId = chatRequest.chatId;
 
+		localStorage.setItem(
+			"user2",
+			JSON.stringify({
+				_id: "6668228bbad947e0e80b2b7f",
+				clientId: chatRequest.clientId,
+				creatorId: chatRequest.creatorId,
+				requestId: chatRequest.id,
+				fullName: "Aseem Gupta",
+				photo:
+					"https://img.clerk.com/eyJ0eXBlIjoiZGVmYXVsdCIsImlpZCI6Imluc18yZ3Y5REx5RkFsSVhIZTZUNUNFQ3FIZlozdVQiLCJyaWQiOiJ1c2VyXzJoUHZmcm1BZHlicUVmdjdyM09xa0w0WnVRRyIsImluaXRpYWxzIjoiQ0cifQ",
+			})
+		);
+
 		try {
 			const existingChatDoc = await getDoc(doc(db, "chats", chatId));
 			if (!existingChatDoc.exists()) {
@@ -256,7 +262,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 							chatId: chatId,
 							lastMessage: "",
 							receiverId: chatRequest.clientId,
-							updatedAt: Date.now(),
+							updatedAt: new Date(),
 						}),
 					}
 				);
@@ -268,11 +274,16 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 							chatId: chatId,
 							lastMessage: "",
 							receiverId: chatRequest.creatorId,
-							updatedAt: Date.now(),
+							updatedAt: new Date(),
 						}),
 					}
 				);
 				await Promise.all([creatorChatUpdate, clientChatUpdate]);
+			}
+			else{
+				await updateDoc(doc(db, "chats", chatId), {
+					createdAt: new Date()
+				})
 			}
 
 			await updateDoc(doc(chatRequestsRef, chatRequest.id), {

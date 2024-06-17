@@ -1,6 +1,6 @@
 "use client";
 
-import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
@@ -35,7 +35,7 @@ const Navbar = () => {
 						<div className=" w-fit flex-between gap-5 text-white">
 							<Link
 								href="/payment"
-								className="w-full flex items-center justify-center gap-2 text-black px-5 py-3 border border-black rounded-lg  hover:bg-[#50a65c36]"
+								className="w-full flex items-center justify-center gap-2 text-black px-5 py-3 border border-black rounded-lg  hover:bg-green-1 group"
 								style={{
 									boxShadow: theme,
 								}}
@@ -45,9 +45,9 @@ const Navbar = () => {
 									width={100}
 									height={100}
 									alt="wallet"
-									className="w-4 h-4"
+									className="w-4 h-4 group-hover:text-white group-hover:invert"
 								/>
-								<span className="w-full text-xs whitespace-nowrap font-semibold">
+								<span className="w-full text-xs whitespace-nowrap font-semibold group-hover:text-white">
 									Rs. {walletBalance.toFixed(2)}
 								</span>
 							</Link>

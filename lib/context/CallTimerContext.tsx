@@ -103,7 +103,6 @@ export const CallTimerProvider = ({
 		const ratePerMinute = isVideoCall ? videoRatePerMinute : audioRatePerMinute;
 		let maxCallDuration = (walletBalance / ratePerMinute) * 60; // in seconds
 		maxCallDuration = maxCallDuration > 3600 ? 3600 : maxCallDuration; // Limit to 60 minutes (3600 seconds)
-
 		if (!callStartedAt) {
 			// If call hasn't started yet, set timeLeft to maxCallDuration
 			setTimeLeft(maxCallDuration);

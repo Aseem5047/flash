@@ -8,6 +8,7 @@ export const handleTransaction = async ({
 	isVideoCall,
 	toast,
 	router,
+	updateWalletBalance,
 }: {
 	call: any;
 	callId: string;
@@ -15,6 +16,7 @@ export const handleTransaction = async ({
 	isVideoCall: boolean;
 	toast: any;
 	router: any;
+	updateWalletBalance: () => Promise<void>;
 }) => {
 	const creatorId = "664c90ae43f0af8f1b3d5803";
 	const clientId = call?.state?.createdBy?.id;
@@ -46,7 +48,7 @@ export const handleTransaction = async ({
 				title: "Transaction Done",
 				description: "Redirecting ...",
 			});
-
+			router.push(`/feedback/${callId}`);
 			return;
 		}
 
@@ -65,6 +67,7 @@ export const handleTransaction = async ({
 					callId,
 					amountPaid: amountToBePaid,
 					isDone: true,
+					callDuration: parseInt(duration, 10),
 				}),
 				headers: { "Content-Type": "application/json" },
 			}),
@@ -87,13 +90,19 @@ export const handleTransaction = async ({
 				headers: { "Content-Type": "application/json" },
 			}),
 		]);
+
+		// remove the activeCallId after transaction is done otherwise user will be redirected to this page and then transactons will take place
+		localStorage.removeItem("activeCallId");
+		router.push(`/feedback/${callId}`);
 	} catch (error) {
 		console.error("Error handling wallet changes:", error);
 		toast({
 			title: "Error",
-			description: "An error occurred while processing the requests",
+			description: "An error occurred while processing the Transactions",
 		});
+		router.push("/");
 	} finally {
-		router.push(`/feedback/${callId}`);
+		// Update wallet balance after transaction
+		updateWalletBalance();
 	}
 };

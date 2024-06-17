@@ -33,8 +33,8 @@ const Sidebar = () => {
 										alt={item.label}
 										width={24}
 										height={24}
-										className={`invert group-hover:invert-0 ${
-											isActive && "invert-0"
+										className={`invert group-hover:invert-0 group-hover:brightness-200 ${
+											isActive && "invert-0 brightness-200"
 										}`}
 									/>
 

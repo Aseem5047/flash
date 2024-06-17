@@ -50,17 +50,17 @@ const UserProfilePage = () => {
 	return (
 		<div className="flex justify-start items-center size-full flex-col gap-7 text-black">
 			{/* Profile Info */}
-			<div className="flex items-center justify-center w-full gap-10 xl:max-w-[69%]">
+			<div className="flex items-center justify-start w-full gap-10 xl:max-w-[69%]">
 				{/* user profile picture */}
 				<Image
 					src={userData.photo}
 					alt="profile picture"
 					width={1000}
 					height={1000}
-					className="rounded-full w-full min-w-24 lg:min-w-32 max-w-40 "
+					className="rounded-full w-full min-w-24 lg:min-w-24 max-w-32 "
 				/>
 
-				<div className="flex flex-col items-center lg:items-start justify-center gap-2">
+				<div className="flex flex-col w-full items-start justify-center gap-2">
 					{/* userDetails */}
 					<div className="grid grid-cols-[2fr_1fr] items-center w-full">
 						<div className="flex flex-col items-start justify-center">
@@ -104,7 +104,7 @@ const UserProfilePage = () => {
 
 			{/* Edit profile area */}
 			{editData && (
-				<div className="flex flex-col w-full lg:max-w-[50%] items-start justify-center gap-7 mt-4">
+				<div className="flex flex-col w-full 2xl:max-w-[60%] items-start justify-center gap-7 mt-4">
 					<span className="text-2xl font-semibold">Edit User Details</span>
 					<EditProfile
 						userData={userData}

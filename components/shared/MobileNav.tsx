@@ -80,6 +80,7 @@ const MobileNav = () => {
 													alt={item.label}
 													width={20}
 													height={20}
+													className="invert-0 brightness-200"
 												/>
 												<p className="font-semibold">{item.label}</p>
 											</Link>

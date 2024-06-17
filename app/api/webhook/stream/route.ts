@@ -2,8 +2,8 @@ import { getCallById } from "@/lib/actions/call.actions";
 import { getUserById } from "@/lib/actions/creator.actions";
 import { NextResponse } from "next/server";
 
-// Define the transaction logic inside the route handler
-async function handleTransaction({
+// Define the transaction logic in a utility function
+export const handleTransaction = async ({
 	call,
 	callId,
 	duration,
@@ -13,7 +13,7 @@ async function handleTransaction({
 	callId: string;
 	duration: string;
 	isVideoCall: boolean;
-}) {
+}) => {
 	const creatorId = "664c90ae43f0af8f1b3d5803";
 	const clientId = call?.state?.createdBy?.id;
 
@@ -84,7 +84,7 @@ async function handleTransaction({
 	} catch (error) {
 		console.error("Error handling wallet changes:", error);
 	}
-}
+};
 
 export async function POST(request: Request) {
 	try {

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCalls, CallingState } from "@stream-io/video-react-sdk";
 import MyIncomingCallUI from "./MyIncomingCallUI";
@@ -13,18 +13,20 @@ const MyCallUI = () => {
 	const { user } = useUser();
 	const { toast } = useToast();
 	let hide = pathname.includes("/meeting");
+	const [hasRedirected, setHasRedirected] = useState(false);
 
 	useEffect(() => {
 		const storedCallId = localStorage.getItem("activeCallId");
 
-		if (storedCallId && !hide) {
+		if (storedCallId && !hide && !hasRedirected) {
 			toast({
 				title: "Ongoing Call",
 				description: "You have an ongoing call. Redirecting you back...",
 			});
 			router.push(`/meeting/${storedCallId}`);
+			setHasRedirected(true); // Set the state to prevent repeated redirects
 		}
-	}, [router, hide, toast]);
+	}, [router, hide, toast, hasRedirected]);
 
 	useEffect(() => {
 		calls.forEach((call) => {
@@ -32,8 +34,8 @@ const MyCallUI = () => {
 				user && user.publicMetadata.userId === call?.state?.createdBy?.id;
 
 			const handleCallEnded = () => {
-				localStorage.removeItem("activeCallId");
 				if (!isMeetingOwner) {
+					localStorage.removeItem("activeCallId");
 					toast({
 						title: "Call Ended",
 						description: "The call ended. Redirecting to HomePage...",
@@ -47,12 +49,11 @@ const MyCallUI = () => {
 					title: "Call Rejected",
 					description: "The call was rejected. Redirecting to HomePage...",
 				});
-				localStorage.removeItem("activeCallId");
 				router.push("/");
 			};
 
 			const handleCallStarted = () => {
-				localStorage.setItem("activeCallId", call.id);
+				isMeetingOwner && localStorage.setItem("activeCallId", call.id);
 			};
 
 			call.on("call.ended", handleCallEnded);

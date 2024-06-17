@@ -23,7 +23,13 @@ const MeetingCard = ({ icon, title, date, callId }: MeetingCardProps) => {
 			}`}
 		>
 			<article className="flex flex-col gap-5">
-				<Image src={icon} alt="upcoming" width={28} height={28} />
+				<Image
+					src={icon}
+					alt="upcoming"
+					width={28}
+					height={28}
+					className="invert-1 brightness-200"
+				/>
 				<div className="flex justify-between">
 					<div className="flex flex-col gap-2">
 						<h1 className="text-2xl font-bold">{title}</h1>

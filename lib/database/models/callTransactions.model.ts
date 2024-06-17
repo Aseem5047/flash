@@ -24,6 +24,10 @@ const CallTransactionSchema: Schema = new Schema(
 			required: true,
 			default: false,
 		},
+		callDuration: {
+			type: Number,
+			required: true,
+		},
 	},
 	{
 		timestamps: true,

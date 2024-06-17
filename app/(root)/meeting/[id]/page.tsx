@@ -5,22 +5,19 @@ import { useUser } from "@clerk/nextjs";
 import {
 	StreamCall,
 	StreamTheme,
-	useCall,
 	useCallStateHooks,
 } from "@stream-io/video-react-sdk";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Loader from "@/components/shared/Loader";
 import { useToast } from "@/components/ui/use-toast";
-import {
-	CallTimerProvider,
-	useCallTimerContext,
-} from "@/lib/context/CallTimerContext";
+import { CallTimerProvider } from "@/lib/context/CallTimerContext";
 import MeetingRoom from "@/components/meeting/MeetingRoom";
 import { useGetCallById } from "@/hooks/useGetCallById";
 import { handleTransaction } from "@/utils/TransactionUtils";
 import { Cursor, Typewriter } from "react-simple-typewriter";
 import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
+import SinglePostLoader from "@/components/shared/SinglePostLoader";
 
 const MeetingPage = () => {
 	const { id } = useParams();
@@ -29,7 +26,6 @@ const MeetingPage = () => {
 	const { toast } = useToast();
 	const { call, isCallLoading } = useGetCallById(id);
 	const { user } = useUser();
-
 	const [isReloading, setIsReloading] = useState(false);
 
 	useEffect(() => {
@@ -114,8 +110,51 @@ const CallEnded = ({ toast, router, call }: any) => {
 	const [loading, setLoading] = useState(false);
 	const [toastShown, setToastShown] = useState(false);
 	const transactionHandled = useRef(false);
+	const { user } = useUser();
+
+	const isMeetingOwner =
+		user?.publicMetadata?.userId === call?.state?.createdBy?.id;
+
+	console.log(isMeetingOwner);
 
 	useEffect(() => {
+		const handleCallEnd = async () => {
+			if (transactionHandled.current) return;
+
+			transactionHandled.current = true;
+
+			const callEndedTime = new Date(callEndedAt);
+			const callStartsAtTime = new Date(callStartsAt);
+			const duration = (
+				(callEndedTime.getTime() - callStartsAtTime.getTime()) /
+				1000
+			).toFixed(2);
+
+			if (!toastShown) {
+				isMeetingOwner
+					? toast({
+							title: "Call Has Ended",
+							description: "Checking for Pending Transactions ...",
+					  })
+					: toast({
+							title: "Call Has Ended",
+							description: "Redirecting ...",
+					  });
+				setToastShown(true);
+			}
+
+			setLoading(true);
+			await handleTransaction({
+				call,
+				callId: call?.id,
+				duration: duration,
+				isVideoCall: call?.type === "default",
+				toast,
+				router,
+				updateWalletBalance,
+			});
+		};
+
 		if (!callEndedAt || !callStartsAt) {
 			if (!toastShown) {
 				toast({
@@ -130,47 +169,21 @@ const CallEnded = ({ toast, router, call }: any) => {
 			return;
 		}
 
-		const handleCallEnd = async () => {
-			if (transactionHandled.current) {
-				return;
-			}
-
-			transactionHandled.current = true;
-			setLoading(true);
-
-			const callEndedTime = new Date(callEndedAt);
-			const callStartsAtTime = new Date(callStartsAt);
-			// const now = new Date();
-			// const timeDifferenceInMinutes =
-			// 	(now.getTime() - callEndedTime.getTime()) / 60000;
-			const duration = (
-				(callEndedTime.getTime() - callStartsAtTime.getTime()) /
-				1000
-			).toFixed(2);
-
-			if (!toastShown) {
-				toast({
-					title: "Call Has Ended",
-					description: "Redirecting ...",
-				});
-				setToastShown(true);
-			}
-
-			await handleTransaction({
-				call,
-				callId: call?.id,
-				duration: duration,
-				isVideoCall: call?.type === "default",
-				toast,
-				router,
-			});
-
-			// Update wallet balance after transaction
-			updateWalletBalance();
-		};
-
-		handleCallEnd();
-	}, [router, callEndedAt, callStartsAt, call?.id]);
+		if (isMeetingOwner) {
+			handleCallEnd();
+		} else {
+			router.push(`/feedback/${call?.id}`);
+		}
+	}, [
+		callEndedAt,
+		callStartsAt,
+		isMeetingOwner,
+		call?.id,
+		router,
+		toast,
+		toastShown,
+		updateWalletBalance,
+	]);
 
 	if (loading) {
 		return (
@@ -192,7 +205,7 @@ const CallEnded = ({ toast, router, call }: any) => {
 				</div>
 				<h1 className="text-2xl font-semibold mt-7">
 					<Typewriter
-						words={["Checking For Any Pending Requests", "Please Wait ..."]}
+						words={["Checking For Any Pending Transactions", "Please Wait ..."]}
 						loop={true}
 						cursor
 						cursorStyle="_"
@@ -208,13 +221,7 @@ const CallEnded = ({ toast, router, call }: any) => {
 
 	return (
 		<div className="flex flex-col w-full items-center justify-center h-screen gap-7">
-			<Image
-				src="/icons/notFound.gif"
-				alt="Home"
-				width={1000}
-				height={1000}
-				className="w-96 h-auto rounded-xl object-cover"
-			/>
+			<SinglePostLoader />
 		</div>
 	);
 };
