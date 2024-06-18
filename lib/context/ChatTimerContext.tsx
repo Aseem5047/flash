@@ -1,3 +1,4 @@
+// ChatTimerContext.tsx
 import React, {
 	createContext,
 	useContext,
@@ -8,13 +9,13 @@ import React, {
 import { useWalletBalanceContext } from "./WalletBalanceContext";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
-import { useCall, useCallStateHooks } from "@stream-io/video-react-sdk";
 import { creatorUser } from "@/types";
+import chatTime from "@/hooks/chatTime";
 
-interface CallTimerContextProps {
+interface ChatTimerContextProps {
 	timeLeft: string;
 	hasLowBalance: boolean;
-	endCall: () => void;
+	endChat: () => void;
 	pauseTimer: () => void;
 	resumeTimer: () => void;
 	anyModalOpen: boolean;
@@ -22,20 +23,19 @@ interface CallTimerContextProps {
 	totalTimeUtilized: number;
 }
 
-interface CallTimerProviderProps {
+interface ChatTimerProviderProps {
 	children: ReactNode;
-	isVideoCall: boolean;
-	isMeetingOwner: boolean;
-	expert: any;
+	clientId: string;
+	creatorId: string;
 }
 
-const CallTimerContext = createContext<CallTimerContextProps | null>(null);
+const ChatTimerContext = createContext<ChatTimerContextProps | null>(null);
 
-export const useCallTimerContext = () => {
-	const context = useContext(CallTimerContext);
+export const useChatTimerContext = () => {
+	const context = useContext(ChatTimerContext);
 	if (!context) {
 		throw new Error(
-			"useCallTimerContext must be used within a CallTimerProvider"
+			"useChatTimerContext must be used within a ChatTimerProvider"
 		);
 	}
 	return context;
@@ -49,42 +49,31 @@ const formatTimeLeft = (timeLeft: number): string => {
 	return `${paddedMinutes}:${paddedSeconds}`;
 };
 
-export const CallTimerProvider = ({
+export const ChatTimerProvider = ({
 	children,
-	isVideoCall,
-	isMeetingOwner,
-	expert,
-}: CallTimerProviderProps) => {
+	clientId,
+	creatorId,
+}: ChatTimerProviderProps) => {
 	const { toast } = useToast();
-	const [audioRatePerMinute, setAudioRatePerMinute] = useState(0);
-	const [videoRatePerMinute, setVideoRatePerMinute] = useState(0);
+	const [chatRatePerMinute, setChatRatePerMinute] = useState(0);
 	const [anyModalOpen, setAnyModalOpen] = useState(false);
-	// const [currentCreator, setCurrentCreator] = useState<creatorUser | null>(null);
-	const { useCallStartsAt } = useCallStateHooks();
+	const { walletBalance } = useWalletBalanceContext();
 
 	const [timeLeft, setTimeLeft] = useState(0);
 	const [lowBalanceNotified, setLowBalanceNotified] = useState(false);
 	const [hasLowBalance, setHasLowBalance] = useState(false);
 	const [isTimerRunning, setIsTimerRunning] = useState(true);
 	const [totalTimeUtilized, setTotalTimeUtilized] = useState(0);
-	const { walletBalance } = useWalletBalanceContext();
-	const lowBalanceThreshold = 300;
+	const lowBalanceThreshold = 300; // Threshold in seconds
 	const router = useRouter();
-	const call = useCall();
-	const callStartedAt = useCallStartsAt();
-	const [toastShown, setToastShown] = useState(false);
+	const {startedAt} = chatTime();
 
-	const endCall = async () => {
-		await call?.endCall();
-		if (!toastShown) {
-			toast({
-				title: "Call Has Ended",
-				description: "User Wallet is Empty ...",
-			});
-
-			setToastShown(true);
-		}
-		// router.push(`/feedback/${call?.id}`);
+	const endChat = async () => {
+		toast({
+			title: "Chat Ended",
+			description: "Wallet is Empty. Redirecting ...",
+		});
+		router.push("/");
 	};
 
 	const pauseTimer = () => setIsTimerRunning(false);
@@ -94,47 +83,38 @@ export const CallTimerProvider = ({
 		const storedCreator = localStorage.getItem("currentCreator");
 		if (storedCreator) {
 			const parsedCreator: creatorUser = JSON.parse(storedCreator);
-			// setCurrentCreator(parsedCreator);
-			if (parsedCreator.audioRate) {
-				setAudioRatePerMinute(parseInt(parsedCreator.audioRate, 10));
-			}
-			if (parsedCreator.videoRate) {
-				setVideoRatePerMinute(parseInt(parsedCreator.videoRate, 10));
+			if (parsedCreator.chatRate) {
+				setChatRatePerMinute(parseInt(parsedCreator.chatRate, 10));
 			}
 		}
 	}, []);
 
 	useEffect(() => {
-		const ratePerMinute = isVideoCall ? videoRatePerMinute : audioRatePerMinute;
-		let maxCallDuration = (walletBalance / ratePerMinute) * 60; // in seconds
-		maxCallDuration = maxCallDuration > 3600 ? 3600 : maxCallDuration; // Limit to 60 minutes (3600 seconds)
-		if (!callStartedAt) {
-			// If call hasn't started yet, set timeLeft to maxCallDuration
-			setTimeLeft(maxCallDuration);
-			return;
-		}
+		const ratePerMinute = chatRatePerMinute;
+		let maxChatDuration = (walletBalance / ratePerMinute) * 60; // in seconds
+		maxChatDuration = maxChatDuration > 3600 ? 3600 : maxChatDuration; // Limit to 60 minutes (3600 seconds)
 
-		const callStartedTime = new Date(callStartedAt);
+		const chatStartedTime = new Date(startedAt!);
 
 		const intervalId = setInterval(() => {
 			if (isTimerRunning) {
 				const now = new Date();
-				const timeUtilized = (now.getTime() - callStartedTime.getTime()) / 1000; // Time in seconds
+				const timeUtilized = (now.getTime() - chatStartedTime.getTime()) / 1000; // Time in seconds
 
-				const newTimeLeft = maxCallDuration - timeUtilized;
+				const newTimeLeft = maxChatDuration - timeUtilized;
 
 				setTimeLeft(newTimeLeft > 0 ? newTimeLeft : 0);
 				setTotalTimeUtilized(timeUtilized);
 
 				if (newTimeLeft <= 0) {
 					clearInterval(intervalId);
-					if (isMeetingOwner) {
-						endCall();
+					if (clientId) {
+						endChat();
 					}
 				}
 
 				if (
-					isMeetingOwner &&
+					clientId &&
 					newTimeLeft <= lowBalanceThreshold &&
 					newTimeLeft > 0
 				) {
@@ -142,7 +122,7 @@ export const CallTimerProvider = ({
 					if (!lowBalanceNotified) {
 						setLowBalanceNotified(true);
 						toast({
-							title: "Call Will End Soon",
+							title: "Chat Will End Soon",
 							description: "Client's wallet balance is low.",
 						});
 					}
@@ -156,23 +136,21 @@ export const CallTimerProvider = ({
 		return () => clearInterval(intervalId);
 	}, [
 		isTimerRunning,
-		isMeetingOwner,
-		audioRatePerMinute,
-		videoRatePerMinute,
+		clientId,
+		chatRatePerMinute,
 		lowBalanceNotified,
 		lowBalanceThreshold,
-		endCall,
+		endChat,
 		toast,
-		callStartedAt,
 		walletBalance,
 	]);
 
 	return (
-		<CallTimerContext.Provider
+		<ChatTimerContext.Provider
 			value={{
 				timeLeft: formatTimeLeft(timeLeft),
 				hasLowBalance,
-				endCall,
+				endChat,
 				pauseTimer,
 				resumeTimer,
 				anyModalOpen,
@@ -181,6 +159,6 @@ export const CallTimerProvider = ({
 			}}
 		>
 			{children}
-		</CallTimerContext.Provider>
+		</ChatTimerContext.Provider>
 	);
 };

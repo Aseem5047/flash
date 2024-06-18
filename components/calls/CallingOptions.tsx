@@ -84,7 +84,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 
 			const members: MemberRequest[] = [
 				{
-					user_id: "6668228bbad947e0e80b2b7f",
+					user_id: "66715dd9ed259b141bc99683",
 					// user_id: "66681d96436f89b49d8b498b",
 					custom: { name: String(creator.username), type: "expert" },
 					role: "call_member",
@@ -111,7 +111,17 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			maxCallDuration =
 				maxCallDuration > 3600 ? 3600 : Math.floor(maxCallDuration);
 
-			console.log(maxCallDuration, ratePerMinute);
+			// Check if maxCallDuration is less than 5 minutes (300 seconds)
+			if (maxCallDuration < 300) {
+				toast({
+					title: "Insufficient Balance",
+					description: "Your balance is below the minimum amount.",
+				});
+				router.push("/payment");
+				return;
+			}
+
+			// console.log(maxCallDuration, ratePerMinute);
 
 			await call.getOrCreate({
 				data: {
@@ -144,7 +154,19 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	};
 
 	const handleChat = async () => {
-		
+		let maxCallDuration = (walletBalance / parseInt(creator?.chatRate, 10)) * 60; // in seconds
+			maxCallDuration =
+				maxCallDuration > 3600 ? 3600 : Math.floor(maxCallDuration);
+
+			// Check if maxCallDuration is less than 5 minutes (300 seconds)
+			if (maxCallDuration < 300) {
+				toast({
+					title: "Insufficient Balance",
+					description: "Your balance is below the minimum amount.",
+				});
+				router.push("/payment");
+				return;
+			}
 		// console.log(chatRef);
 		const chatRequestsRef = collection(db, "chatRequests");
 
@@ -153,7 +175,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			const creatorChatsDocRef = doc(
 				db,
 				"userchats",
-				"6668228bbad947e0e80b2b7f"
+				"66715dd9ed259b141bc99683"
 			);
 
 			const userChatsDocSnapshot = await getDoc(userChatsDocRef);
@@ -169,7 +191,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 
 				const existingChat =
 					userChatsData.chats.find(
-						(chat: any) => chat.receiverId === "6668228bbad947e0e80b2b7f"
+						(chat: any) => chat.receiverId === "66715dd9ed259b141bc99683"
 					) ||
 					creatorChatsData.chats.find(
 						(chat: any) => chat.receiverId === clientId
@@ -186,11 +208,11 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			// Create a new chat request
 			const newChatRequestRef = doc(chatRequestsRef);
 			await setDoc(newChatRequestRef, {
-				creatorId: "6668228bbad947e0e80b2b7f",
+				creatorId: "66715dd9ed259b141bc99683",
 				clientId: clientId,
 				status: "pending",
 				chatId: chatId,
-				createdAt: serverTimestamp(),
+				createdAt: Date.now(),
 			});
 
 			if (!userChatsDocSnapshot.exists()) {
@@ -202,6 +224,27 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			}
 
 			setSheetOpen(true);
+
+			const chatRequestDoc = doc(chatRequestsRef, newChatRequestRef.id);
+			const unsubscribe = onSnapshot(chatRequestDoc, (doc) => {
+				const data = doc.data();
+				if (data && data.status === "accepted") {
+					unsubscribe();
+					localStorage.setItem(
+						"user2",
+						JSON.stringify({
+							_id: "66715dd9ed259b141bc99683",
+							clientId: data.clientId,
+							creatorId: data.creatorId,
+							requestId: doc.id,
+							fullName: "Aseem Gupta",
+							photo:
+								"https://img.clerk.com/eyJ0eXBlIjoiZGVmYXVsdCIsImlpZCI6Imluc18yZ3Y5REx5RkFsSVhIZTZUNUNFQ3FIZlozdVQiLCJyaWQiOiJ1c2VyXzJoUHZmcm1BZHlicUVmdjdyM09xa0w0WnVRRyIsImluaXRpYWxzIjoiQ0cifQ",
+						})
+					);
+					// router.push(`/chat/${data.chatId}?creatorId=${data.creatorId}&clientId=${data.clientId}&startedAt=${data.startedAt}`);
+				}
+			});
 		} catch (error) {
 			console.error(error);
 			toast({ title: "Failed to send chat request" });
@@ -211,7 +254,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	const listenForChatRequests = () => {
 		const q = query(
 			chatRequestsRef,
-			where("creatorId", "==", "6668228bbad947e0e80b2b7f"),
+			where("creatorId", "==", "66715dd9ed259b141bc99683"),
 			where("status", "==", "pending")
 		);
 
@@ -232,24 +275,12 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		const userChatsRef = collection(db, "userchats");
 		const chatId = chatRequest.chatId;
 
-		localStorage.setItem(
-			"user2",
-			JSON.stringify({
-				_id: "6668228bbad947e0e80b2b7f",
-				clientId: chatRequest.clientId,
-				creatorId: chatRequest.creatorId,
-				requestId: chatRequest.id,
-				fullName: "Aseem Gupta",
-				photo:
-					"https://img.clerk.com/eyJ0eXBlIjoiZGVmYXVsdCIsImlpZCI6Imluc18yZ3Y5REx5RkFsSVhIZTZUNUNFQ3FIZlozdVQiLCJyaWQiOiJ1c2VyXzJoUHZmcm1BZHlicUVmdjdyM09xa0w0WnVRRyIsImluaXRpYWxzIjoiQ0cifQ",
-			})
-		);
-
 		try {
 			const existingChatDoc = await getDoc(doc(db, "chats", chatId));
 			if (!existingChatDoc.exists()) {
 				await setDoc(doc(db, "chats", chatId), {
-					createdAt: serverTimestamp(),
+					startedAt: Date.now(),
+					endedAt: null,
 					clientId: clientId,
 					status: "active",
 					messages: [],
@@ -279,11 +310,11 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 					}
 				);
 				await Promise.all([creatorChatUpdate, clientChatUpdate]);
-			}
-			else{
+			} else {
 				await updateDoc(doc(db, "chats", chatId), {
-					createdAt: new Date()
-				})
+					startedAt: Date.now(),
+					endedAt: null,
+				});
 			}
 
 			await updateDoc(doc(chatRequestsRef, chatRequest.id), {
@@ -325,7 +356,9 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			const data = doc.data();
 			if (data && data.status === "accepted") {
 				unsubscribe();
-				router.push(`/chat/${chatRequest.chatId}`);
+				router.push(
+					`/chat/${chatRequest.chatId}?creatorId=${chatRequest.creatorId}&clientId=${chatRequest.clientId}&startedAt=${chatRequest.startedAt}`
+				);
 			}
 		});
 
@@ -337,7 +370,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		return () => {
 			unsubscribe();
 		};
-	}, ["6668228bbad947e0e80b2b7f"]);
+	}, ["66715dd9ed259b141bc99683"]);
 
 	if (!client || !user) return <Loader />;
 
@@ -436,7 +469,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			/>
 
 			{chatRequest &&
-				user?.publicMetadata?.userId === "6668228bbad947e0e80b2b7f" && (
+				user?.publicMetadata?.userId === "66715dd9ed259b141bc99683" && (
 					<div className="chatRequestModal">
 						<p>Incoming chat request from {chatRequest.clientId}</p>
 						<Button onClick={handleAcceptChat}>Accept</Button>
