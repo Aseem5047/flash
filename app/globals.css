@@ -103,6 +103,12 @@
 	border-radius: 15px;
 }
 
+.str-video__speaker-layout
+	.str-video__speaker-layout__spotlight
+	.str-video__video {
+	object-fit: cover !important;
+}
+
 @layer base {
 	body {
 		@apply !font-default;

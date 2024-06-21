@@ -153,8 +153,8 @@ const MeetingRoom = () => {
 					</div>
 				)}
 			</div>
-			{!callHasEnded && <CallTimer />}
-			<div className="fixed bottom-0 pb-4 flex flex-wrap-reverse w-full items-center justify-center gap-2 px-4 transition-all">
+			{!callHasEnded && isMeetingOwner && <CallTimer />}
+			<div className="fixed bg-dark-1 bottom-0 py-2 flex flex-wrap-reverse w-full items-center justify-center gap-2 px-4 transition-all">
 				{/* <SpeakingWhileMutedNotification> */}
 				<ToggleAudioPublishingButton />
 				{/* </SpeakingWhileMutedNotification> */}
