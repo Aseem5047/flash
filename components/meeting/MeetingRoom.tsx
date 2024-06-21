@@ -127,7 +127,13 @@ const MeetingRoom = () => {
 			case "grid":
 				return <PaginatedGridLayout />;
 			default:
-				return <SpeakerLayout participantsBarPosition="bottom" />;
+				return (
+					<SpeakerLayout
+						participantsBarPosition="bottom"
+						ParticipantViewUIBar={null}
+						ParticipantViewUISpotlight={null}
+					/>
+				);
 		}
 	}, [layout]);
 
@@ -149,9 +155,9 @@ const MeetingRoom = () => {
 			</div>
 			{!callHasEnded && isMeetingOwner && <CallTimer />}
 			<div className="fixed bottom-0 pb-4 flex flex-wrap-reverse w-full items-center justify-center gap-2 px-4 transition-all">
-				<SpeakingWhileMutedNotification>
-					<ToggleAudioPublishingButton />
-				</SpeakingWhileMutedNotification>
+				{/* <SpeakingWhileMutedNotification> */}
+				<ToggleAudioPublishingButton />
+				{/* </SpeakingWhileMutedNotification> */}
 				{isVideoCall && <ToggleVideoPublishingButton />}
 				<div className="hidden md:flex gap-2 transition-all">
 					<ScreenShareButton />
