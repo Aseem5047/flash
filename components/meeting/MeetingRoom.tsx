@@ -5,8 +5,8 @@ import {
 	CallParticipantsList,
 	CallStatsButton,
 	CallingState,
+	DeviceSettings,
 	PaginatedGridLayout,
-	ReactionsButton,
 	ScreenShareButton,
 	SpeakerLayout,
 	SpeakingWhileMutedNotification,
@@ -24,6 +24,8 @@ import { useCallTimerContext } from "@/lib/context/CallTimerContext";
 import { useToast } from "../ui/use-toast";
 import useWarnOnUnload from "@/hooks/useWarnOnUnload";
 import { VideoToggleButton } from "../calls/VideoToggleButton";
+import { AudioToggleButton } from "../calls/AudioToggleButton";
+import ContentLoading from "../shared/ContentLoading";
 
 type CallLayoutType = "grid" | "speaker-bottom";
 
@@ -140,6 +142,8 @@ const MeetingRoom = () => {
 	const isMeetingOwner =
 		user?.publicMetadata?.userId === call?.state?.createdBy?.id;
 
+	if (callingState !== CallingState.JOINED) return <ContentLoading />;
+
 	return (
 		<section className="relative h-screen w-full overflow-hidden pt-4 text-white bg-dark-2">
 			<div className="relative flex size-full items-center justify-center transition-all">
@@ -153,18 +157,32 @@ const MeetingRoom = () => {
 					</div>
 				)}
 			</div>
+			<div className="absolute bottom-3 right-4 z-20 w-fit">
+				<DeviceSettings />
+			</div>
 			{!callHasEnded && isMeetingOwner && <CallTimer />}
-			<div className="fixed bg-dark-1 bottom-0 py-2 flex flex-wrap-reverse w-full items-center justify-center gap-2 px-4 transition-all">
-				{/* <SpeakingWhileMutedNotification> */}
-				<ToggleAudioPublishingButton />
-				{/* </SpeakingWhileMutedNotification> */}
-				{isVideoCall && <ToggleVideoPublishingButton />}
-				<div className="hidden md:flex gap-2 transition-all">
+			<div className="fixed bg-dark-1 bottom-0  flex flex-wrap-reverse w-full items-center justify-center gap-4 py-2 px-4 transition-all">
+				<SpeakingWhileMutedNotification>
+					{isVideoCall &&
+						(isMobile ? (
+							<AudioToggleButton />
+						) : (
+							<ToggleAudioPublishingButton />
+						))}
+				</SpeakingWhileMutedNotification>
+
+				{isVideoCall &&
+					(isMobile ? <VideoToggleButton /> : <ToggleVideoPublishingButton />)}
+
+				<div className="hidden md:flex gap-4 transition-all">
 					<ScreenShareButton />
 					<CallStatsButton />
 				</div>
-				<button onClick={() => setShowParticipants((prev) => !prev)}>
-					<div className="cursor-pointer rounded-2xl bg-[#19232d] px-4 py-2 hover:bg-[#4c535b] transition-all">
+				<button
+					onClick={() => setShowParticipants((prev) => !prev)}
+					className="hidden md:block"
+				>
+					<div className="cursor-pointer rounded-full bg-[#ffffff14] p-3 hover:bg-[#4c535b] flex items-center">
 						<Users size={20} className="text-white" />
 					</div>
 				</button>
