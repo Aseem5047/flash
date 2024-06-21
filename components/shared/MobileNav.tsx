@@ -90,7 +90,7 @@ const MobileNav = () => {
 
 								<Button
 									className={cn(
-										"absolute bottom-3 md:bottom-5 flex gap-4 items-center p-6 rounded-lg w-[85%] bg-green-1 outline-none focus:ring-0 hoverScaleDownEffect"
+										"absolute bottom-4 md:bottom-6 flex gap-4 items-center p-6 rounded-lg w-[85%] bg-green-1 outline-none focus:ring-0 hoverScaleDownEffect"
 									)}
 									onClick={() => signOut({ redirectUrl: "/" })}
 								>
