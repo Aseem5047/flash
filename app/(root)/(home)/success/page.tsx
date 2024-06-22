@@ -11,10 +11,10 @@ export type SuccessProps = {
 };
 
 // Update the Success component to use the defined props type
-const Success = ({
+const Success: React.FC<SuccessProps> = ({
 	redirect = "payment",
 	event = "Amount Added",
-}: SuccessProps) => {
+}) => {
 	const router = useRouter();
 	useEffect(() => {
 		setTimeout(() => {
