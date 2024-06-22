@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState, useMemo } from "react";
 import {
 	CallParticipantsList,
@@ -18,7 +16,7 @@ import {
 	useCallStateHooks,
 } from "@stream-io/video-react-sdk";
 import { useSearchParams } from "next/navigation";
-import { Users } from "lucide-react";
+import { CameraIcon, Users } from "lucide-react";
 import EndCallButton from "../calls/EndCallButton";
 import { useUser } from "@clerk/nextjs";
 import CallTimer from "../calls/CallTimer";
@@ -125,6 +123,17 @@ const MeetingRoom = () => {
 		return () => clearTimeout(timeoutId);
 	}, [participantCount, anyModalOpen, call]);
 
+	// Function to toggle front and back camera
+	const toggleCamera = async () => {
+		if (call && call.camera) {
+			try {
+				await call.camera.flip();
+			} catch (error) {
+				console.error("Error toggling camera:", error);
+			}
+		}
+	};
+
 	// Memoized Call Layout
 	const CallLayout = useMemo(() => {
 		switch (layout) {
@@ -166,7 +175,7 @@ const MeetingRoom = () => {
 			</div>
 
 			{!callHasEnded && isMeetingOwner && <CallTimer />}
-			<div className="fixed bg-dark-1 bottom-0  flex flex-wrap-reverse w-full items-center justify-center gap-4 py-2 px-4 transition-all">
+			<div className="fixed bg-dark-1 bottom-0 flex flex-wrap-reverse w-full items-center justify-center gap-4 py-2 px-4 transition-all">
 				<SpeakingWhileMutedNotification>
 					{isVideoCall &&
 						(isMobile ? (
@@ -178,6 +187,15 @@ const MeetingRoom = () => {
 
 				{isVideoCall &&
 					(isMobile ? <VideoToggleButton /> : <ToggleVideoPublishingButton />)}
+
+				{isMobile && (
+					<button
+						onClick={toggleCamera}
+						className="p-3 bg-[#ffffff14] rounded-full hover:bg-[#4c535b]"
+					>
+						<CameraIcon size={20} className="text-white" />
+					</button>
+				)}
 
 				<div className="hidden md:flex gap-4 transition-all">
 					<ScreenShareButton />
