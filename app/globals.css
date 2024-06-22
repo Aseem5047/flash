@@ -134,11 +134,11 @@
 	}
 
 	.str-video__device-settings {
-		min-width: 50vw !important;
+		min-width: 35vw !important;
 	}
 
 	.str-video__device-settings__device-kind {
-		min-width: 50vw !important;
+		min-width: 35vw !important;
 	}
 }
 

@@ -164,10 +164,7 @@ const MeetingRoom = () => {
 					</div>
 				)}
 			</div>
-			<div className="absolute bottom-3 right-4 z-20 w-fit flex items-center gap-2">
-				{/* <ToggleAudioOutputButton /> */}
-				<DeviceSettings />
-			</div>
+
 			{!callHasEnded && isMeetingOwner && <CallTimer />}
 			<div className="fixed bg-dark-1 bottom-0  flex flex-wrap-reverse w-full items-center justify-center gap-4 py-2 px-4 transition-all">
 				<SpeakingWhileMutedNotification>
@@ -196,6 +193,11 @@ const MeetingRoom = () => {
 				</button>
 
 				{!isPersonalRoom && <EndCallButton />}
+
+				<div className="absolute bottom-3 right-4 z-20 w-fit flex items-center gap-2">
+					{/* <ToggleAudioOutputButton /> */}
+					<DeviceSettings />
+				</div>
 			</div>
 		</section>
 	);
