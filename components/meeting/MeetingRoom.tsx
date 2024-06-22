@@ -74,6 +74,14 @@ const MeetingRoom = () => {
 
 	const isMobile = useScreenSize();
 
+	const handleCallRejected = async () => {
+		toast({
+			title: "Call Ended ...",
+			description: "Less than 2 Participants",
+		});
+		await call?.endCall();
+	};
+
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
 			if (
@@ -123,7 +131,7 @@ const MeetingRoom = () => {
 
 	useEffect(() => {
 		let timeoutId: NodeJS.Timeout;
-
+		call?.on("call.session_participant_left", handleCallRejected);
 		if (
 			participantCount < 2 ||
 			anyModalOpen ||
