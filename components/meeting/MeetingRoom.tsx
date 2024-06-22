@@ -124,7 +124,12 @@ const MeetingRoom = () => {
 	useEffect(() => {
 		let timeoutId: NodeJS.Timeout;
 
-		if (participantCount < 2 && !callHasEnded) {
+		if (
+			participantCount < 2 &&
+			!callHasEnded &&
+			hasJoined &&
+			callingState === CallingState.JOINED
+		) {
 			toast({
 				title: "Call Ended ...",
 				description: "Less than 2 Participants or Due to Inactivity",
