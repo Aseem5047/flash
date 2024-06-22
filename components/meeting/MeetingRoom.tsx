@@ -16,7 +16,13 @@ import {
 	useCallStateHooks,
 } from "@stream-io/video-react-sdk";
 import { useSearchParams } from "next/navigation";
-import { CameraIcon, Users } from "lucide-react";
+import {
+	CameraIcon,
+	FlipHorizontal,
+	RecycleIcon,
+	SwitchCamera,
+	Users,
+} from "lucide-react";
 import EndCallButton from "../calls/EndCallButton";
 import { useUser } from "@clerk/nextjs";
 import CallTimer from "../calls/CallTimer";
@@ -185,6 +191,8 @@ const MeetingRoom = () => {
 						))}
 				</SpeakingWhileMutedNotification>
 
+				{isMobile && <ToggleAudioOutputButton />}
+
 				{isVideoCall &&
 					(isMobile ? <VideoToggleButton /> : <ToggleVideoPublishingButton />)}
 
@@ -193,7 +201,7 @@ const MeetingRoom = () => {
 						onClick={toggleCamera}
 						className="p-3 bg-[#ffffff14] rounded-full hover:bg-[#4c535b]"
 					>
-						<CameraIcon size={20} className="text-white" />
+						<SwitchCamera size={20} className="text-white" />
 					</button>
 				)}
 
