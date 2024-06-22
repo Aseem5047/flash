@@ -10,6 +10,8 @@ import {
 	ScreenShareButton,
 	SpeakerLayout,
 	SpeakingWhileMutedNotification,
+	ToggleAudioOutputButton,
+	ToggleAudioPreviewButton,
 	ToggleAudioPublishingButton,
 	ToggleVideoPublishingButton,
 	useCall,
@@ -25,7 +27,7 @@ import { useToast } from "../ui/use-toast";
 import useWarnOnUnload from "@/hooks/useWarnOnUnload";
 import { VideoToggleButton } from "../calls/VideoToggleButton";
 import { AudioToggleButton } from "../calls/AudioToggleButton";
-import ContentLoading from "../shared/ContentLoading";
+import SinglePostLoader from "../shared/SinglePostLoader";
 
 type CallLayoutType = "grid" | "speaker-bottom";
 
@@ -142,7 +144,12 @@ const MeetingRoom = () => {
 	const isMeetingOwner =
 		user?.publicMetadata?.userId === call?.state?.createdBy?.id;
 
-	if (callingState !== CallingState.JOINED) return <ContentLoading />;
+	if (callingState !== CallingState.JOINED)
+		return (
+			<section className="w-full h-screen flex items-center justify-center">
+				<SinglePostLoader />
+			</section>
+		);
 
 	return (
 		<section className="relative h-screen w-full overflow-hidden pt-4 text-white bg-dark-2">
@@ -157,7 +164,8 @@ const MeetingRoom = () => {
 					</div>
 				)}
 			</div>
-			<div className="absolute bottom-3 right-4 z-20 w-fit">
+			<div className="absolute bottom-3 right-4 z-20 w-fit flex items-center gap-2">
+				{/* <ToggleAudioOutputButton /> */}
 				<DeviceSettings />
 			</div>
 			{!callHasEnded && isMeetingOwner && <CallTimer />}
