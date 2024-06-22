@@ -9,7 +9,6 @@ import {
 	ScreenShareButton,
 	SpeakerLayout,
 	SpeakingWhileMutedNotification,
-	ToggleAudioOutputButton,
 	ToggleAudioPublishingButton,
 	ToggleVideoPublishingButton,
 	useCall,
@@ -17,7 +16,7 @@ import {
 } from "@stream-io/video-react-sdk";
 
 import { useSearchParams } from "next/navigation";
-import { AudioLinesIcon, SwitchCamera, Users } from "lucide-react";
+import { SwitchCamera, Users } from "lucide-react";
 import EndCallButton from "../calls/EndCallButton";
 import { useUser } from "@clerk/nextjs";
 import CallTimer from "../calls/CallTimer";
@@ -27,7 +26,6 @@ import useWarnOnUnload from "@/hooks/useWarnOnUnload";
 import { VideoToggleButton } from "../calls/VideoToggleButton";
 import { AudioToggleButton } from "../calls/AudioToggleButton";
 import SinglePostLoader from "../shared/SinglePostLoader";
-import { connectStorageEmulator } from "firebase/storage";
 
 type CallLayoutType = "grid" | "speaker-bottom";
 
@@ -126,7 +124,7 @@ const MeetingRoom = () => {
 	useEffect(() => {
 		let timeoutId: NodeJS.Timeout;
 
-		if (participantCount < 2) {
+		if (participantCount < 2 && !callHasEnded) {
 			toast({
 				title: "Call Ended ...",
 				description: "Less than 2 Participants or Due to Inactivity",
