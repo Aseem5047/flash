@@ -4,29 +4,28 @@ import { success } from "@/constants/icons";
 import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
 
-// Define the type for the component props
-export type SuccessProps = {
+// Update the Success component to use the defined props type
+const Success = ({
+	redirect,
+	event,
+}: {
 	redirect?: string;
 	event?: string;
-};
-
-// Update the Success component to use the defined props type
-const Success: React.FC<SuccessProps> = ({
-	redirect = "payment",
-	event = "Amount Added",
 }) => {
 	const router = useRouter();
 	useEffect(() => {
 		setTimeout(() => {
-			router.push(`/${redirect}`);
+			router.push(`/${redirect ? redirect : "payment"}`);
 		}, 4000);
-	}, [redirect, router]);
+	}, [router]);
 
 	return (
 		<div className="flex flex-col items-center justify-center min-w-full h-full gap-7">
 			{success}
 			<div className="flex flex-col items-center justify-center gap-2 tracking-wider">
-				<span className="font-semibold text-xl">{event}</span>
+				<span className="font-semibold text-xl">
+					{event ? event : "Amount Added"}
+				</span>
 				<span className="font-semibold text-lg text-green-1">Successfully</span>
 			</div>
 		</div>
