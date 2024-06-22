@@ -129,7 +129,6 @@
 .str-video__device-settings__option {
 	/* font-size: 10px !important; */
 	text-overflow: ellipsis;
-
 	overflow-x: hidden;
 	text-wrap: nowrap;
 }

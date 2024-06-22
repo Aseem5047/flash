@@ -90,6 +90,8 @@ const MeetingRoomWrapper = ({ toast, router, call }: any) => {
 	const callEndedAt = useCallEndedAt();
 	const callHasEnded = !!callEndedAt;
 
+	console.log(callHasEnded);
+
 	if (callHasEnded) {
 		return <CallEnded toast={toast} router={router} call={call} />;
 	} else {

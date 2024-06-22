@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import {
 	CallParticipantsList,
 	CallStatsButton,
@@ -62,6 +62,7 @@ const MeetingRoom = () => {
 	const callHasEnded = !!callEndedAt;
 	const { toast } = useToast();
 	const isVideoCall = useMemo(() => call?.type === "default", [call]);
+	const audioDeviceListRef = useRef<HTMLDivElement | null>(null);
 
 	const callingState = useCallCallingState();
 	const participantCount = useParticipantCount();
@@ -74,6 +75,22 @@ const MeetingRoom = () => {
 	);
 
 	const isMobile = useScreenSize();
+
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			if (
+				audioDeviceListRef.current &&
+				!audioDeviceListRef.current.contains(event.target as Node)
+			) {
+				setShowAudioDeviceList(false);
+			}
+		};
+
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => {
+			document.removeEventListener("mousedown", handleClickOutside);
+		};
+	}, [audioDeviceListRef]);
 
 	useEffect(() => {
 		if (isMobile) {
@@ -109,8 +126,15 @@ const MeetingRoom = () => {
 	useEffect(() => {
 		let timeoutId: NodeJS.Timeout;
 
+		if (participantCount < 2) {
+			toast({
+				title: "Call Ended ...",
+				description: "Less than 2 Participants or Due to Inactivity",
+			});
+			call?.endCall();
+		}
+
 		if (
-			participantCount < 2 ||
 			anyModalOpen ||
 			callingState === CallingState.OFFLINE ||
 			callingState === CallingState.UNKNOWN
@@ -123,8 +147,6 @@ const MeetingRoom = () => {
 				await call?.endCall();
 			}, 60000); // 1 minute
 		}
-
-		return () => clearTimeout(timeoutId);
 	}, [participantCount, anyModalOpen, call]);
 
 	// Function to toggle front and back camera
@@ -164,21 +186,6 @@ const MeetingRoom = () => {
 			</section>
 		);
 
-	const getAudioOutputDevice = async () => {
-		const audioOutputDevice = new Map();
-		const devices = await navigator.mediaDevices.enumerateDevices();
-		for (const device of devices) {
-			if (device.kind == "audiooutput")
-				audioOutputDevice.set(device.deviceId, device);
-		}
-		return audioOutputDevice;
-	};
-
-	const setAudioOutputDevice = (deviceId: any) => {
-		const audioTags = document.getElementsByTagName("audio");
-		console.log(audioTags);
-	};
-
 	return (
 		<section className="relative h-screen w-full overflow-hidden pt-4 text-white bg-dark-2">
 			<div className="relative flex size-full items-center justify-center transition-all">
@@ -206,13 +213,32 @@ const MeetingRoom = () => {
 
 				{isMobile && (
 					<button className="p-3 bg-[#ffffff14] rounded-full hover:bg-[#4c535b]">
-						<AudioLinesIcon
+						{/* <AudioLinesIcon
 							size={20}
 							className="text-white"
 							onClick={() => setShowAudioDeviceList((prev) => !prev)}
-						/>
-						{!showAudioDeviceList && (
-							<div className="absolute bottom-16 left-0 bg-dark-1 rounded-t-xl w-full">
+						/> */}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							strokeWidth={1.5}
+							stroke="currentColor"
+							className="size-6"
+							onClick={() => setShowAudioDeviceList((prev) => !prev)}
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"
+							/>
+						</svg>
+
+						{showAudioDeviceList && (
+							<div
+								ref={audioDeviceListRef}
+								className="absolute bottom-16 left-0 bg-dark-1 rounded-t-xl w-full"
+							>
 								<DeviceSelectorAudioInput />
 							</div>
 						)}
