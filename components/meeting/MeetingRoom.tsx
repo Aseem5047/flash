@@ -131,7 +131,8 @@ const MeetingRoom = () => {
 
 	useEffect(() => {
 		let timeoutId: NodeJS.Timeout;
-		call?.on("call.session_participant_left", handleCallRejected);
+		participantCount === 2 &&
+			call?.on("call.session_participant_left", handleCallRejected);
 		if (
 			participantCount < 2 ||
 			anyModalOpen ||
