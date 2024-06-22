@@ -5,16 +5,16 @@ import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
 
 // Define the type for the component props
-interface SuccessProps {
+export type SuccessProps = {
 	redirect?: string;
 	event?: string;
-}
+};
 
 // Update the Success component to use the defined props type
-const Success: React.FC<SuccessProps> = ({
+const Success = ({
 	redirect = "payment",
 	event = "Amount Added",
-}) => {
+}: SuccessProps) => {
 	const router = useRouter();
 	useEffect(() => {
 		setTimeout(() => {
