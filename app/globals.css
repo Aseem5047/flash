@@ -137,6 +137,13 @@
 	background-color: #50a65c;
 }
 
+.str-video__device-settings__device-selector-title {
+	font-size: 16px !important;
+	margin-left: 0.75rem;
+	font-weight: 700;
+	color: #50a65c;
+}
+
 .str-video__device-settings__device-kind .str-video__option input[type="radio"],
 .str-video__device-settings__device-kind
 	.str-video__device-settings__option
