@@ -183,6 +183,7 @@ const MeetingRoom = () => {
 
 			{!callHasEnded && isMeetingOwner && <CallTimer />}
 
+			{/* Call Controls */}
 			<div className="fixed bg-dark-1 bottom-0 flex flex-wrap-reverse w-full items-center justify-center gap-4 py-2 px-4 transition-all">
 				<SpeakingWhileMutedNotification>
 					{isVideoCall &&
@@ -196,7 +197,7 @@ const MeetingRoom = () => {
 				{isMobile && (
 					<>
 						<button
-							className="p-3 bg-[#ffffff14] rounded-full hover:bg-[#4c535b]"
+							className="p-3 bg-[#ffffff14] rounded-full hover:bg-[#4c535b] transition-all duration-300 hover:scale-110"
 							onClick={() => setShowAudioDeviceList((prev) => !prev)}
 						>
 							<svg
@@ -233,7 +234,7 @@ const MeetingRoom = () => {
 				{isMobile && (
 					<button
 						onClick={toggleCamera}
-						className="p-3 bg-[#ffffff14] rounded-full hover:bg-[#4c535b]"
+						className="p-3 bg-[#ffffff14] rounded-full hover:bg-[#4c535b] transition-all duration-300 hover:scale-110"
 					>
 						<SwitchCamera size={20} className="text-white" />
 					</button>

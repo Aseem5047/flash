@@ -7,7 +7,7 @@ export const VideoToggleButton = () => {
 	return (
 		<div
 			onClick={() => camera.toggle()}
-			className="cursor-pointer rounded-full bg-[#ffffff14] p-3 hover:bg-[#4c535b] flex items-center"
+			className="cursor-pointer rounded-full bg-[#ffffff14] p-3 hover:bg-[#4c535b] transition-all duration-300 hover:scale-110 flex items-center"
 		>
 			{!isMute ? <button>{video}</button> : <button>{videoOff}</button>}
 		</div>
