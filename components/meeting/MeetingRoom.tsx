@@ -223,7 +223,7 @@ const MeetingRoom = () => {
 					<TooltipTrigger>
 						<EndCallButton />
 					</TooltipTrigger>
-					<TooltipContent className="mb-2 bg-red-500  border-none">
+					<TooltipContent className="hidden md:block mb-2 bg-red-500  border-none">
 						<p className="!text-white">End Call</p>
 					</TooltipContent>
 				</Tooltip>
