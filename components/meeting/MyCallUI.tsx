@@ -56,8 +56,8 @@ const MyCallUI = () => {
 
 			const handleCallStarted = async () => {
 				isMeetingOwner && localStorage.setItem("activeCallId", call.id);
-				// await call?.join();
 				router.push(`/meeting/${call.id}`);
+				// await call?.join();
 			};
 
 			call.on("call.ended", handleCallEnded);

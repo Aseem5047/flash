@@ -125,7 +125,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 
 			// console.log(maxCallDuration, ratePerMinute);
 
-			await call.create({
+			await call.getOrCreate({
 				ring: true,
 				data: {
 					starts_at: startsAt,
