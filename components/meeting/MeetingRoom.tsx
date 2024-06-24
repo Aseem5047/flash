@@ -72,6 +72,10 @@ const MeetingRoom = () => {
 	const isMobile = useScreenSize();
 
 	const handleCallRejected = async () => {
+		toast({
+			title: "Call Ended ...",
+			description: "Less than 2 Participants",
+		});
 		await call?.endCall();
 	};
 

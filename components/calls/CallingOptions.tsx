@@ -58,9 +58,8 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			description: "The call has been accepted. Redirecting to meeting...",
 		});
 		setSheetOpen(false);
-		call?.leave();
-		router.push(`/meeting/${call.id}`);
-		// router.push(`/meeting/${call.id}?reload=true`);
+		await call?.leave();
+		// router.push(`/meeting/${call.id}`);
 	};
 
 	const handleCallRejected = () => {
