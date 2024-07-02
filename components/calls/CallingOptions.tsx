@@ -7,7 +7,6 @@ import { Call, useStreamVideoClient } from "@stream-io/video-react-sdk";
 import { useUser } from "@clerk/nextjs";
 import { Input } from "../ui/input";
 import MeetingModal from "../meeting/MeetingModal";
-import { MemberRequest } from "@stream-io/video-react-sdk";
 import { Button } from "../ui/button";
 import {
 	arrayUnion,
@@ -23,7 +22,6 @@ import {
 import { db } from "@/lib/firebase";
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
 import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
-import { createCall, updateCall } from "@/lib/actions/call.actions";
 
 interface CallingOptions {
 	creator: creatorUser;
@@ -50,6 +48,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	const chatRequestsRef = collection(db, "chatRequests");
 	const chatRef = collection(db, "chats");
 	const clientId = user?.publicMetadata?.userId as string;
+	const storedCallId = localStorage.getItem("activeCallId");
 
 	const handleCallAccepted = async (call: Call) => {
 		toast({
@@ -164,9 +163,10 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			call.on("call.accepted", () => handleCallAccepted(call));
 			call.on("call.rejected", handleCallRejected);
 
-			toast({
-				title: "Meeting Created",
-			});
+			// toast({
+			// 	title: "Meeting Created",
+			// 	description: "Waiting for Expert to Respond",
+			// });
 		} catch (error) {
 			console.error(error);
 			toast({ title: "Failed to create Meeting" });
@@ -397,9 +397,11 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		callType: string,
 		modalType: "isJoiningMeeting" | "isInstantMeeting"
 	) => {
-		if (user) {
+		if (user && !storedCallId) {
 			setMeetingState(`${modalType}`);
 			setCallType(`${callType}`);
+		} else if (user && storedCallId) {
+			router.push(`/meeting/${storedCallId}`);
 		} else {
 			router.replace("/sign-in");
 		}

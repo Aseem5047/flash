@@ -13,7 +13,7 @@ import FeedbackCheck from "../feedbacks/FeedbackCheck";
 
 const CallListMobile = () => {
 	const [calls, setCalls] = useState<RegisterCallParams[]>([]);
-	const [callsCount, setCallsCount] = useState(6);
+	const [callsCount, setCallsCount] = useState(8);
 	const [loading, setLoading] = useState(true);
 	const { user } = useUser();
 	const pathname = usePathname();
@@ -118,15 +118,26 @@ const CallListMobile = () => {
 										</span>
 										<span className="text-[12.5px]">
 											{call.duration
-												? `${(parseInt(call.duration, 10) / 60).toFixed(
-														2
-												  )} Minutes`
+												? (() => {
+														const seconds = parseInt(call.duration, 10);
+														const hours = Math.floor(seconds / 3600);
+														const minutes = Math.floor((seconds % 3600) / 60);
+														const remainingSeconds = seconds % 60;
+														const formattedTime = [
+															hours > 0 ? `${hours}h` : null,
+															minutes > 0 ? `${minutes}m` : null,
+															`${remainingSeconds}s`,
+														]
+															.filter(Boolean)
+															.join(" ");
+														return formattedTime;
+												  })()
 												: "Call Was Rejected"}
 										</span>
 									</div>
 								</div>
 								{/* StartedAt & Feedbacks */}
-								<div className="w-1/2 flex flex-col items-end justify-center gap-2">
+								<div className="w-1/2 flex flex-col items-end justify-between h-full gap-2">
 									<span className="text-sm text-[#A7A8A1] pr-1 whitespace-nowrap">
 										{formattedDate.dateTime}
 									</span>

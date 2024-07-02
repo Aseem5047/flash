@@ -2,8 +2,6 @@ import { useEffect, useState, useMemo } from "react";
 import {
 	CallParticipantsList,
 	CallingState,
-	DeviceSelectorAudioInput,
-	DeviceSelectorAudioOutput,
 	DeviceSettings,
 	PaginatedGridLayout,
 	SpeakerLayout,
@@ -16,7 +14,7 @@ import {
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
-import { SwitchCamera, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import EndCallButton from "../calls/EndCallButton";
 import { useUser } from "@clerk/nextjs";
 import CallTimer from "../calls/CallTimer";
@@ -28,7 +26,6 @@ import { AudioToggleButton } from "../calls/AudioToggleButton";
 import SinglePostLoader from "../shared/SinglePostLoader";
 import SwitchCameraType from "../calls/SwitchCameraType";
 import AudioDeviceList from "../calls/AudioDeviceList";
-import PictureInPicture from "../calls/PictureInPicture";
 
 type CallLayoutType = "grid" | "speaker-bottom";
 
@@ -75,10 +72,6 @@ const MeetingRoom = () => {
 	const isMobile = useScreenSize();
 
 	const handleCallRejected = async () => {
-		toast({
-			title: "Call Ended ...",
-			description: "Less than 2 Participants",
-		});
 		await call?.endCall();
 	};
 
@@ -183,10 +176,13 @@ const MeetingRoom = () => {
 				)}
 			</div>
 
-			{!callHasEnded && isMeetingOwner && <CallTimer />}
+			{!callHasEnded && isMeetingOwner && (
+				<CallTimer handleCallRejected={handleCallRejected} />
+			)}
 
 			{/* Call Controls */}
 			<div className="fixed bg-dark-1 bottom-0 flex flex-wrap-reverse w-full items-center justify-center gap-4 py-2 px-4 transition-all">
+				{/* Audio Button */}
 				<SpeakingWhileMutedNotification>
 					{isVideoCall &&
 						(isMobile ? (
@@ -196,6 +192,7 @@ const MeetingRoom = () => {
 						))}
 				</SpeakingWhileMutedNotification>
 
+				{/* Audio Device List */}
 				{isMobile && (
 					<AudioDeviceList
 						showAudioDeviceList={showAudioDeviceList}
@@ -203,9 +200,11 @@ const MeetingRoom = () => {
 					/>
 				)}
 
+				{/* Video Button */}
 				{isVideoCall &&
 					(isMobile ? <VideoToggleButton /> : <ToggleVideoPublishingButton />)}
 
+				{/* Switch Camera */}
 				{isVideoCall && isMobile && (
 					<SwitchCameraType toggleCamera={toggleCamera} />
 				)}
@@ -223,6 +222,7 @@ const MeetingRoom = () => {
 					</TooltipContent>
 				</Tooltip>
 
+				{/* End Call Button */}
 				<Tooltip>
 					<TooltipTrigger>
 						<EndCallButton />
@@ -233,8 +233,6 @@ const MeetingRoom = () => {
 				</Tooltip>
 
 				<div className="absolute bottom-3 right-4 z-20 w-fit hidden md:flex items-center gap-2">
-					{/* <ToggleAudioOutputButton /> */}
-					{/* <PictureInPicture /> */}
 					<DeviceSettings />
 				</div>
 			</div>

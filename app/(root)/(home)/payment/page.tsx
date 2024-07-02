@@ -244,8 +244,8 @@ const Payment: React.FC = () => {
 						{arrowLeft}
 					</button>
 					<div
-						className={`flex gap-2 w-full md:w-fit mx-auto items-center justify-start ${
-							transactions.length < 5 && "justify-center"
+						className={`flex gap-2 w-full md:w-fit mx-auto items-center  ${
+							totalPages <= 6 ? "justify-center" : "justify-start"
 						} px-4 py-2 overflow-x-scroll no-scrollbar`}
 					>
 						{pageNumbers.map((_, index) => (
