@@ -11,9 +11,7 @@ import {
 	useCall,
 	useCallStateHooks,
 } from "@stream-io/video-react-sdk";
-
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-
 import { Users } from "lucide-react";
 import EndCallButton from "../calls/EndCallButton";
 import { useUser } from "@clerk/nextjs";
@@ -136,6 +134,20 @@ const MeetingRoom = () => {
 			}
 		}
 	};
+
+	// Handle visibility change
+	const handleVisibilityChange = () => {
+		if (document.visibilityState === "hidden") {
+			call?.camera.disable();
+		}
+	};
+
+	useEffect(() => {
+		document.addEventListener("visibilitychange", handleVisibilityChange);
+		return () => {
+			document.removeEventListener("visibilitychange", handleVisibilityChange);
+		};
+	}, [call]);
 
 	// Memoized Call Layout
 	const CallLayout = useMemo(() => {
