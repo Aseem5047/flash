@@ -26,6 +26,7 @@ import { AudioToggleButton } from "../calls/AudioToggleButton";
 import SinglePostLoader from "../shared/SinglePostLoader";
 import SwitchCameraType from "../calls/SwitchCameraType";
 import AudioDeviceList from "../calls/AudioDeviceList";
+import CustomParticipantViewUI from "../calls/CustomParticipantViewUI";
 
 type CallLayoutType = "grid" | "speaker-bottom";
 
@@ -145,8 +146,8 @@ const MeetingRoom = () => {
 				return (
 					<SpeakerLayout
 						participantsBarPosition="bottom"
-						ParticipantViewUIBar={null}
-						ParticipantViewUISpotlight={null}
+						ParticipantViewUIBar={<CustomParticipantViewUI />}
+						ParticipantViewUISpotlight={<CustomParticipantViewUI />}
 					/>
 				);
 		}
@@ -184,12 +185,7 @@ const MeetingRoom = () => {
 			<div className="fixed bg-dark-1 bottom-0 flex flex-wrap-reverse w-full items-center justify-center gap-4 py-2 px-4 transition-all">
 				{/* Audio Button */}
 				<SpeakingWhileMutedNotification>
-					{isVideoCall &&
-						(isMobile ? (
-							<AudioToggleButton />
-						) : (
-							<ToggleAudioPublishingButton />
-						))}
+					{isMobile ? <AudioToggleButton /> : <ToggleAudioPublishingButton />}
 				</SpeakingWhileMutedNotification>
 
 				{/* Audio Device List */}
@@ -232,9 +228,11 @@ const MeetingRoom = () => {
 					</TooltipContent>
 				</Tooltip>
 
-				<div className="absolute bottom-3 right-4 z-20 w-fit hidden md:flex items-center gap-2">
-					<DeviceSettings />
-				</div>
+				{isVideoCall && (
+					<div className="absolute bottom-3 right-4 z-20 w-fit hidden md:flex items-center gap-2">
+						<DeviceSettings />
+					</div>
+				)}
 			</div>
 		</section>
 	);

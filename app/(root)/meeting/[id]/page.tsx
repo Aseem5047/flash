@@ -112,7 +112,7 @@ const CallEnded = ({ toast, router, call }: any) => {
 
 			if (!toastShown) {
 				toast({
-					title: "Hope you liked the session",
+					title: "Session Has Ended",
 					description: "Checking for Pending Transactions ...",
 				});
 

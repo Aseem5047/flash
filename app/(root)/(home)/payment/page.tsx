@@ -163,7 +163,7 @@ const Payment: React.FC = () => {
 			</section>
 
 			{/* Transaction History Section */}
-			<section className="sticky top-16 bg-white z-30 w-full h-full py-5 px-4 ">
+			<section className="sticky top-16 bg-white z-30 w-full h-fit py-5 px-4 ">
 				<div className="flex flex-col items-start justify-start gap-4 w-full h-fit">
 					<h2 className=" text-gray-500 text-xl pt-4 font-normal leading-7">
 						Transaction History
@@ -190,13 +190,13 @@ const Payment: React.FC = () => {
 			</section>
 
 			{/* Transaction History List */}
-			<ul className="space-y-4 w-full p-4">
+			<ul className="space-y-4 w-full h-full px-4">
 				{!loading ? (
 					transactions.length === 0 ? (
-						<p className="flex flex-col items-center justify-center size-full text-xl px-7 text-center flex-1 min-h-44 text-red-500 font-semibold">
+						<p className="flex flex-col items-center justify-center size-full text-xl text-center flex-1 min-h-44 text-red-500 font-semibold">
 							{errorMessage
 								? errorMessage
-								: `No transactions under ${btn} filter Listed`}
+								: `No transactions under ${btn} filter`}
 						</p>
 					) : (
 						transactions.map((transaction) => (

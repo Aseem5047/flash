@@ -154,6 +154,10 @@
 	height: 0.75rem !important;
 }
 
+.str-video__participant-view > .str-video__call-controls__button {
+	display: none;
+}
+
 @media (min-width: 600px) {
 	.str-video__speaker-layout
 		.str-video__speaker-layout__spotlight
