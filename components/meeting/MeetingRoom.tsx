@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
 import {
-	CallControls,
 	CallParticipantsList,
 	CallingState,
 	DeviceSettings,
@@ -136,6 +135,20 @@ const MeetingRoom = () => {
 		}
 	};
 
+	// Handle visibility change
+	const handleVisibilityChange = () => {
+		if (document.visibilityState === "hidden") {
+			call?.camera.enable();
+		}
+	};
+
+	useEffect(() => {
+		document.addEventListener("visibilitychange", handleVisibilityChange);
+		return () => {
+			document.removeEventListener("visibilitychange", handleVisibilityChange);
+		};
+	}, [call]);
+
 	// Memoized Call Layout
 	const CallLayout = useMemo(() => {
 		switch (layout) {
@@ -182,30 +195,29 @@ const MeetingRoom = () => {
 
 			{/* Call Controls */}
 			<div className="fixed bg-dark-1 bottom-0 flex flex-wrap-reverse w-full items-center justify-center gap-4 py-2 px-4 transition-all">
-				<CallControls />
 				{/* Audio Button */}
-				{/* <SpeakingWhileMutedNotification>
+				<SpeakingWhileMutedNotification>
 					{isMobile ? <AudioToggleButton /> : <ToggleAudioPublishingButton />}
-				</SpeakingWhileMutedNotification> */}
+				</SpeakingWhileMutedNotification>
 
 				{/* Audio Device List */}
-				{/* {isMobile && (
+				{isMobile && (
 					<AudioDeviceList
 						showAudioDeviceList={showAudioDeviceList}
 						setShowAudioDeviceList={setShowAudioDeviceList}
 					/>
-				)} */}
+				)}
 
 				{/* Video Button */}
-				{/* {isVideoCall &&
-					(isMobile ? <VideoToggleButton /> : <ToggleVideoPublishingButton />)} */}
+				{isVideoCall &&
+					(isMobile ? <VideoToggleButton /> : <ToggleVideoPublishingButton />)}
 
 				{/* Switch Camera */}
-				{/* {isVideoCall && isMobile && (
+				{isVideoCall && isMobile && (
 					<SwitchCameraType toggleCamera={toggleCamera} />
-				)} */}
+				)}
 
-				{/* <Tooltip>
+				<Tooltip>
 					<TooltipTrigger className="hidden md:block">
 						<button onClick={() => setShowParticipants((prev) => !prev)}>
 							<div className="cursor-pointer rounded-full bg-[#ffffff14] p-3 hover:bg-[#4c535b] flex items-center">
@@ -216,10 +228,10 @@ const MeetingRoom = () => {
 					<TooltipContent className="mb-2 bg-gray-700  border-none">
 						<p className="!text-white">Participants</p>
 					</TooltipContent>
-				</Tooltip> */}
+				</Tooltip>
 
 				{/* End Call Button */}
-				{/* <Tooltip>
+				<Tooltip>
 					<TooltipTrigger>
 						<EndCallButton />
 					</TooltipTrigger>
@@ -232,7 +244,7 @@ const MeetingRoom = () => {
 					<div className="absolute bottom-3 right-4 z-20 w-fit hidden md:flex items-center gap-2">
 						<DeviceSettings />
 					</div>
-				)} */}
+				)}
 			</div>
 		</section>
 	);
