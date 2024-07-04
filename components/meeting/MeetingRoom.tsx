@@ -140,9 +140,8 @@ const MeetingRoom = () => {
 		switch (layout) {
 			case "grid":
 				return (
-					<PaginatedGridLayout
-						ParticipantViewUI={<CustomParticipantViewUI />}
-					/>
+					<PaginatedGridLayout />
+					// ParticipantViewUI={<CustomParticipantViewUI />}
 				);
 			default:
 				return (
