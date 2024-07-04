@@ -138,7 +138,7 @@ const MeetingRoom = () => {
 	// Handle visibility change
 	const handleVisibilityChange = () => {
 		if (document.visibilityState === "hidden") {
-			call?.camera.disable();
+			call?.camera.enable();
 		}
 	};
 
