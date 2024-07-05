@@ -11,7 +11,7 @@ const PreviousPage = () => {
 	const options: ("Calls" | "Chats")[] = ["Calls", "Chats"];
 
 	return (
-		<section className="flex size-full flex-col gap-2 pb-5 md:pb-14 ">
+		<section className="flex size-full flex-col gap-2 pb-5 md:pb-14 overflow-x-hidden no-scrollbar">
 			<div className="sticky top-16 bg-white z-30 w-full px-4 py-4 pt-7 flex items-center justify-between">
 				<h1 className="text-3xl font-bold">Order History</h1>
 				<div className="hidden xl:flex items-center justify-center w-fit gap-2">
