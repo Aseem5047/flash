@@ -1,16 +1,14 @@
 "use client";
 
 import { formatDateTime } from "@/lib/utils";
-import { RegisterCallParams, SelectedChat } from "@/types";
+import { SelectedChat } from "@/types";
 import { useUser } from "@clerk/nextjs";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import ContentLoading from "../shared/ContentLoading";
 import Link from "next/link";
 import Image from "next/image";
-import SinglePostLoader from "../shared/SinglePostLoader";
 import FeedbackCheck from "../feedbacks/FeedbackCheck";
-import { Button } from "../ui/button";
 
 const ChatList = () => {
 	const [chats, setChats] = useState<SelectedChat[]>([]);
@@ -77,7 +75,7 @@ const ChatList = () => {
 				<section
 					className={`grid grid-cols-1 ${
 						chats.length > 0 && "xl:grid-cols-2 3xl:grid-cols-3"
-					} items-center gap-5 xl:gap-10 w-full h-fit text-black px-4`}
+					} items-center gap-5 xl:gap-10 w-full h-fit text-black px-4 overflow-hidden`}
 				>
 					{visibleChats.map((chat, index) => {
 						const formattedDate = formatDateTime(chat.startedAt as Date);
