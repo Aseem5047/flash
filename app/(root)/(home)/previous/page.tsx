@@ -12,7 +12,7 @@ const PreviousPage = () => {
 
 	return (
 		<section className="flex size-full flex-col gap-2 pb-5 md:pb-14">
-			<div className="sticky top-16 bg-white z-30 w-full px-4 py-4 pt-7 flex items-center justify-between">
+			<div className="sticky top-16 bg-white z-30 w-full px-4 py-5 flex items-center justify-between">
 				<h1 className="text-3xl font-bold">Order History</h1>
 				<div className="hidden xl:flex items-center justify-center w-fit gap-2">
 					{options.map((option, index) => (
