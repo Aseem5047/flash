@@ -122,7 +122,6 @@ const CallEnded = ({ toast, router, call }: any) => {
 			}
 
 			setLoading(true);
-
 			logEvent(analytics, "call_ended", {
 				callId: call.id,
 				duration: duration,
