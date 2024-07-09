@@ -13,6 +13,8 @@ import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import Link from "next/link";
 import SinglePostLoader from "@/components/shared/SinglePostLoader";
 import { useToast } from "@/components/ui/use-toast";
+import { logEvent } from "firebase/analytics";
+import { analytics } from "@/lib/firebase";
 
 const About: React.FC = () => {
 	const searchParams = useSearchParams();
@@ -42,6 +44,11 @@ const About: React.FC = () => {
 		e: React.MouseEvent<HTMLButtonElement, MouseEvent>
 	): Promise<void> => {
 		e.preventDefault();
+
+		logEvent(analytics, 'wallet_recharge', {
+			userId: user?.publicMetadata?.userId,
+			// creatorId: creator._id,
+		});
 
 		if (typeof window.Razorpay === "undefined") {
 			console.error("Razorpay SDK is not loaded");
