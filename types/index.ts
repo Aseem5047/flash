@@ -113,6 +113,7 @@ export type Client = {
 	username: string;
 	phone: string;
 	photo?: string; // Optional field if you have profile images
+	role?: string;
 };
 
 export type CreatorFeedback = {

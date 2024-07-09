@@ -131,9 +131,9 @@ const UserReviews = ({
 									<p className="text-lg font-semibold">
 										{feedback.clientId.username}
 									</p>
-									<p className="text-sm font-semibold">
+									{/* <p className="text-sm font-semibold">
 										{feedback.clientId.phone}
-									</p>
+									</p> */}
 								</div>
 							</div>
 						</div>
