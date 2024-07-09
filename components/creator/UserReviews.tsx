@@ -32,12 +32,14 @@ const UserReviews = ({
 	const lastIndex = creatorFeedback?.length - 1;
 	const [direction, setDirection] = useState("right");
 
-	// Auto slider (uncomment if needed)
+	// Auto slider
 	useEffect(() => {
-		let sliderInterval = setInterval(() => {
-			setCurrentIndex((prev) => (prev + 1 > lastIndex ? 0 : prev + 1));
-		}, 10000);
-		return () => clearInterval(sliderInterval);
+		if (creatorFeedback?.length > 1) {
+			let sliderInterval = setInterval(() => {
+				setCurrentIndex((prev) => (prev + 1 > lastIndex ? 0 : prev + 1));
+			}, 10000);
+			return () => clearInterval(sliderInterval);
+		}
 	}, [currentIndex]);
 
 	const getSliderState = (feedbackIndex: number) => {
@@ -62,14 +64,12 @@ const UserReviews = ({
 			</section>
 		);
 
-	console.log(creatorFeedback);
-
 	return (
 		<div
 			className="flex overflow-x-scroll no-scrollbar items-center text-white w-full rounded-t-xl md:rounded-xl xl:w-[60%]"
 			style={{ backgroundColor: theme }}
 		>
-			{creatorFeedback.map((feedback, index) => {
+			{creatorFeedback?.map((feedback, index) => {
 				const adjustedIndex =
 					(index + creatorFeedback?.length) % creatorFeedback?.length;
 				const slideState = getSliderState(adjustedIndex);
@@ -139,33 +139,35 @@ const UserReviews = ({
 						</div>
 
 						{/* navigation arrow */}
-						<div className="flex items-center justify-evenly">
-							<button
-								className="bg-black/10 text-white w-10 h-10 rounded-full p-2 hoverScaleEffect hover:bg-black/50"
-								onClick={previousSlide}
-							>
-								{arrowLeft}
-							</button>
-							<div className="flex gap-2 items-center max-w-[50%] md:max-w-[75%] py-2 overflow-x-scroll no-scrollbar">
-								{creatorFeedback.map((_, index) => (
-									<button
-										key={index}
-										className={`${
-											index === currentIndex && "!bg-black/50"
-										} bg-black/10 w-5 h-5 rounded-full p-5 flex items-center justify-center hoverScaleEffect hover:bg-black/50`}
-										onClick={() => setCurrentIndex(index)}
-									>
-										<span className="mx-auto">{index + 1}</span>
-									</button>
-								))}
+						{creatorFeedback?.length > 1 && (
+							<div className="flex items-center justify-evenly">
+								<button
+									className="bg-black/10 text-white w-10 h-10 rounded-full p-2 hoverScaleEffect hover:bg-black/50"
+									onClick={previousSlide}
+								>
+									{arrowLeft}
+								</button>
+								<div className="flex gap-2 items-center max-w-[50%] md:max-w-[75%] py-2 overflow-x-scroll no-scrollbar">
+									{creatorFeedback?.map((_, index) => (
+										<button
+											key={index}
+											className={`${
+												index === currentIndex && "!bg-black/50"
+											} bg-black/10 w-5 h-5 rounded-full p-5 flex items-center justify-center hoverScaleEffect hover:bg-black/50`}
+											onClick={() => setCurrentIndex(index)}
+										>
+											<span className="mx-auto">{index + 1}</span>
+										</button>
+									))}
+								</div>
+								<button
+									className="bg-black/10 text-white w-10 h-10 rounded-full p-2 hoverScaleEffect hover:bg-black/50"
+									onClick={nextSlide}
+								>
+									{arrowRight}
+								</button>
 							</div>
-							<button
-								className="bg-black/10 text-white w-10 h-10 rounded-full p-2 hoverScaleEffect hover:bg-black/50"
-								onClick={nextSlide}
-							>
-								{arrowRight}
-							</button>
-						</div>
+						)}
 					</div>
 				);
 			})}

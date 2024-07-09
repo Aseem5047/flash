@@ -20,7 +20,8 @@ const FeedbackEntrySchema = new Schema(
 const CreatorFeedbackSchema = new Schema(
 	{
 		creatorId: {
-			type: String,
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "Creator",
 			required: true,
 		},
 		feedbacks: [FeedbackEntrySchema],

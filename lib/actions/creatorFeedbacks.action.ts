@@ -5,6 +5,7 @@ import { handleError } from "@/lib/utils";
 import mongoose from "mongoose";
 import Client from "../database/models/client.model";
 import CreatorFeedback from "../database/models/creatorFeedbacks.model";
+import Creator from "../database/models/creator.model";
 
 export async function createFeedback({
 	creatorId,
@@ -67,6 +68,11 @@ export async function getCreatorFeedback(creatorId?: string) {
 			mongoose.model("Client", Client.schema);
 		}
 
+		// Manually register the models if necessary
+		if (!mongoose.models.Creator) {
+			mongoose.model("Creator", Creator.schema);
+		}
+
 		let query: any = {};
 
 		if (creatorId) {
@@ -74,6 +80,7 @@ export async function getCreatorFeedback(creatorId?: string) {
 		}
 
 		const feedbacks = await CreatorFeedback.find(query, { feedbacks: 1 })
+			.populate("creatorId")
 			.populate("feedbacks.clientId")
 			.lean();
 
