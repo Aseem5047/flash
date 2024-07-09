@@ -74,7 +74,6 @@ export async function getCreatorFeedback(creatorId?: string) {
 		}
 
 		const feedbacks = await CreatorFeedback.find(query, { feedbacks: 1 })
-			.populate("creatorId")
 			.populate("feedbacks.clientId")
 			.lean();
 
