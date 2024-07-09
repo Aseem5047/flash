@@ -108,6 +108,21 @@ export type CreatorFeedbackParams = {
 	showFeedback: boolean;
 };
 
+export type Client = {
+	_id: string;
+	username: string;
+	phone: string;
+	photo?: string; // Optional field if you have profile images
+};
+
+export type CreatorFeedback = {
+	clientId: Client;
+	rating: number;
+	feedback: string;
+	showFeedback: boolean;
+	createdAt: Date;
+};
+
 // Call Params
 
 export type MemberRequest = {

@@ -151,7 +151,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 
 			logEvent(analytics, "call_initiated", {
 				userId: user?.publicMetadata?.usreId,
-				creatorId: creator._id
+				creatorId: creator._id,
 			});
 
 			fetch("/api/v1/calls/registerCall", {
@@ -340,9 +340,8 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 							lastMessage: "",
 							receiverId: chatRequest.clientId,
 							updatedAt: new Date(),
-							
 						}),
-						online: false
+						online: false,
 					}
 				);
 
@@ -355,7 +354,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 							receiverId: chatRequest.creatorId,
 							updatedAt: new Date(),
 						}),
-						online: false
+						online: false,
 					}
 				);
 				await Promise.all([creatorChatUpdate, clientChatUpdate]);
@@ -427,7 +426,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 						creatorId: creator._id,
 					});
 					router.push(
-						`/chat/${chatRequest.chatId}?creatorId=${chatRequest.creatorId}&clientId=${chatRequest.clientId}}`
+						`/chat/${chatRequest.chatId}?creatorId=${chatRequest.creatorId}&clientId=${chatRequest.clientId}`
 					);
 				}, 3000);
 			}
