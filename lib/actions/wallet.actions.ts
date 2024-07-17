@@ -11,6 +11,7 @@ export async function addMoney({ userId, userType, amount }: WalletParams) {
 		await connectToDatabase();
 
 		let user;
+		let referredBy;
 		if (userType === "Client") {
 			user = await Client.findById(userId);
 		} else if (userType === "Creator") {
@@ -22,7 +23,7 @@ export async function addMoney({ userId, userType, amount }: WalletParams) {
 		if (!user) throw new Error("User not found");
 
 		// Ensure amount is a number
-		const numericAmount = Number(amount);
+		const numericAmount = Math.round(Number(amount) * 100) / 100;
 		if (isNaN(numericAmount)) {
 			throw new Error("Amount must be a number");
 		}
@@ -46,6 +47,22 @@ export async function addMoney({ userId, userType, amount }: WalletParams) {
 				amount: numericAmount,
 				type: "credit",
 			}));
+
+		if (user.referredBy && user.referralAmount > 0) {
+			const referrer = await Creator.findOne({ referralId: user.referredBy });
+			if (referrer) {
+				const referralBonus = (5 / 100) * numericAmount;
+				referrer.walletBalance = Number(referrer.walletBalance) + referralBonus;
+				await referrer.save();
+				await Wallet.findOneAndUpdate(
+					{ userId: referrer._id, userType: "Creator" },
+					{ $inc: { balance: referralBonus } },
+					{ new: true, upsert: true }
+				);
+				user.referralAmount = Number(user.referralAmount) - referralBonus;
+				await user.save();
+			}
+		}
 
 		return JSON.parse(JSON.stringify(wallet));
 	} catch (error) {
@@ -75,7 +92,7 @@ export async function processPayout({
 		if (user.walletBalance < amount) throw new Error("Insufficient balance");
 
 		// Ensure amount is a number
-		const numericAmount = Number(amount);
+		const numericAmount = Math.round(Number(amount) * 100) / 100;
 		if (isNaN(numericAmount)) {
 			throw new Error("Amount must be a number");
 		}
