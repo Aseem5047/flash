@@ -66,6 +66,9 @@ export type CreateCreatorParams = {
 	phone: any;
 	profession?: string;
 	themeSelected?: string;
+	videoRate?: string;
+	audioRate?: string;
+	chatRate?: string;
 	gender?: string;
 	dob?: string;
 	bio?: string;

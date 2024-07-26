@@ -34,7 +34,7 @@ export async function getUsers() {
 	}
 }
 
-export async function getUserById(userId: string) {
+export async function getCreatorById(userId: string) {
 	try {
 		await connectToDatabase();
 

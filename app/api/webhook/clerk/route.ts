@@ -106,6 +106,9 @@ export async function POST(req: Request) {
 					phone: phone_numbers[0]?.phone_number ?? "",
 					profession: "Astrologer",
 					themeSelected: "#50A65C",
+					videoRate: "0",
+					audioRate: "0",
+					chatRate: "0",
 					walletBalance: 0,
 				};
 			} else {
