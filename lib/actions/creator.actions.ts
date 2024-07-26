@@ -9,7 +9,7 @@ import { handleError } from "@/lib/utils";
 import { CreateCreatorParams, UpdateCreatorParams } from "@/types";
 import Creator from "../database/models/creator.model";
 
-export async function createUser(user: CreateCreatorParams) {
+export async function createCreatorUser(user: CreateCreatorParams) {
 	try {
 		await connectToDatabase();
 
@@ -60,7 +60,10 @@ export async function getUserByPhone(phone: string) {
 	}
 }
 
-export async function updateUser(userId: string, user: UpdateCreatorParams) {
+export async function updateCreatorUser(
+	userId: string,
+	user: UpdateCreatorParams
+) {
 	try {
 		await connectToDatabase();
 		const updatedUser = await Creator.findByIdAndUpdate(userId, user, {
@@ -78,7 +81,7 @@ export async function updateUser(userId: string, user: UpdateCreatorParams) {
 	}
 }
 
-export async function deleteUser(userId: string) {
+export async function deleteCreatorUser(userId: string) {
 	try {
 		await connectToDatabase();
 

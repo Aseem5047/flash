@@ -48,7 +48,7 @@ const HomePage = () => {
 					<div className="animate-in grid grid-cols-1 xl:grid-cols-2 gap-10 items-center 3xl:items-start justify-start h-fit pb-6">
 						{creators.map((creator, index) => (
 							<Link
-								href={`/creator/${creator._id}`}
+								href={`/expert/${creator.username}/${creator._id}`}
 								className="min-w-full transition-all duration-500 hover:scale-95"
 								key={creator._id || index}
 							>

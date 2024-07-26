@@ -10,6 +10,7 @@ const protectedRoute = createRouteMatcher([
 	"/user-profile",
 	"/profile/(.*)",
 	"/payment",
+	"/favorites",
 	"/recharge(.*)",
 ]);
 

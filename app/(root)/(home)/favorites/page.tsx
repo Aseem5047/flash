@@ -67,7 +67,7 @@ const Favorites = () => {
 				</div>
 			) : favorites.length === 0 ? (
 				<div className="size-full flex items-center justify-center text-2xl font-semibold text-center text-gray-500">
-					Favorites List is Empty.
+					No creators found.
 				</div>
 			) : (
 				<div className="animate-in grid grid-cols-1 xl:grid-cols-2 gap-10 items-center 3xl:items-start justify-start h-fit pb-6">

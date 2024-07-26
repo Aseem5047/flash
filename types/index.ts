@@ -51,6 +51,7 @@ export type creatorUser = {
 	audioRate: string;
 	chatRate: string;
 	kyc_status: string;
+	walletBalance: number;
 	referralId: string;
 	referredBy: string;
 	referralAmount: number;
@@ -63,15 +64,16 @@ export type CreateCreatorParams = {
 	username: string;
 	photo: string;
 	phone: any;
-	profession: string;
-	themeSelected: string;
+	profession?: string;
+	themeSelected?: string;
 	gender?: string;
 	dob?: string;
 	bio?: string;
-	kyc_status: string;
-	referralId: string;
-	referredBy: string;
-	referralAmount: number;
+	kyc_status?: string;
+	walletBalance: number;
+	referralId?: string;
+	referredBy?: string;
+	referralAmount?: number;
 };
 
 export type UpdateCreatorParams = {
@@ -91,7 +93,8 @@ export type UpdateCreatorParams = {
 	gender?: string;
 	dob?: string;
 	bio?: string;
-	kyc_status: string;
+	kyc_status?: string;
+	walletBalance?: number;
 };
 
 // Feedback Params
