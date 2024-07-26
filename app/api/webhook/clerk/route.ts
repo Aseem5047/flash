@@ -79,14 +79,16 @@ export async function POST(req: Request) {
 	console.log(`Received event with ID: ${evt.data.id} and type: ${evt.type}`);
 	console.log("Webhook body:", body);
 
-	// Extract URL parameters
-	// const url = new URL(req.url);
-	// const userType = url.searchParams.get("userType");
+	// Extract URL pathname
+	const url = new URL(req.url);
+	const pathname = url.pathname;
 
-	const { searchParams } = new URL(req.url);
-	const userType = searchParams.get("userType") || undefined;
+	console.log("URL Pathname:", pathname);
 
-	console.log("User type:", userType, "request: ", req, "event: ", evt);
+	// Check if the pathname includes "/creator"
+	const userType = pathname.includes("/creator") ? "creator" : "client";
+
+	console.log("User type:", userType);
 
 	// Handle the event
 	try {
