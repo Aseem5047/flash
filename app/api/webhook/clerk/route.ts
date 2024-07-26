@@ -86,7 +86,7 @@ export async function POST(req: Request) {
 	const { searchParams } = new URL(req.url);
 	const userType = searchParams.get("userType") || undefined;
 
-	console.log("User type:", userType);
+	console.log("User type:", userType, "request: ", req, "event: ", evt);
 
 	// Handle the event
 	try {
