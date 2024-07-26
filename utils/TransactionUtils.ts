@@ -1,4 +1,4 @@
-import { getUserById } from "@/lib/actions/creator.actions";
+import { getCreatorById } from "@/lib/actions/creator.actions";
 import { analytics } from "@/lib/firebase";
 import { logEvent } from "firebase/analytics";
 
@@ -43,7 +43,7 @@ export const handleTransaction = async ({
 			fetch(`/api/v1/calls/transaction/getTransaction?callId=${callId}`).then(
 				(res) => res.json()
 			),
-			getUserById(creatorId),
+			getCreatorById(creatorId),
 		]);
 
 		if (transactionResponse) {
