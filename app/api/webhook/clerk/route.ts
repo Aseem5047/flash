@@ -79,16 +79,16 @@ export async function POST(req: Request) {
 	console.log(`Received event with ID: ${evt.data.id} and type: ${evt.type}`);
 	console.log("Webhook body:", body);
 
-	// Extract URL pathname
-	const url = new URL(req.url);
-	const pathname = url.pathname;
+	let userType: string;
+	try {
+		const user = await clerkClient.users.getUser(evt.data.id as string);
+		userType = String(user.unsafeMetadata.userType || "client");
+	} catch (err) {
+		console.error("Error fetching user metadata:", err);
+		userType = "client";
+	}
 
-	console.log("URL Pathname:", pathname);
-
-	// Check if the pathname includes "/creator"
-	const userType = pathname.includes("/creator") ? "creator" : "client";
-
-	console.log("User type:", userType);
+	console.log(userType);
 
 	// Handle the event
 	try {
