@@ -80,8 +80,11 @@ export async function POST(req: Request) {
 	console.log("Webhook body:", body);
 
 	// Extract URL parameters
-	const url = new URL(req.url);
-	const userType = url.searchParams.get("userType");
+	// const url = new URL(req.url);
+	// const userType = url.searchParams.get("userType");
+
+	const { searchParams } = new URL(req.url);
+	const userType = searchParams.get("userType") || undefined;
 
 	console.log("User type:", userType);
 
