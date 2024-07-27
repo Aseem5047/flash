@@ -19,7 +19,10 @@ const MobileNav = () => {
 	const pathname = usePathname();
 	const { user } = useUser();
 	const { signOut } = useClerk();
-
+	const handleSignout = () => {
+		// localStorage.removeItem("userType");
+		signOut({ redirectUrl: "/" });
+	};
 	return (
 		<section className="w-full  relative">
 			<Sheet>
@@ -92,7 +95,7 @@ const MobileNav = () => {
 									className={cn(
 										"absolute bottom-4 md:bottom-6 flex gap-4 items-center p-6 rounded-lg w-[85%] bg-green-1 outline-none focus:ring-0 hoverScaleDownEffect"
 									)}
-									onClick={() => signOut({ redirectUrl: "/" })}
+									onClick={() => handleSignout()}
 								>
 									<svg
 										xmlns="http://www.w3.org/2000/svg"

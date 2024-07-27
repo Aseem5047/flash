@@ -10,8 +10,8 @@ import { NextResponse } from "next/server";
 import { addMoney } from "@/lib/actions/wallet.actions";
 import {
 	createCreatorUser,
-	deleteCreatorUser,
-	updateCreatorUser,
+	deleteCreatorUserUsingClerk,
+	updateCreatorUserUsingClerk,
 } from "@/lib/actions/creator.actions";
 import {
 	CreateCreatorParams,
@@ -82,7 +82,9 @@ export async function POST(req: Request) {
 	let userType: string;
 	try {
 		const user = await clerkClient.users.getUser(evt.data.id as string);
-		userType = String(user.unsafeMetadata.userType || user.publicMetadata.role || "client");
+		userType = String(
+			user.unsafeMetadata.userType || user.publicMetadata.role || "client"
+		);
 	} catch (err) {
 		console.error("Error fetching user metadata:", err);
 		userType = "client";
@@ -99,6 +101,7 @@ export async function POST(req: Request) {
 			let user: CreateCreatorParams | CreateUserParams;
 			if (userType === "creator") {
 				user = {
+					clerkId: id,
 					firstName: first_name ?? undefined,
 					lastName: last_name ?? undefined,
 					username: username ?? "",
@@ -176,7 +179,7 @@ export async function POST(req: Request) {
 
 			const updatedUser =
 				userType === "creator"
-					? await updateCreatorUser(id, user as UpdateCreatorParams)
+					? await updateCreatorUserUsingClerk(id, user as UpdateCreatorParams)
 					: await updateUser(id, user as UpdateUserParams);
 
 			return NextResponse.json({ message: "OK", user: updatedUser });
@@ -187,7 +190,7 @@ export async function POST(req: Request) {
 
 			const deletedUser =
 				userType === "creator"
-					? await deleteCreatorUser(id!)
+					? await deleteCreatorUserUsingClerk(id!)
 					: await deleteUser(id!);
 
 			return NextResponse.json({ message: "OK", user: deletedUser });

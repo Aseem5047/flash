@@ -7,16 +7,17 @@ import React, { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import MobileNav from "./MobileNav";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
+	Sheet,
+	SheetContent,
+	SheetDescription,
+	SheetHeader,
+	SheetTitle,
+	SheetTrigger,
+} from "@/components/ui/sheet";
 
 import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import { useRouter } from "next/navigation";
+import { useToast } from "../ui/use-toast";
 
 const Navbar = () => {
 	const [isMounted, setIsMounted] = useState(false);
@@ -28,10 +29,11 @@ const Navbar = () => {
 
 	const handleRouting = (userType: string) => {
 		localStorage.setItem("userType", userType);
+
 		if (userType === "client") {
-			router.push("/sign-in");
+			router.replace("/sign-in");
 		} else if (userType === "creator") {
-			router.push("/sign-in?usertype=creator");
+			router.replace("/sign-in?usertype=creator");
 		}
 	};
 	const theme = `5px 5px 0px 0px #000000`;
@@ -77,43 +79,43 @@ const Navbar = () => {
 					</SignedIn>
 
 					<SignedOut>
-						<Dialog>
-							<DialogTrigger>
+						<Sheet>
+							<SheetTrigger asChild>
 								<Button
-									asChild
-									className="text-white hover:opacity-80 bg-green-1"
+									className="animate-enterFromRight lg:animate-enterFromBottom bg-green-1 transition-all duration-300 hover:bg-green-700 text-white font-semibold w-fit mr-1 rounded-md"
 									size="lg"
 								>
 									Login
 								</Button>
-							</DialogTrigger>
-							<DialogContent>
-								<DialogHeader>
-									<DialogTitle>Please Select User Type?</DialogTitle>
-									<DialogDescription>
+							</SheetTrigger>
+							<SheetContent
+								side="bottom"
+								className="flex flex-col items-start justify-center border-none rounded-t-xl px-10 pt-7 bg-white max-h-fit w-full sm:max-w-[444px] mx-auto"
+							>
+								<SheetHeader>
+									<SheetTitle>Please Select User Type?</SheetTitle>
+									<SheetDescription>
 										You'll be redirected to specific authentication page.
-									</DialogDescription>
-								</DialogHeader>
-								<div className="flex items-center gap-2">
+									</SheetDescription>
+								</SheetHeader>
+								<div className="flex items-center justify-start w-full gap-2 pt-4">
 									<Button
-										asChild
-										className="text-white hover:opacity-80 bg-green-1"
+										className="text-white hoverScaleEffect bg-green-1"
 										size="lg"
 										onClick={() => handleRouting("client")}
 									>
 										Client
 									</Button>
 									<Button
-										asChild
-										className="text-white hover:opacity-80 bg-green-1"
+										className="text-white hoverScaleEffect bg-green-1"
 										size="lg"
 										onClick={() => handleRouting("creator")}
 									>
 										Creator
 									</Button>
 								</div>
-							</DialogContent>
-						</Dialog>
+							</SheetContent>
+						</Sheet>
 					</SignedOut>
 				</>
 			)}

@@ -18,15 +18,12 @@ const HomePage = () => {
 	const { user } = useUser();
 
 	const storedUserType = localStorage.getItem("userType");
-	const userType = storedUserType ? JSON.parse(storedUserType) : null;
+	const userType = storedUserType ? storedUserType : null;
 
 	useEffect(() => {
 		// If userType is not set and user role is available, set it in localStorage
 		if (!userType && user?.publicMetadata?.role) {
-			localStorage.setItem(
-				"userType",
-				JSON.stringify(user.publicMetadata.role)
-			);
+			localStorage.setItem("userType", user.publicMetadata.role as string);
 		}
 
 		const getCreators = async () => {
@@ -45,7 +42,7 @@ const HomePage = () => {
 		if (userType !== "creator" && user?.publicMetadata?.role !== "creator") {
 			getCreators();
 		}
-	}, [user]);
+	}, [user, userType]);
 
 	const shouldShowCreators =
 		userType === "creator" || user?.publicMetadata?.role === "creator";

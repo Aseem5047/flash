@@ -59,6 +59,7 @@ export type creatorUser = {
 
 export type CreateCreatorParams = {
 	_id?: string;
+	clerkId?: string;
 	firstName?: string;
 	lastName?: string;
 	username: string;
