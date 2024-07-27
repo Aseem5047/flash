@@ -104,6 +104,9 @@ export async function POST(req: Request) {
 					clerkId: id,
 					firstName: first_name ?? undefined,
 					lastName: last_name ?? undefined,
+					fullName:
+						(first_name && last_name && first_name + " " + last_name) ||
+						undefined,
 					username: username ?? "",
 					photo: image_url ?? "",
 					phone: phone_numbers[0]?.phone_number ?? "",
@@ -157,33 +160,33 @@ export async function POST(req: Request) {
 			return NextResponse.json({ message: "OK", user: newUser });
 		}
 
-		if (evt.type === "user.updated") {
-			const { id, image_url, first_name, last_name, username } = evt.data;
+		// if (evt.type === "user.updated") {
+		// 	const { id, image_url, first_name, last_name, username } = evt.data;
 
-			let user: UpdateCreatorParams | UpdateUserParams;
-			if (userType === "creator") {
-				user = {
-					firstName: first_name ?? undefined,
-					lastName: last_name ?? undefined,
-					username: username ?? "",
-					photo: image_url ?? "",
-				};
-			} else {
-				user = {
-					firstName: first_name!,
-					lastName: last_name!,
-					username: username!,
-					photo: image_url!,
-				};
-			}
+		// 	let user: UpdateCreatorParams | UpdateUserParams;
+		// 	if (userType === "creator") {
+		// 		user = {
+		// 			firstName: first_name ?? undefined,
+		// 			lastName: last_name ?? undefined,
+		// 			username: username ?? "",
+		// 			photo:  image_url,
+		// 		};
+		// 	} else {
+		// 		user = {
+		// 			firstName: first_name!,
+		// 			lastName: last_name!,
+		// 			username: username!,
+		// 			photo:  image_url!,
+		// 		};
+		// 	}
 
-			const updatedUser =
-				userType === "creator"
-					? await updateCreatorUserUsingClerk(id, user as UpdateCreatorParams)
-					: await updateUser(id, user as UpdateUserParams);
+		// 	const updatedUser =
+		// 		userType === "creator"
+		// 			? await updateCreatorUserUsingClerk(id, user as UpdateCreatorParams)
+		// 			: await updateUser(id, user as UpdateUserParams);
 
-			return NextResponse.json({ message: "OK", user: updatedUser });
-		}
+		// 	return NextResponse.json({ message: "OK", user: updatedUser });
+		// }
 
 		if (evt.type === "user.deleted") {
 			const { id } = evt.data;

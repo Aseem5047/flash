@@ -13,6 +13,7 @@ export type CreateUserParams = {
 
 export type UpdateUserParams = {
 	id?: string;
+	clerkId?: string;
 	fullName?: string;
 	firstName: string;
 	lastName: string;
@@ -31,6 +32,7 @@ export type clientUser = {
 	photo: string;
 	phone: string;
 	walletBalance: number;
+	bio: string;
 };
 
 // Creator Params
@@ -60,6 +62,7 @@ export type creatorUser = {
 export type CreateCreatorParams = {
 	_id?: string;
 	clerkId?: string;
+	fullName?: string;
 	firstName?: string;
 	lastName?: string;
 	username: string;

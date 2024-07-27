@@ -99,7 +99,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 					custom: {
 						name: String(user.username),
 						type: "client",
-						image: user.imageUrl,
+						image: (user?.unsafeMetadata?.photo as string) || user.imageUrl,
 					},
 					role: "admin",
 				},
@@ -359,7 +359,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 					}
 				);
 				await Promise.all([creatorChatUpdate, clientChatUpdate]);
-			} 
+			}
 			// else {
 			// 	await updateDoc(doc(db, "chats", chatId), {
 			// 		startedAt: Date.now(),

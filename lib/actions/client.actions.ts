@@ -51,13 +51,32 @@ export async function updateUser(clerkId: string, user: UpdateUserParams) {
 	try {
 		await connectToDatabase();
 
-		const updatedUser = await Client.findOneAndUpdate({ clerkId }, user, {
+		// First attempt to find and update by clerkId
+		let updatedUser = await Client.findOneAndUpdate({ clerkId }, user, {
 			new: true,
+			runValidators: true, // Ensure schema validation
 		});
+
+		// If no user is found with clerkId, try finding by username
+		if (!updatedUser && user.username) {
+			updatedUser = await Client.findOneAndUpdate(
+				{ username: user.username },
+				user,
+				{
+					new: true,
+					runValidators: true, // Ensure schema validation
+				}
+			);
+		}
+
+		console.log(updatedUser);
 
 		if (!updatedUser) throw new Error("User update failed");
 		return JSON.parse(JSON.stringify(updatedUser));
-	} catch (error) {}
+	} catch (error) {
+		console.error("Error updating user:", error);
+		throw error; // Propagate error for further handling
+	}
 }
 
 export async function deleteUser(clerkId: string) {

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getUsers } from "@/lib/actions/creator.actions";
 import { creatorUser } from "@/types";
 import { useUser } from "@clerk/nextjs";
+import CreatorHome from "@/components/creator/CreatorHome";
 
 const CreatorDetails = lazy(
 	() => import("@/components/creator/CreatorDetails")
@@ -19,6 +20,8 @@ const HomePage = () => {
 
 	const storedUserType = localStorage.getItem("userType");
 	const userType = storedUserType ? storedUserType : null;
+
+	console.log(user?.publicMetadata?.role, userType);
 
 	useEffect(() => {
 		// If userType is not set and user role is available, set it in localStorage
@@ -48,7 +51,7 @@ const HomePage = () => {
 		userType === "creator" || user?.publicMetadata?.role === "creator";
 
 	return (
-		<section className="flex size-full flex-col gap-5 md:pb-14">
+		<main className="flex size-full flex-col gap-5 md:pb-14">
 			{!shouldShowCreators ? (
 				<Suspense fallback={<PostLoader count={6} />}>
 					{loading ? (
@@ -63,7 +66,7 @@ const HomePage = () => {
 							No creators found.
 						</div>
 					) : (
-						<div className="animate-in grid grid-cols-1 xl:grid-cols-2 gap-10 items-center 3xl:items-start justify-start h-fit pb-6">
+						<section className="animate-in grid grid-cols-1 xl:grid-cols-2 gap-10 items-center 3xl:items-start justify-start h-fit pb-6">
 							{creators.map((creator, index) => (
 								<Link
 									href={`/expert/${creator.username}/${creator._id}`}
@@ -73,15 +76,15 @@ const HomePage = () => {
 									<CreatorDetails creator={creator} />
 								</Link>
 							))}
-						</div>
+						</section>
 					)}
 				</Suspense>
 			) : (
-				<div className="size-full flex items-center justify-center text-2xl font-semibold text-center text-gray-500">
-					Yet to be Implemented
-				</div>
+				<section className="size-full flex flex-col items-center justify-center">
+					<CreatorHome />
+				</section>
 			)}
-		</section>
+		</main>
 	);
 };
 

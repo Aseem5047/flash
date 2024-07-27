@@ -14,10 +14,11 @@ import { sidebarLinks } from "@/constants";
 import { cn } from "@/lib/utils";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { Button } from "../ui/button";
+import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 
 const MobileNav = () => {
 	const pathname = usePathname();
-	const { user } = useUser();
+	const { currentUser } = useCurrentUsersContext();
 	const { signOut } = useClerk();
 	const handleSignout = () => {
 		// localStorage.removeItem("userType");
@@ -28,11 +29,11 @@ const MobileNav = () => {
 			<Sheet>
 				<SheetTrigger asChild>
 					<Image
-						src={user?.imageUrl || "/images/defaultProfile.png"}
+						src={currentUser?.photo || "/images/defaultProfile.png"}
 						alt="Profile"
 						width={1000}
 						height={1000}
-						className="rounded-full w-10 h-10 mx-auto cursor-pointer hoverScaleEffect"
+						className="rounded-full w-11 h-11 object-cover mx-auto cursor-pointer hoverScaleEffect"
 					/>
 				</SheetTrigger>
 				<SheetContent
@@ -43,19 +44,20 @@ const MobileNav = () => {
 						className={`flex gap-4 items-center rounded-lg   lg:px-2 justify-start  `}
 					>
 						<Image
-							src={user?.imageUrl || "/images/defaultProfile.png"}
+							src={currentUser?.photo || "/images/defaultProfile.png"}
 							alt="Profile"
-							width={24}
-							height={24}
+							width={1000}
+							height={1000}
 							className="rounded-full w-full max-w-[56px]"
 						/>
 						<div className="flex flex-col items-start justify-center text-white">
 							<span className="text-lg capitalize">
-								{user?.fullName || user?.username}
+								{currentUser?.firstName + " " + currentUser?.lastName ||
+									currentUser?.username}
 							</span>
 							<span className="text-sm text-green-1">
-								{user?.primaryPhoneNumber?.phoneNumber ||
-									`@${user?.username} || "Authenticate"`}
+								{currentUser?.phone ||
+									`@${currentUser?.username} || "Authenticate"`}
 							</span>
 						</div>
 					</div>

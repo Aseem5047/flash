@@ -1,14 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import {
 	Form,
 	FormControl,
-	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
@@ -17,20 +16,22 @@ import {
 import { Input } from "@/components/ui/input";
 
 import { updateUser } from "@/lib/actions/client.actions";
-import { UpdateUserParams } from "@/types";
+import { UpdateCreatorParams, UpdateUserParams } from "@/types";
 import { useUser } from "@clerk/nextjs";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { editProfileFormSchema } from "@/lib/validator";
 import { Textarea } from "../ui/textarea";
 import axios from "axios";
 import { useToast } from "../ui/use-toast";
 import FileUploader from "../shared/FileUploader";
+import { updateCreatorUser } from "@/lib/actions/creator.actions";
 
 export type EditProfileProps = {
 	userData: UpdateUserParams;
 	setUserData: any;
 	initialState: UpdateUserParams;
-	setEditData: any;
+	setEditData: React.Dispatch<React.SetStateAction<boolean>>;
+	userType: string | null;
 };
 
 const EditProfile = ({
@@ -38,10 +39,12 @@ const EditProfile = ({
 	setUserData,
 	initialState,
 	setEditData,
+	userType,
 }: EditProfileProps) => {
 	const { user } = useUser();
 	const userId = user?.id;
 	const { toast } = useToast();
+	const [isChanged, setIsChanged] = useState(false); // State to track if any changes are made
 
 	// 1. Define your form.
 	const form = useForm<z.infer<typeof editProfileFormSchema>>({
@@ -54,6 +57,20 @@ const EditProfile = ({
 			bio: userData.bio,
 		},
 	});
+
+	// Watch form values to detect changes
+	const watchedValues = useWatch({ control: form.control });
+
+	useEffect(() => {
+		const hasChanged =
+			watchedValues.firstName !== initialState.firstName ||
+			watchedValues.lastName !== initialState.lastName ||
+			watchedValues.username !== initialState.username ||
+			watchedValues.photo !== initialState.photo ||
+			watchedValues.bio !== initialState.bio;
+
+		setIsChanged(hasChanged);
+	}, [watchedValues, initialState]);
 
 	// Utility function to get updated value or fallback to existing value
 	const getUpdatedValue = (
@@ -69,7 +86,7 @@ const EditProfile = ({
 	// 2. Define a submit handler.
 	async function onSubmit(values: z.infer<typeof editProfileFormSchema>) {
 		try {
-			const updatedValues = {
+			const commonValues = {
 				firstName: getUpdatedValue(
 					values.firstName,
 					initialState.firstName,
@@ -85,38 +102,61 @@ const EditProfile = ({
 					initialState.username,
 					userData.username
 				),
+				bio: getBio(values.bio || "", userData.bio || ""),
 				photo: values.photo,
-				bio: getBio(values.bio, userData.bio),
 			};
 
-			console.log(values.photo);
+			let response;
+			let newUserDetails;
 
-			const response = await axios.post("/api/update-user", updatedValues);
-			const updatedUser = response.data.updatedUser;
+			if (userType === "creator") {
+				const updatedCreatorValues = { ...commonValues };
+				response = await updateCreatorUser(
+					userData.id!,
+					updatedCreatorValues as UpdateCreatorParams
+				);
+				console.log("Creator response:", response);
+				const updatedUser = response.updatedUser;
 
-			console.log("updatedUser ... ", updatedUser);
+				newUserDetails = {
+					...userData,
+					fullName: `${updatedUser.firstName} ${updatedUser.lastName}`,
+					firstName: updatedUser.firstName,
+					lastName: updatedUser.lastName,
+					username: updatedUser.username,
+					photo: updatedUser.photo,
+					bio: updatedUser.bio,
+				};
+			} else {
+				const updatedValues = {
+					...commonValues,
+					userType: userData.role,
+				};
+				response = await axios.post("/api/update-user", updatedValues);
+				const updatedUser = response.data.updatedUser;
+				console.log("User response:", updatedUser);
 
-			const newUserDetails = {
-				...userData,
-				fullName: `${updatedUser.firstName} ${updatedUser.lastName}`,
-				firstName: updatedUser.firstName,
-				lastName: updatedUser.lastName,
-				username: updatedUser.username,
-				bio: updatedUser.unsafeMetadata.bio,
-			};
-
-			await updateUser(String(userId), newUserDetails);
+				newUserDetails = {
+					...userData,
+					fullName: `${updatedUser.firstName} ${updatedUser.lastName}`,
+					firstName: updatedUser.firstName,
+					lastName: updatedUser.lastName,
+					username: updatedUser.username,
+					photo: updatedUser.unsafeMetadata.photo,
+					bio: updatedUser.unsafeMetadata.bio,
+				};
+			}
 
 			setUserData(newUserDetails);
 
 			toast({
 				title: "Details Edited Successfully",
-				description: "Changes are now visible on your profile section ...",
+				description: "Changes are now visible on your profile section...",
 			});
 
-			setEditData((prev: boolean) => !prev);
+			setEditData((prev) => !prev);
 		} catch (error) {
-			console.log(error);
+			console.error("Error updating user details:", error);
 			toast({
 				variant: "destructive",
 				title: "Unable to Edit Details",
@@ -136,7 +176,6 @@ const EditProfile = ({
 					name="photo"
 					render={({ field }) => (
 						<FormItem className="w-full">
-							{/* <FormLabel className="font-normal">Profile Image</FormLabel> */}
 							<FormControl>
 								<FileUploader
 									fieldChange={field.onChange}
@@ -161,7 +200,6 @@ const EditProfile = ({
 									className="input-field"
 								/>
 							</FormControl>
-
 							<FormMessage />
 						</FormItem>
 					)}
@@ -179,7 +217,6 @@ const EditProfile = ({
 									className="input-field"
 								/>
 							</FormControl>
-
 							<FormMessage />
 						</FormItem>
 					)}
@@ -197,7 +234,6 @@ const EditProfile = ({
 									className="input-field"
 								/>
 							</FormControl>
-
 							<FormMessage />
 						</FormItem>
 					)}
@@ -218,20 +254,19 @@ const EditProfile = ({
 									{...field}
 								/>
 							</FormControl>
-							{/* <FormDescription>
-								Your bio will be edited to the support your profile.
-							</FormDescription> */}
 							<FormMessage />
 						</FormItem>
 					)}
 				/>
 
-				<Button
-					className="bg-green-1 hover:opacity-80 w-3/4 mx-auto text-white"
-					type="submit"
-				>
-					Update Details
-				</Button>
+				{isChanged && (
+					<Button
+						className="bg-green-1 hover:opacity-80 w-3/4 mx-auto text-white"
+						type="submit"
+					>
+						Update Details
+					</Button>
+				)}
 			</form>
 		</Form>
 	);

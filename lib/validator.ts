@@ -8,7 +8,8 @@ export const editProfileFormSchema = z.object({
 	bio: z
 		.string()
 		.min(3, "Description must be at least 3 characters")
-		.max(400, "Description must be less than 400 characters"),
+		.max(400, "Description must be less than 400 characters")
+		.optional(),
 });
 
 export const enterAmountSchema = z.object({

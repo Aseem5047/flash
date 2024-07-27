@@ -41,7 +41,12 @@ export const WalletBalanceProvider = ({
 
 	const { user, isLoaded } = useUser();
 
-	let isCreator = (user?.publicMetadata?.role as string) === "creator";
+	const storedUserType = localStorage.getItem("userType");
+	const userType = storedUserType ? storedUserType : null;
+
+	let isCreator =
+		userType === "creator" ||
+		(user?.publicMetadata?.role as string) === "creator";
 	let userId = user?.publicMetadata?.userId as string;
 
 	const fetchCurrentUser = async () => {

@@ -74,7 +74,7 @@ export async function updateCreatorUser(
 			throw new Error("User not found"); // Throw error if user is not found
 		}
 
-		return JSON.parse(JSON.stringify(updatedUser));
+		return JSON.parse(JSON.stringify({ updatedUser }));
 	} catch (error) {
 		console.error("Error updating user:", error); // Log the error
 		throw new Error("User update failed"); // Throw the error to be caught by the caller
@@ -87,9 +87,21 @@ export async function updateCreatorUserUsingClerk(
 ) {
 	try {
 		await connectToDatabase();
-		const updatedUser = await Creator.findByIdAndUpdate(clerkId, user, {
+
+		let updatedUser = await Creator.findByIdAndUpdate(clerkId, user, {
 			new: true,
 		});
+
+		if (!updatedUser && user.username) {
+			// Attempt to find and update the user by username if clerkId update failed
+			const existingUser = await Creator.findOneAndUpdate(
+				{ username: user.username },
+				user,
+				{ new: true }
+			);
+
+			updatedUser = existingUser;
+		}
 
 		if (!updatedUser) {
 			throw new Error("User not found"); // Throw error if user is not found

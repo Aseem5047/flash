@@ -17,7 +17,6 @@ import {
 
 import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import { useRouter } from "next/navigation";
-import { useToast } from "../ui/use-toast";
 
 const Navbar = () => {
 	const [isMounted, setIsMounted] = useState(false);
