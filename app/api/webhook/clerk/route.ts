@@ -82,7 +82,7 @@ export async function POST(req: Request) {
 	let userType: string;
 	try {
 		const user = await clerkClient.users.getUser(evt.data.id as string);
-		userType = String(user.unsafeMetadata.userType || "client");
+		userType = String(user.unsafeMetadata.userType || user.publicMetadata.role || "client");
 	} catch (err) {
 		console.error("Error fetching user metadata:", err);
 		userType = "client";

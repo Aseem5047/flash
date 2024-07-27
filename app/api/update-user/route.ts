@@ -5,14 +5,14 @@ export async function POST(req: NextRequest) {
 	const { userId } = getAuth(req);
 	if (!userId) return NextResponse.redirect("/sign-in");
 
-	const { firstName, lastName, username, bio } = await req.json();
+	const { firstName, lastName, username, bio, photo } = await req.json();
 
-	// Update user attributes
+	// Update user attributes including the profile image
 	const updatedUser = await clerkClient.users.updateUser(userId, {
 		firstName,
 		lastName,
 		username,
-		unsafeMetadata: { bio },
+		unsafeMetadata: { bio, photo },
 	});
 
 	return NextResponse.json({ updatedUser });

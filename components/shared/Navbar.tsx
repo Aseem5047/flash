@@ -6,14 +6,34 @@ import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import MobileNav from "./MobileNav";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+
 import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
+import { useRouter } from "next/navigation";
 
 const Navbar = () => {
 	const [isMounted, setIsMounted] = useState(false);
+	const router = useRouter();
 
 	useEffect(() => {
 		setIsMounted(true);
 	}, []);
+
+	const handleRouting = (userType: string) => {
+		localStorage.setItem("userType", userType);
+		if (userType === "client") {
+			router.push("/sign-in");
+		} else if (userType === "creator") {
+			router.push("/sign-in?usertype=creator");
+		}
+	};
 	const theme = `5px 5px 0px 0px #000000`;
 	const { walletBalance } = useWalletBalanceContext();
 
@@ -57,13 +77,43 @@ const Navbar = () => {
 					</SignedIn>
 
 					<SignedOut>
-						<Button
-							asChild
-							className="text-white hover:opacity-80 bg-green-1"
-							size="lg"
-						>
-							<Link href="/sign-in">Login</Link>
-						</Button>
+						<Dialog>
+							<DialogTrigger>
+								<Button
+									asChild
+									className="text-white hover:opacity-80 bg-green-1"
+									size="lg"
+								>
+									Login
+								</Button>
+							</DialogTrigger>
+							<DialogContent>
+								<DialogHeader>
+									<DialogTitle>Please Select User Type?</DialogTitle>
+									<DialogDescription>
+										You'll be redirected to specific authentication page.
+									</DialogDescription>
+								</DialogHeader>
+								<div className="flex items-center gap-2">
+									<Button
+										asChild
+										className="text-white hover:opacity-80 bg-green-1"
+										size="lg"
+										onClick={() => handleRouting("client")}
+									>
+										Client
+									</Button>
+									<Button
+										asChild
+										className="text-white hover:opacity-80 bg-green-1"
+										size="lg"
+										onClick={() => handleRouting("creator")}
+									>
+										Creator
+									</Button>
+								</div>
+							</DialogContent>
+						</Dialog>
 					</SignedOut>
 				</>
 			)}

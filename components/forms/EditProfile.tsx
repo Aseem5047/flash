@@ -24,6 +24,7 @@ import { editProfileFormSchema } from "@/lib/validator";
 import { Textarea } from "../ui/textarea";
 import axios from "axios";
 import { useToast } from "../ui/use-toast";
+import FileUploader from "../shared/FileUploader";
 
 export type EditProfileProps = {
 	userData: UpdateUserParams;
@@ -49,6 +50,7 @@ const EditProfile = ({
 			firstName: userData.firstName,
 			lastName: userData.lastName,
 			username: userData.username,
+			photo: userData.photo,
 			bio: userData.bio,
 		},
 	});
@@ -83,8 +85,11 @@ const EditProfile = ({
 					initialState.username,
 					userData.username
 				),
+				photo: values.photo,
 				bio: getBio(values.bio, userData.bio),
 			};
+
+			console.log(values.photo);
 
 			const response = await axios.post("/api/update-user", updatedValues);
 			const updatedUser = response.data.updatedUser;
@@ -126,6 +131,23 @@ const EditProfile = ({
 				onSubmit={form.handleSubmit(onSubmit)}
 				className="space-y-8 w-full flex flex-col items-center"
 			>
+				<FormField
+					control={form.control}
+					name="photo"
+					render={({ field }) => (
+						<FormItem className="w-full">
+							{/* <FormLabel className="font-normal">Profile Image</FormLabel> */}
+							<FormControl>
+								<FileUploader
+									fieldChange={field.onChange}
+									mediaUrl={userData?.photo}
+								/>
+							</FormControl>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+
 				<FormField
 					control={form.control}
 					name="firstName"
@@ -186,7 +208,7 @@ const EditProfile = ({
 					name="bio"
 					render={({ field }) => (
 						<FormItem className="w-full">
-							<FormLabel className="font-semibold">
+							<FormLabel className="font-normal">
 								{userData?.bio?.length === 0 ? "Add" : "Edit"} Description
 							</FormLabel>
 							<FormControl>
@@ -196,9 +218,9 @@ const EditProfile = ({
 									{...field}
 								/>
 							</FormControl>
-							<FormDescription>
+							{/* <FormDescription>
 								Your bio will be edited to the support your profile.
-							</FormDescription>
+							</FormDescription> */}
 							<FormMessage />
 						</FormItem>
 					)}
