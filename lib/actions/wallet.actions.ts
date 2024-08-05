@@ -11,7 +11,6 @@ export async function addMoney({ userId, userType, amount }: WalletParams) {
 		await connectToDatabase();
 
 		let user;
-		let referredBy;
 		if (userType === "Client") {
 			user = await Client.findById(userId);
 		} else if (userType === "Creator") {
@@ -151,6 +150,30 @@ export async function getTransactionsByUserId(
 	}
 }
 
+export async function getCreatorTransactionsByUserId(
+	userId: string,
+	page = 1
+	// limit = 10
+) {
+	try {
+		await connectToDatabase();
+		// const skip = (page - 1) * limit;
+
+		const transactions = await Transaction.find({ userId })
+			.sort({ createdAt: -1 })
+			// .skip(skip)
+			// .limit(limit)
+			.lean();
+
+		const totalTransactions = await Transaction.countDocuments({ userId });
+
+		return { transactions, totalTransactions };
+	} catch (error) {
+		console.error(error);
+		handleError(error);
+	}
+}
+
 export async function getTransactionsByType(type: "debit" | "credit") {
 	try {
 		await connectToDatabase();
@@ -192,6 +215,34 @@ export async function getTransactionsByUserIdAndType(
 	}
 }
 
+export async function getCreatorTransactionsByUserIdAndType(
+	userId: string,
+	type: "debit" | "credit",
+	page = 1
+	// limit = 10
+) {
+	try {
+		await connectToDatabase();
+		// const skip = (page - 1) * limit;
+
+		const transactions = await Transaction.find({ userId, type })
+			.sort({ createdAt: -1 })
+			// .skip(skip)
+			// .limit(limit)
+			.lean();
+
+		const totalTransactions = await Transaction.countDocuments({
+			userId,
+			type,
+		});
+
+		return { transactions, totalTransactions };
+	} catch (error) {
+		console.error(error);
+		handleError(error);
+	}
+}
+
 export async function getAllTransactionsByUserId(userId: string) {
 	try {
 		await connectToDatabase();
@@ -213,6 +264,35 @@ export async function getUsersTransactionsByType(
 		await connectToDatabase();
 
 		const transactions = await Transaction.find({ userId, type })
+			.sort({ createdAt: -1 })
+			.lean();
+
+		return { transactions };
+	} catch (error) {
+		console.error(error);
+		handleError(error);
+	}
+}
+
+export async function getTransactionsByUserIdAndDate(
+	userId: string,
+	date: string
+) {
+	try {
+		await connectToDatabase();
+
+		// Convert the provided date string to a Date object
+		const targetDate = new Date(date);
+		const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
+		const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
+
+		const transactions = await Transaction.find({
+			userId,
+			createdAt: {
+				$gte: startOfDay,
+				$lte: endOfDay,
+			},
+		})
 			.sort({ createdAt: -1 })
 			.lean();
 

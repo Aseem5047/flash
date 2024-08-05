@@ -7,17 +7,14 @@ import { useUser } from "@clerk/nextjs";
 import { Cursor, Typewriter } from "react-simple-typewriter";
 import Image from "next/image";
 import EditProfile from "@/components/forms/EditProfile";
-import Loader from "@/components/shared/Loader";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
-import PostLoader from "@/components/shared/PostLoader";
 import SinglePostLoader from "@/components/shared/SinglePostLoader";
 
 const UserProfilePage = () => {
 	const { user, isLoaded } = useUser();
 	const { currentUser, userType, refreshCurrentUser } =
 		useCurrentUsersContext();
-
-	const initialState: UpdateUserParams = {
+	const getInitialState = (): UpdateUserParams => ({
 		id: currentUser?._id || "",
 		fullName:
 			(currentUser?.firstName || "") +
@@ -28,27 +25,23 @@ const UserProfilePage = () => {
 		username: currentUser?.username || "guest",
 		phone: currentUser?.phone || "",
 		photo: currentUser?.photo || "/images/defaultProfile.png",
-		bio: currentUser?.bio || "Fetching Profile Details",
+		bio: currentUser?.bio || "",
 		role: userType || "client",
-	};
-	const [userData, setUserData] = useState<UpdateUserParams>(initialState);
+		gender: currentUser?.gender || "",
+		dob: currentUser?.dob || "",
+		creatorId: currentUser?.creatorId || "",
+	});
+
+	const [userData, setUserData] = useState<UpdateUserParams>(getInitialState);
+	const [initialState, setInitialState] =
+		useState<UpdateUserParams>(getInitialState);
 	const [editData, setEditData] = useState(false);
-	const [showFullDesc, setShowFullDesc] = useState(false);
 
 	useEffect(() => {
 		if (isLoaded && user && currentUser) {
-			setUserData({
-				id: currentUser?._id,
-				fullName:
-					(currentUser?.firstName || "") + " " + (currentUser?.lastName || ""),
-				firstName: currentUser?.firstName || "",
-				lastName: currentUser?.lastName || "",
-				username: currentUser?.username || "",
-				phone: currentUser?.phone || "",
-				photo: currentUser?.photo || "/images/defaultProfile.png",
-				bio: currentUser?.bio || "",
-				role: userType || "client",
-			});
+			const updatedInitialState = getInitialState();
+			setUserData(updatedInitialState);
+			setInitialState(updatedInitialState);
 		}
 	}, [isLoaded, user, userType, currentUser]);
 
@@ -69,14 +62,14 @@ const UserProfilePage = () => {
 				<>
 					{/* Profile Info */}
 					<div
-						className={`p-4 flex flex-col md:flex-row items-center justify-start w-full gap-10 ${
+						className={`animate-enterFromTop p-4 flex flex-col md:flex-row items-center justify-start w-full gap-10 ${
 							editData ? "2xl:max-w-[69%]" : "2xl:max-w-[75%]"
 						}
 					`}
 					>
 						{/* user profile picture */}
 						{!editData && (
-							<div className="animate-enterFromTop flex items-center justify-center w-1/3 pt-2 ">
+							<div className="flex items-center justify-center md:w-1/3 pt-2 ">
 								<Image
 									src={userData.photo}
 									alt="profile picture"
@@ -97,7 +90,7 @@ const UserProfilePage = () => {
 											: userData.fullName}
 									</span>
 									<span className="text-sm text-green-1 font-semibold">
-										@{userData?.username}
+										@ {userData?.username}
 									</span>
 								</div>
 
@@ -111,16 +104,9 @@ const UserProfilePage = () => {
 
 							{/* user bio */}
 							<p
-								className={`font-semibold pt-4 cursor-pointe w-full text-sm no-scrollbar cursor-pointer text-start ${
-									showFullDesc
-										? "overflow-scroll max-h-[120px]"
-										: "text-ellipsis overflow-hidden whitespace-nowrap max-w-[600px]"
-								}`}
-								onClick={() =>
-									userData?.bio
-										? setShowFullDesc((prev) => !prev)
-										: setEditData((prev) => !prev)
-								}
+								className={`font-semibold pt-4 cursor-pointe w-full text-sm no-scrollbar cursor-pointer text-start  text-ellipsis overflow-hidden whitespace-wrap md:whitespace-nowrap max-w-full
+								`}
+								onClick={() => setEditData((prev) => !prev)}
 							>
 								{userData?.bio?.length === 0 || userData?.bio === "undefined"
 									? "Add Description for your Profile and Account"
@@ -144,7 +130,7 @@ const UserProfilePage = () => {
 					)}
 
 					{/* typewriter effect */}
-					<h1 className="text-3xl lg:text-4xl font-semibold my-7">
+					<h1 className="text-3xl lg:text-4xl font-semibold my-7 text-center">
 						<Typewriter
 							words={[
 								`Hi There ${userData.username}`,

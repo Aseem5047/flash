@@ -21,8 +21,6 @@ const HomePage = () => {
 	const storedUserType = localStorage.getItem("userType");
 	const userType = storedUserType ? storedUserType : null;
 
-	console.log(user?.publicMetadata?.role, userType);
-
 	useEffect(() => {
 		// If userType is not set and user role is available, set it in localStorage
 		if (!userType && user?.publicMetadata?.role) {
@@ -51,7 +49,7 @@ const HomePage = () => {
 		userType === "creator" || user?.publicMetadata?.role === "creator";
 
 	return (
-		<main className="flex size-full flex-col gap-5 md:pb-14">
+		<main className="flex size-full flex-col gap-5">
 			{!shouldShowCreators ? (
 				<Suspense fallback={<PostLoader count={6} />}>
 					{loading ? (
@@ -67,22 +65,25 @@ const HomePage = () => {
 						</div>
 					) : (
 						<section className="animate-in grid grid-cols-1 xl:grid-cols-2 gap-10 items-center 3xl:items-start justify-start h-fit pb-6">
-							{creators.map((creator, index) => (
-								<Link
-									href={`/expert/${creator.username}/${creator._id}`}
-									className="min-w-full transition-all duration-500 hover:scale-95"
-									key={creator._id || index}
-								>
-									<CreatorDetails creator={creator} />
-								</Link>
-							))}
+							{creators.map(
+								(creator, index) =>
+									parseInt(creator.audioRate, 10) !== 0 &&
+									parseInt(creator.videoRate, 10) !== 0 &&
+									parseInt(creator.chatRate, 10) !== 0 && (
+										<Link
+											href={`/expert/${creator.username}/${creator._id}`}
+											className="min-w-full transition-all duration-500 hover:scale-95"
+											key={creator._id || index}
+										>
+											<CreatorDetails creator={creator} />
+										</Link>
+									)
+							)}
 						</section>
 					)}
 				</Suspense>
 			) : (
-				<section className="size-full flex flex-col items-center justify-center">
-					<CreatorHome />
-				</section>
+				<CreatorHome />
 			)}
 		</main>
 	);

@@ -14,6 +14,9 @@ const CreatorSchema = new Schema(
 		videoRate: { type: String, required: true },
 		audioRate: { type: String, required: true },
 		chatRate: { type: String, required: true },
+		videoAllowed: { type: Boolean, default: true },
+		audioAllowed: { type: Boolean, default: true },
+		chatAllowed: { type: Boolean, default: true },
 		gender: { type: String },
 		dob: { type: String },
 		bio: { type: String },
@@ -22,6 +25,7 @@ const CreatorSchema = new Schema(
 		referralId: { type: String, unique: true },
 		referredBy: { type: String, default: null },
 		referralAmount: { type: Number, default: 0 },
+		creatorId: { type: String, unique: true },
 	},
 	{
 		timestamps: true,

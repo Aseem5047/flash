@@ -13,6 +13,14 @@ export async function createCreatorUser(user: CreateCreatorParams) {
 	try {
 		await connectToDatabase();
 
+		// Check for existing user with the same email or username
+		const existingUser = await Creator.findOne({
+			$or: [{ username: user.username }],
+		});
+		if (existingUser) {
+			return { error: "User with the same username already exists" };
+		}
+
 		const newUser = await Creator.create(user);
 		// console.log(newUser);
 		return JSON.parse(JSON.stringify(newUser));
@@ -66,6 +74,18 @@ export async function updateCreatorUser(
 ) {
 	try {
 		await connectToDatabase();
+
+		// Check for existing user with the same email or username
+		// const existingUser = await Creator.findOne({
+		// 	$or: [{ username: user.username }],
+		// });
+
+		// if (existingUser) {
+		// 	return { error: "User with the same username already exists" };
+		// }
+
+		console.log("Trying to update user");
+
 		const updatedUser = await Creator.findByIdAndUpdate(userId, user, {
 			new: true,
 		});

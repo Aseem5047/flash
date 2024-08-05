@@ -12,6 +12,13 @@ import Client from "../database/models/client.model";
 export async function createUser(user: CreateUserParams) {
 	try {
 		await connectToDatabase();
+		// Check for existing user with the same email or username
+		const existingUser = await Client.findOne({
+			$or: [{ username: user.username }],
+		});
+		if (existingUser) {
+			return { error: "User with the same username already exists" };
+		}
 		const newUser = await Client.create(user);
 		// console.log(newUser);
 		return JSON.parse(JSON.stringify(newUser));
@@ -51,6 +58,16 @@ export async function updateUser(clerkId: string, user: UpdateUserParams) {
 	try {
 		await connectToDatabase();
 
+		console.log("Updating user");
+
+		// Check for existing user with the same email or username
+		// const existingUser = await Client.findOne({
+		// 	$or: [{ username: user.username }],
+		// });
+		// if (existingUser) {
+		// 	return { error: "User with the same username already exists" };
+		// }
+
 		// First attempt to find and update by clerkId
 		let updatedUser = await Client.findOneAndUpdate({ clerkId }, user, {
 			new: true,
@@ -69,10 +86,8 @@ export async function updateUser(clerkId: string, user: UpdateUserParams) {
 			);
 		}
 
-		console.log(updatedUser);
-
 		if (!updatedUser) throw new Error("User update failed");
-		return JSON.parse(JSON.stringify(updatedUser));
+		return JSON.parse(JSON.stringify({ updatedUser }));
 	} catch (error) {
 		console.error("Error updating user:", error);
 		throw error; // Propagate error for further handling
