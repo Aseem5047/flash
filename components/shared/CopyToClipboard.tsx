@@ -19,24 +19,26 @@ const CopyToClipboard = ({ link }: { link: string }) => {
 	};
 	return (
 		<div className="flex justify-between items-center w-full gap-2 p-1">
-			<div className="relative flex  border w-full max-w-[90%] xl:max-w-[95%] rounded-full p-2 bg-white justify-start items-center shadow-sm">
+			<div className="relative flex border w-full rounded-full p-2 bg-white justify-between items-center shadow-sm gap-2">
 				<Image
 					src={"/link.svg"}
 					width={24}
 					height={24}
 					alt="link"
-					className="w-auto h-auto "
+					className="w-5 h-5"
 				/>
-				<p className="pl-2 text-ellipsis w-full min-w-0 max-w-[85%] overflow-hidden">
-					{link}
-				</p>
+				<div className="grid items-start justify-start overflow-x-hidden w-full ">
+					<p className="text-ellipsis whitespace-nowrap min-w-0 overflow-hidden">
+						{link}
+					</p>
+				</div>
 
 				<Image
 					src={"/copy.svg"}
 					width={24}
 					height={24}
 					alt="copy"
-					className="w-10 h-10 p-2 rounded-full absolute right-0 hover:bg-gray-100 cursor-pointer"
+					className="w-10 h-10 p-2 rounded-full hover:bg-gray-100 cursor-pointer"
 					onClick={() => copyToClipboard(link)}
 				/>
 			</div>

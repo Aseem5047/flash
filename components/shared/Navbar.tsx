@@ -6,14 +6,6 @@ import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import MobileNav from "./MobileNav";
-import {
-	Sheet,
-	SheetContent,
-	SheetDescription,
-	SheetHeader,
-	SheetTitle,
-	SheetTrigger,
-} from "@/components/ui/sheet";
 
 import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import { useRouter } from "next/navigation";
@@ -26,14 +18,10 @@ const Navbar = () => {
 		setIsMounted(true);
 	}, []);
 
-	const handleRouting = (userType: string) => {
-		localStorage.setItem("userType", userType);
+	const handleRouting = () => {
+		localStorage.setItem("userType", "client");
 
-		if (userType === "client") {
-			router.replace("/sign-in");
-		} else if (userType === "creator") {
-			router.replace("/sign-in?usertype=creator");
-		}
+		router.replace("/sign-in");
 	};
 	const theme = `5px 5px 0px 0px #000000`;
 	const { walletBalance } = useWalletBalanceContext();
@@ -78,43 +66,13 @@ const Navbar = () => {
 					</SignedIn>
 
 					<SignedOut>
-						<Sheet>
-							<SheetTrigger asChild>
-								<Button
-									className="animate-enterFromRight lg:animate-enterFromBottom bg-green-1 transition-all duration-300 hover:bg-green-700 text-white font-semibold w-fit mr-1 rounded-md"
-									size="lg"
-								>
-									Login
-								</Button>
-							</SheetTrigger>
-							<SheetContent
-								side="bottom"
-								className="flex flex-col items-start justify-center border-none rounded-t-xl px-10 pt-7 bg-white max-h-fit w-full sm:max-w-[444px] mx-auto"
-							>
-								<SheetHeader>
-									<SheetTitle>Please Select User Type?</SheetTitle>
-									<SheetDescription>
-										You'll be redirected to specific authentication page.
-									</SheetDescription>
-								</SheetHeader>
-								<div className="flex items-center justify-start w-full gap-2 pt-4">
-									<Button
-										className="text-white hoverScaleEffect bg-green-1"
-										size="lg"
-										onClick={() => handleRouting("client")}
-									>
-										Client
-									</Button>
-									<Button
-										className="text-white hoverScaleEffect bg-green-1"
-										size="lg"
-										onClick={() => handleRouting("creator")}
-									>
-										Creator
-									</Button>
-								</div>
-							</SheetContent>
-						</Sheet>
+						<Button
+							className="animate-enterFromRight lg:animate-enterFromBottom bg-green-1 transition-all duration-300 hover:bg-green-700 text-white font-semibold w-fit mr-1 rounded-md"
+							size="lg"
+							onClick={handleRouting}
+						>
+							Login
+						</Button>
 					</SignedOut>
 				</>
 			)}

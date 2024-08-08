@@ -64,7 +64,6 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		const creatorRef = doc(db, "services", creator._id);
 		const unsubscribe = onSnapshot(creatorRef, (doc) => {
 			const data = doc.data();
-			console.log(data);
 
 			if (data) {
 				let prices = data.prices;
@@ -144,6 +143,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 
 	const handleCallAccepted = async (call: Call) => {
 		toast({
+			variant: "destructive",
 			title: "Call Accepted",
 			description: "The call has been accepted. Redirecting to meeting...",
 		});
@@ -154,6 +154,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 
 	const handleCallRejected = () => {
 		toast({
+			variant: "destructive",
 			title: "Call Rejected",
 			description: "The call was rejected. Please try again later.",
 		});
@@ -182,6 +183,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 						name: String(creator.username),
 						type: "expert",
 						image: creator.photo || "/images/defaultProfile.png",
+						phone: creator.phone,
 					},
 					role: "call_member",
 				},
@@ -192,6 +194,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 						name: String(user.username),
 						type: "client",
 						image: (user?.unsafeMetadata?.photo as string) || user.imageUrl,
+						phone: user.primaryPhoneNumber,
 					},
 					role: "admin",
 				},
@@ -215,6 +218,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			// Check if maxCallDuration is less than 5 minutes (300 seconds)
 			if (maxCallDuration < 300) {
 				toast({
+					variant: "destructive",
 					title: "Insufficient Balance",
 					description: "Your balance is below the minimum amount.",
 				});

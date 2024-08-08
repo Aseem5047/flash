@@ -163,7 +163,7 @@ const Withdraw: React.FC = () => {
 				{/* Transaction History Section */}
 				<section className="w-full px-4 pb-5">
 					<div className="flex flex-col items-start justify-start gap-2 w-full h-fit">
-						<h2 className="text-gray-500 text-sm pt-3 font-normal leading-7">
+						<h2 className="text-gray-500 text-xl pt-7 pb-2 font-normal leading-7">
 							Transaction History
 						</h2>
 						<div className="flex space-x-2 text-xs font-bold leading-4 w-fit">
@@ -207,13 +207,16 @@ const Withdraw: React.FC = () => {
 									{transactions.get(date)?.map((transaction, index, arr) => (
 										<div
 											key={transaction._id}
-											className={`flex justify-between items-center py-4 left-0 dark:bg-gray-800 ${
+											className={`flex justify-between items-start lg:items-center py-4 left-0 dark:bg-gray-800 ${
 												index < arr.length - 1 ? "border-b-2" : ""
 											}`}
 										>
-											<div className="flex flex-col items-start justify-center gap-2">
-												<p className="font-normal text-sm leading-4">
-													Transaction ID <strong>{transaction._id}</strong>
+											<div className="flex flex-wrap flex-col items-start justify-center gap-2">
+												<p className="font-normal text-xs leading-4">
+													Transaction ID{" "}
+													<span className="text-sm font-semibold">
+														{transaction._id}
+													</span>
 												</p>
 												<p className=" text-gray-400 font-normal text-xs leading-4">
 													{new Date(transaction.createdAt).toLocaleTimeString()}

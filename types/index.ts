@@ -143,7 +143,7 @@ export type Client = {
 	_id: string;
 	username: string;
 	phone: string;
-	photo?: string; // Optional field if you have profile images
+	photo?: string;
 	role?: string;
 };
 
@@ -153,6 +153,16 @@ export type CreatorFeedback = {
 	feedback: string;
 	showFeedback: boolean;
 	createdAt: Date;
+	position?: number;
+};
+
+export type UserFeedback = {
+	clientId: Client;
+	rating: number;
+	feedback: string;
+	createdAt: Date;
+	showFeedback?: boolean;
+	position?: number;
 };
 
 // Call Params
@@ -163,6 +173,7 @@ export type MemberRequest = {
 		name: string;
 		type: string;
 		image: string;
+		phone?: string;
 	};
 	role: string;
 };
@@ -176,6 +187,7 @@ export type RegisterCallParams = {
 	startedAt?: Date;
 	endedAt?: Date;
 	duration?: string;
+	feedbacks?: CreatorFeedback[];
 };
 
 export type RegisterChatParams = {

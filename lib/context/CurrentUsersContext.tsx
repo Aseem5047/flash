@@ -1,4 +1,4 @@
-import { useUser } from "@clerk/nextjs";
+import { useClerk, useUser } from "@clerk/nextjs";
 import {
 	ReactNode,
 	createContext,
@@ -9,6 +9,7 @@ import {
 import { getCreatorById } from "../actions/creator.actions";
 import { getUserById } from "../actions/client.actions";
 import { clientUser, creatorUser } from "@/types";
+import { useToast } from "@/components/ui/use-toast";
 
 // Define the shape of the context value
 interface CurrentUsersContextValue {
@@ -50,6 +51,14 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	const userType = storedUserType ? storedUserType : null;
 	const [clientUser, setClientUser] = useState<clientUser | null>(null);
 	const [creatorUser, setCreatorUser] = useState<creatorUser | null>(null);
+	const { toast } = useToast();
+	const { signOut } = useClerk();
+	const handleSignout = () => {
+		localStorage.removeItem("userType");
+		setClientUser(null);
+		setCreatorUser(null);
+		signOut({ redirectUrl: "/" });
+	};
 
 	const fetchCurrentUser = async () => {
 		try {
@@ -69,6 +78,12 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 			}
 		} catch (error) {
 			console.error("Error fetching current user:", error);
+			toast({
+				variant: "destructive",
+				title: "User Not Found",
+				description: "Authenticate Again ...",
+			});
+			handleSignout();
 		}
 	};
 

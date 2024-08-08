@@ -232,7 +232,7 @@ const CreatorHome = () => {
 	return (
 		<>
 			<div
-				className={`relative min-h-full w-full 2xl:w-[90%] mx-auto flex flex-col pt-4 rounded-t-xl`}
+				className={`animate-enterFromBottom relative min-h-full w-full 2xl:w-[90%] mx-auto flex flex-col pt-4 rounded-t-xl`}
 				style={{ backgroundColor: theme }}
 			>
 				<div className="flex justify-end p-2 absolute top-2 right-2">
@@ -264,6 +264,7 @@ const CreatorHome = () => {
 				</div>
 				<div className="flex-grow flex flex-col gap-4 bg-gray-50 rounded-t-3xl  p-4">
 					<CopyToClipboard link={creatorLink} />
+
 					<section className="flex flex-row justify-between border rounded-lg bg-white p-2 shadow-sm">
 						<div className="flex flex-row pl-2 gap-3">
 							<Image
