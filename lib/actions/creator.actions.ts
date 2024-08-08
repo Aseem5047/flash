@@ -15,7 +15,7 @@ export async function createCreatorUser(user: CreateCreatorParams) {
 
 		// Check for existing user with the same email or username
 		const existingUser = await Creator.findOne({
-			$or: [{ username: user.username }],
+			$or: [{ username: user.username, phone: user.phone }],
 		});
 		if (existingUser) {
 			return { error: "User with the same username already exists" };

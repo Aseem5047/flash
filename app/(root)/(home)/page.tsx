@@ -4,8 +4,8 @@ import React, { useEffect, useState, Suspense, lazy } from "react";
 import Link from "next/link";
 import { getUsers } from "@/lib/actions/creator.actions";
 import { creatorUser } from "@/types";
-import { useUser } from "@clerk/nextjs";
 import CreatorHome from "@/components/creator/CreatorHome";
+import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 
 const CreatorDetails = lazy(
 	() => import("@/components/creator/CreatorDetails")
@@ -16,17 +16,9 @@ const HomePage = () => {
 	const [creators, setCreators] = useState<creatorUser[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(false);
-	const { user } = useUser();
-
-	const storedUserType = localStorage.getItem("userType");
-	const userType = storedUserType ? storedUserType : null;
+	const { userType } = useCurrentUsersContext();
 
 	useEffect(() => {
-		// If userType is not set and user role is available, set it in localStorage
-		if (!userType && user?.publicMetadata?.role) {
-			localStorage.setItem("userType", user.publicMetadata.role as string);
-		}
-
 		const getCreators = async () => {
 			try {
 				const response = await getUsers();
@@ -40,17 +32,14 @@ const HomePage = () => {
 		};
 
 		// Fetch creators if the user is not a creator
-		if (userType !== "creator" && user?.publicMetadata?.role !== "creator") {
+		if (userType !== "creator") {
 			getCreators();
 		}
-	}, [user, userType]);
-
-	const shouldShowCreators =
-		userType === "creator" || user?.publicMetadata?.role === "creator";
+	}, [userType]);
 
 	return (
 		<main className="flex size-full flex-col gap-5">
-			{!shouldShowCreators ? (
+			{userType !== "creator" ? (
 				<Suspense fallback={<PostLoader count={6} />}>
 					{loading ? (
 						<PostLoader count={6} />

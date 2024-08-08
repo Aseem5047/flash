@@ -1,6 +1,5 @@
 "use client";
 
-import { SignedIn, SignedOut } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
@@ -9,9 +8,11 @@ import MobileNav from "./MobileNav";
 
 import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import { useRouter } from "next/navigation";
+import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 
 const Navbar = () => {
 	const [isMounted, setIsMounted] = useState(false);
+	const { currentUser } = useCurrentUsersContext();
 	const router = useRouter();
 
 	useEffect(() => {
@@ -21,7 +22,7 @@ const Navbar = () => {
 	const handleRouting = () => {
 		localStorage.setItem("userType", "client");
 
-		router.replace("/sign-in");
+		router.replace("/authenticate");
 	};
 	const theme = `5px 5px 0px 0px #000000`;
 	const { walletBalance } = useWalletBalanceContext();
@@ -40,7 +41,7 @@ const Navbar = () => {
 
 			{isMounted && (
 				<>
-					<SignedIn>
+					{currentUser?._id ? (
 						<div className=" w-fit h-full flex-between gap-2 text-white">
 							<Link
 								href="/payment"
@@ -57,15 +58,14 @@ const Navbar = () => {
 									className="w-4 h-4 group-hover:text-white group-hover:invert"
 								/>
 								<span className="w-full text-xs whitespace-nowrap font-semibold group-hover:text-white">
-									Rs. {walletBalance.toFixed(2)}
+									{walletBalance >= 0
+										? `Rs. ${walletBalance.toFixed(2)}`
+										: "Updating..."}
 								</span>
 							</Link>
-							{/* <UserButton afterSignOutUrl="/sign-in" /> */}
 							<MobileNav />
 						</div>
-					</SignedIn>
-
-					<SignedOut>
+					) : (
 						<Button
 							className="animate-enterFromRight lg:animate-enterFromBottom bg-green-1 transition-all duration-300 hover:bg-green-700 text-white font-semibold w-fit mr-1 rounded-md"
 							size="lg"
@@ -73,7 +73,7 @@ const Navbar = () => {
 						>
 							Login
 						</Button>
-					</SignedOut>
+					)}
 				</>
 			)}
 		</nav>

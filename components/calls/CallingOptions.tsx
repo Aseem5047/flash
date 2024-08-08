@@ -274,7 +274,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			creatorId: creator._id,
 		});
 
-		if (!user) router.push("sign-in");
+		if (!user) router.push("/authenticate");
 		let maxCallDuration =
 			(walletBalance / parseInt(creator?.chatRate, 10)) * 60; // in seconds
 		maxCallDuration =
@@ -509,7 +509,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			});
 			router.push(`/meeting/${storedCallId}`);
 		} else {
-			router.replace("/sign-in");
+			router.replace("/authenticate");
 		}
 	};
 
