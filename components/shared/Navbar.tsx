@@ -34,8 +34,8 @@ const Navbar = () => {
 				/>
 			</Link>
 
-			{walletBalance >= 0 ? (
-				currentUser?._id ? (
+			{currentUser ? (
+				walletBalance >= 0 ? (
 					<div className=" w-fit h-full flex-between gap-2 text-white animate-enterFromRight">
 						<Link
 							href="/payment"
@@ -58,22 +58,22 @@ const Navbar = () => {
 						<MobileNav />
 					</div>
 				) : (
-					<Button
-						className="animate-enterFromRight lg:animate-enterFromBottom bg-green-1 transition-all duration-300 hover:bg-green-700 text-white font-semibold w-fit mr-1 rounded-md"
-						size="lg"
-						onClick={handleRouting}
-					>
-						Login
-					</Button>
+					<div className="w-full max-w-[10rem] space-y-3">
+						<div className="grid grid-cols-3 gap-4">
+							<div className="h-2 bg-gray-300 rounded col-span-2"></div>
+							<div className="h-2 bg-gray-300 rounded col-span-1"></div>
+						</div>
+						<div className="h-2 bg-gray-300 rounded"></div>
+					</div>
 				)
 			) : (
-				<div className="w-full max-w-[10rem] space-y-3">
-					<div className="grid grid-cols-3 gap-4">
-						<div className="h-2 bg-gray-300 rounded col-span-2"></div>
-						<div className="h-2 bg-gray-300 rounded col-span-1"></div>
-					</div>
-					<div className="h-2 bg-gray-300 rounded"></div>
-				</div>
+				<Button
+					className="animate-enterFromRight lg:animate-enterFromBottom bg-green-1 transition-all duration-300 hover:bg-green-700 text-white font-semibold w-fit mr-1 rounded-md"
+					size="lg"
+					onClick={handleRouting}
+				>
+					Login
+				</Button>
 			)}
 		</nav>
 	);
