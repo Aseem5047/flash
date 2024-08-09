@@ -20,6 +20,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "../ui/use-toast";
 import { CreateCreatorParams, CreateUserParams } from "@/types";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const formSchema = z.object({
 	phone: z
@@ -88,6 +90,25 @@ const AuthenticateViaOTP = ({ userType }: { userType: string }) => {
 		}
 	};
 
+	// managing single session authentication
+	const updateFirestoreAuthToken = async (token: string) => {
+		try {
+			const authTokenDocRef = doc(db, "authToken", phoneNumber);
+			const authTokenDoc = await getDoc(authTokenDocRef);
+			if (authTokenDoc.exists()) {
+				await updateDoc(authTokenDocRef, {
+					token,
+				});
+			} else {
+				await setDoc(authTokenDocRef, {
+					token,
+				});
+			}
+		} catch (error) {
+			console.error("Error updating Firestore token: ", error);
+		}
+	};
+
 	// Handle OTP submission
 	const handleOTPSubmit = async (values: z.infer<typeof FormSchemaOTP>) => {
 		setIsVerifyingOTP(true);
@@ -98,9 +119,13 @@ const AuthenticateViaOTP = ({ userType }: { userType: string }) => {
 				token: token,
 			});
 
+			let authToken = response.data.sessionToken;
+
 			// Save the auth token (with 7 days expiry) in localStorage
-			localStorage.setItem("authToken", response.data.sessionToken);
-			console.log("OTP verified and token saved:", response.data.sessionToken);
+			localStorage.setItem("authToken", authToken);
+			console.log("OTP verified and token saved:", authToken);
+
+			updateFirestoreAuthToken(authToken);
 
 			setVerificationSuccess(true); // Set success state
 

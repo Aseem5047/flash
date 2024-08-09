@@ -23,6 +23,7 @@ interface CurrentUsersContextValue {
 	setCreatorUser: (user: creatorUser | null) => void;
 	userType: string | null;
 	refreshCurrentUser: () => Promise<void>;
+	handleSignout: () => void;
 }
 
 // Create the context with a default value of null
@@ -168,6 +169,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		setCreatorUser,
 		userType,
 		refreshCurrentUser,
+		handleSignout,
 	};
 
 	return (
