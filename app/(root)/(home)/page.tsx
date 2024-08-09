@@ -54,20 +54,21 @@ const HomePage = () => {
 						</div>
 					) : (
 						<section className="animate-in grid grid-cols-1 xl:grid-cols-2 gap-10 items-center 3xl:items-start justify-start h-fit pb-6">
-							{creators.map(
-								(creator, index) =>
-									parseInt(creator.audioRate, 10) !== 0 &&
-									parseInt(creator.videoRate, 10) !== 0 &&
-									parseInt(creator.chatRate, 10) !== 0 && (
-										<Link
-											href={`/expert/${creator.username}/${creator._id}`}
-											className="min-w-full transition-all duration-500 hover:scale-95"
-											key={creator._id || index}
-										>
-											<CreatorDetails creator={creator} />
-										</Link>
-									)
-							)}
+							{creators &&
+								creators.map(
+									(creator, index) =>
+										parseInt(creator.audioRate, 10) !== 0 &&
+										parseInt(creator.videoRate, 10) !== 0 &&
+										parseInt(creator.chatRate, 10) !== 0 && (
+											<Link
+												href={`/expert/${creator.username}/${creator._id}`}
+												className="min-w-full transition-all duration-500 hover:scale-95"
+												key={creator._id || index}
+											>
+												<CreatorDetails creator={creator} />
+											</Link>
+										)
+								)}
 						</section>
 					)}
 				</Suspense>

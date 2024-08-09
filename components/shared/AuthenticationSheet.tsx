@@ -13,7 +13,7 @@ const AuthenticationSheet = ({
 		<section className="fixed w-screen h-screen m-auto z-50 bg-black/50 left-0 top-0 flex flex-col items-center justify-end md:justify-center">
 			<div className="flex relative items-center justify-center">
 				<Button
-					className="absolute top-2 right-2"
+					className="absolute top-2 right-2 z-50"
 					onClick={() => onOpenChange(false)}
 				>
 					<svg

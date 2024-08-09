@@ -233,7 +233,7 @@ const AuthenticateViaOTP = ({ userType }: { userType: string }) => {
 	};
 
 	return (
-		<section className="bg-[#F8F8F8] rounded-t-3xl md:rounded-xl flex flex-col items-center justify-center gap-4 px-8 pt-8 pb-2 shadow-lg w-screen md:w-full md:min-w-[24rem] md:max-w-sm mx-auto">
+		<section className="bg-[#F8F8F8] rounded-t-3xl md:rounded-xl flex flex-col items-center justify-center gap-4 px-8 pt-8 pb-2 shadow-lg w-screen md:w-full md:min-w-[24rem] md:max-w-sm mx-auto animate-enterFromBottom">
 			{!showOTP ? (
 				// SignUp form
 				<>
@@ -304,7 +304,7 @@ const AuthenticateViaOTP = ({ userType }: { userType: string }) => {
 					</Form>
 				</>
 			) : verificationSuccess ? (
-				<div className="flex flex-col items-center justify-center w-full md:min-w-[24rem] md:max-w-[24rem] h-full gap-4 py-7 ">
+				<div className="flex flex-col items-center justify-center w-full md:min-w-[24rem] md:max-w-[24rem] h-full gap-4 pt-7 pb-14">
 					{success}
 					<span className="font-semibold text-lg">Login Successfully</span>
 				</div>
