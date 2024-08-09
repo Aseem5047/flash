@@ -64,79 +64,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	const [userType, setUserType] = useState<string | null>(null);
 	const { toast } = useToast();
 
-	useEffect(() => {
-		// Access localStorage only on the client side
-		const storedUserType = localStorage.getItem("userType");
-		const authToken = localStorage.getItem("authToken");
-		const userId = localStorage.getItem("currentUserID");
-
-		setUserType(storedUserType);
-
-		const fetchCurrentUser = async () => {
-			try {
-				if (authToken && isTokenValid(authToken)) {
-					const decodedToken: any = jwt.decode(authToken);
-					const phoneNumber = decodedToken.phone;
-
-					// Fetch user details using phone number
-					const response = await axios.post("/api/v1/user/getUserByPhone", {
-						phone: phoneNumber,
-					});
-					const user = response.data;
-
-					if (user) {
-						if (storedUserType === "creator") {
-							setCreatorUser(user);
-							setClientUser(null);
-						} else {
-							setClientUser(user);
-							setCreatorUser(null);
-						}
-						localStorage.setItem(
-							"userType",
-							(user.userType as string) ?? "client"
-						);
-					} else {
-						console.error("User not found with phone number:", phoneNumber);
-					}
-				} else if (userId) {
-					const isCreator = storedUserType === "creator";
-
-					if (isCreator) {
-						const response = await getCreatorById(userId);
-						setCreatorUser(response);
-						setClientUser(null);
-					} else {
-						const response = await getUserById(userId);
-						setClientUser(response);
-						setCreatorUser(null);
-					}
-				} else {
-					toast({
-						variant: "destructive",
-						title: "User Not Found",
-						description: "Try Authenticating Again ...",
-					});
-					handleSignout();
-				}
-			} catch (error) {
-				console.error("Error fetching current user:", error);
-				toast({
-					variant: "destructive",
-					title: "User Not Found",
-					description: "Try Authenticating Again ...",
-				});
-				handleSignout();
-			}
-		};
-
-		if (authToken && !isTokenValid(authToken)) {
-			handleSignout();
-		} else {
-			fetchCurrentUser();
-		}
-	}, []);
-
+	// Function to handle user signout
 	const handleSignout = () => {
 		localStorage.removeItem("userType");
 		localStorage.removeItem("userID");
@@ -146,8 +74,84 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		// router.push("/authenticate");
 	};
 
+	// Function to fetch the current user
+	const fetchCurrentUser = async () => {
+		try {
+			const storedUserType = localStorage.getItem("userType");
+			const authToken = localStorage.getItem("authToken");
+			const userId = localStorage.getItem("currentUserID");
+
+			setUserType(storedUserType);
+
+			if (authToken && isTokenValid(authToken)) {
+				const decodedToken: any = jwt.decode(authToken);
+				const phoneNumber = decodedToken.phone;
+
+				// Fetch user details using phone number
+				const response = await axios.post("/api/v1/user/getUserByPhone", {
+					phone: phoneNumber,
+				});
+				const user = response.data;
+
+				if (user) {
+					if (storedUserType === "creator") {
+						setCreatorUser(user);
+						setClientUser(null);
+					} else {
+						setClientUser(user);
+						setCreatorUser(null);
+					}
+					localStorage.setItem(
+						"userType",
+						(user.userType as string) ?? "client"
+					);
+				} else {
+					console.error("User not found with phone number:", phoneNumber);
+				}
+			} else if (userId) {
+				const isCreator = storedUserType === "creator";
+
+				if (isCreator) {
+					const response = await getCreatorById(userId);
+					setCreatorUser(response);
+					setClientUser(null);
+				} else {
+					const response = await getUserById(userId);
+					setClientUser(response);
+					setCreatorUser(null);
+				}
+			} else {
+				toast({
+					variant: "destructive",
+					title: "User Not Found",
+					description: "Try Authenticating Again ...",
+				});
+				handleSignout();
+			}
+		} catch (error) {
+			console.error("Error fetching current user:", error);
+			toast({
+				variant: "destructive",
+				title: "User Not Found",
+				description: "Try Authenticating Again ...",
+			});
+			handleSignout();
+		}
+	};
+
+	// Call fetchCurrentUser when the component mounts
+	useEffect(() => {
+		const authToken = localStorage.getItem("authToken");
+
+		if (authToken && !isTokenValid(authToken)) {
+			handleSignout();
+		} else {
+			fetchCurrentUser();
+		}
+	}, []);
+
+	// Function to refresh the current user data
 	const refreshCurrentUser = async () => {
-		// Re-fetch the current user data
 		await fetchCurrentUser();
 	};
 

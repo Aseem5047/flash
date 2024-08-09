@@ -60,7 +60,7 @@ const Navbar = () => {
 								<span className="w-full text-xs whitespace-nowrap font-semibold group-hover:text-white">
 									{walletBalance >= 0
 										? `Rs. ${walletBalance.toFixed(2)}`
-										: "Updating..."}
+										: "Updating"}
 								</span>
 							</Link>
 							<MobileNav />
