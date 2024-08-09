@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import Head from "next/head";
-import SignUp from "@/components/forms/AuthenticateViaOTP";
+import AuthenticateViaOTP from "@/components/forms/AuthenticateViaOTP";
 
 export default function AuthenticationPage() {
 	const searchParams = useSearchParams();
@@ -22,7 +22,7 @@ export default function AuthenticationPage() {
 				<link rel="icon" href="/icons/logoDarkCircle.png" />
 			</Head>
 			<div className="animate-enterFromBottom">
-				<SignUp userType={userType as string} />
+				<AuthenticateViaOTP userType={userType as string} />
 			</div>
 		</main>
 	);

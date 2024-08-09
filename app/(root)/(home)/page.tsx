@@ -48,7 +48,7 @@ const HomePage = () => {
 							Failed to fetch creators <br />
 							Please try again later.
 						</div>
-					) : creators.length === 0 ? (
+					) : creators && creators.length === 0 ? (
 						<div className="size-full flex items-center justify-center text-2xl font-semibold text-center text-gray-500">
 							No creators found.
 						</div>

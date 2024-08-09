@@ -23,9 +23,9 @@ const MobileNav = () => {
 		useCurrentUsersContext();
 	// const { signOut } = useClerk();
 	const handleSignout = () => {
-		// localStorage.removeItem("userType");
-		// localStorage.removeItem("userID");
-		// localStorage.removeItem("authToken");
+		localStorage.removeItem("userType");
+		localStorage.removeItem("userID");
+		localStorage.removeItem("authToken");
 		setClientUser(null);
 		setCreatorUser(null);
 		// router.push("/authenticate");

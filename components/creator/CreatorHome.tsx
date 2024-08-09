@@ -7,7 +7,7 @@ import PriceEditModal from "./Price";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import axios from "axios";
 import { useToast } from "../ui/use-toast";
-import { calculateTotalEarnings } from "@/lib/utils";
+import { calculateTotalEarnings, isValidUrl } from "@/lib/utils";
 import SinglePostLoader from "../shared/SinglePostLoader";
 import ServicesCheckbox from "../shared/ServicesCheckbox";
 import CopyToClipboard from "../shared/CopyToClipboard";
@@ -229,6 +229,11 @@ const CreatorHome = () => {
 			</section>
 		);
 
+	const imageSrc =
+		creatorUser.photo && isValidUrl(creatorUser.photo)
+			? creatorUser.photo
+			: "/images/defaultProfileImage.png";
+
 	return (
 		<>
 			<div
@@ -245,11 +250,7 @@ const CreatorHome = () => {
 				</div>
 				<div className="flex flex-col items-center justify-center p-4">
 					<Image
-						src={
-							creatorUser?.photo
-								? creatorUser?.photo
-								: "/images/defaultProfileImage.png"
-						}
+						src={imageSrc}
 						width={1000}
 						height={1000}
 						alt="avatar"

@@ -8,6 +8,8 @@ import { toggleFavorite } from "@/lib/actions/favorites.actions";
 import { useToast } from "../ui/use-toast";
 import Favorites from "../shared/Favorites";
 import ShareButton from "../shared/ShareButton";
+import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
+import { isValidUrl } from "@/lib/utils";
 
 interface CreatorDetailsProps {
 	creator: creatorUser;
@@ -21,7 +23,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 	const [isLoading, setIsLoading] = useState(true);
 	const [addingFavorite, setAddingFavorite] = useState(false);
 	const [markedFavorite, setMarkedFavorite] = useState(false);
-	const { user } = useUser();
+	const { clientUser } = useCurrentUsersContext();
 	const { toast } = useToast();
 	// const [showText, setShowText] = useState(false);
 
@@ -43,7 +45,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 	};
 
 	const handleToggleFavorite = async () => {
-		const clientId = user?.publicMetadata?.userId;
+		const clientId = clientUser?._id;
 		setAddingFavorite(true);
 		try {
 			const response = await toggleFavorite({
@@ -73,6 +75,11 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 		}, 1500);
 	}, []);
 
+	const imageSrc =
+		creator.photo && isValidUrl(creator.photo)
+			? creator.photo
+			: "/images/defaultProfileImage.png";
+
 	return (
 		<>
 			<div className="flex flex-col items-center px-4 sm:px-7 justify-center">
@@ -95,11 +102,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 					) : (
 						<>
 							<Image
-								src={
-									creator.photo
-										? creator.photo
-										: "/images/defaultProfileImage.png"
-								}
+								src={imageSrc}
 								alt="profile picture"
 								width={1000}
 								height={1000}
@@ -110,7 +113,9 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 								} ${
 									!isCreatorOrExpertPath && "!max-w-full xl:!max-w-full xl:h-80"
 								} ${isLoading ? "hidden" : "block"}`}
-								onError={handleImageError}
+								onError={(e) => {
+									e.currentTarget.src = "/images/defaultProfileImage.png";
+								}}
 								onLoad={handleImageLoad}
 							/>
 
@@ -118,14 +123,14 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 								{isCreatorOrExpertPath && (
 									<>
 										<ShareButton />
-										{user && (
+										{clientUser && (
 											<Favorites
 												setMarkedFavorite={setMarkedFavorite}
 												markedFavorite={markedFavorite}
 												handleToggleFavorite={handleToggleFavorite}
 												addingFavorite={addingFavorite}
 												creator={creator}
-												user={user}
+												user={clientUser}
 												isCreatorOrExpertPath={isCreatorOrExpertPath}
 											/>
 										)}

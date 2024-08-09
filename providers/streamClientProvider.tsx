@@ -6,6 +6,7 @@ import { useUser } from "@clerk/nextjs";
 import { StreamVideo, StreamVideoClient } from "@stream-io/video-react-sdk";
 import { ReactNode, useEffect, useState } from "react";
 import MyCallUI from "@/components/meeting/MyCallUI";
+import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 
 const API_KEY = process.env.NEXT_PUBLIC_STREAM_API_KEY;
 
@@ -14,14 +15,12 @@ const StreamVideoProvider = ({ children }: { children: ReactNode }) => {
 		null
 	);
 	const [loading, setLoading] = useState(true);
-	const { user, isLoaded } = useUser();
-	const userId = user?.publicMetadata?.userId as string | undefined;
+	const { currentUser } = useCurrentUsersContext();
+	const userId = currentUser?._id as string | undefined;
 
 	useEffect(() => {
 		const initializeVideoClient = async () => {
-			if (!isLoaded) return;
-
-			if (!user || !userId) {
+			if (!currentUser || !userId) {
 				setLoading(false);
 				return;
 			}
@@ -33,8 +32,8 @@ const StreamVideoProvider = ({ children }: { children: ReactNode }) => {
 					apiKey: API_KEY,
 					user: {
 						id: userId,
-						name: user?.username || userId,
-						image: (user?.unsafeMetadata?.photo as string) || user?.imageUrl,
+						name: currentUser?.username || userId,
+						image: currentUser?.photo as string,
 					},
 					tokenProvider: tokenProvider,
 				});
@@ -47,15 +46,15 @@ const StreamVideoProvider = ({ children }: { children: ReactNode }) => {
 		};
 
 		initializeVideoClient();
-	}, [isLoaded, user, userId]);
+	}, [currentUser?._id, userId]);
 
-	if (loading) {
-		return (
-			<div className="flex items-center justify-center w-full h-screen">
-				<Loader />
-			</div>
-		);
-	}
+	// if (loading) {
+	// 	return (
+	// 		<div className="flex items-center justify-center w-full h-screen">
+	// 			<Loader />
+	// 		</div>
+	// 	);
+	// }
 
 	return videoClient ? (
 		<StreamVideo client={videoClient}>

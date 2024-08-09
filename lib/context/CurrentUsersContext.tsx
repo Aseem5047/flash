@@ -39,21 +39,103 @@ export const useCurrentUsersContext = () => {
 	return context;
 };
 
-export const isCreatorUser = (
-	user: clientUser | creatorUser
-): user is creatorUser => {
-	return (user as creatorUser).profession !== undefined;
+// Utility function to check if a token is valid
+const isTokenValid = (token: string): boolean => {
+	try {
+		const decodedToken: any = jwt.decode(token);
+
+		if (!decodedToken || typeof decodedToken !== "object") {
+			return false;
+		}
+
+		const currentTime = Math.floor(Date.now() / 1000);
+
+		return decodedToken.exp > currentTime;
+	} catch (error) {
+		console.error("Error decoding token:", error);
+		return false;
+	}
 };
 
 // Provider component to hold the state and provide it to its children
 export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
-	const storedUserType = localStorage.getItem("userType");
-	const userType = storedUserType ? storedUserType : null;
-	const authToken = localStorage.getItem("authToken");
-	const userId = localStorage.getItem("currentUserID");
 	const [clientUser, setClientUser] = useState<clientUser | null>(null);
 	const [creatorUser, setCreatorUser] = useState<creatorUser | null>(null);
+	const [userType, setUserType] = useState<string | null>(null);
 	const { toast } = useToast();
+
+	useEffect(() => {
+		// Access localStorage only on the client side
+		const storedUserType = localStorage.getItem("userType");
+		const authToken = localStorage.getItem("authToken");
+		const userId = localStorage.getItem("currentUserID");
+
+		setUserType(storedUserType);
+
+		const fetchCurrentUser = async () => {
+			try {
+				if (authToken && isTokenValid(authToken)) {
+					const decodedToken: any = jwt.decode(authToken);
+					const phoneNumber = decodedToken.phone;
+
+					// Fetch user details using phone number
+					const response = await axios.post("/api/v1/user/getUserByPhone", {
+						phone: phoneNumber,
+					});
+					const user = response.data;
+
+					if (user) {
+						if (storedUserType === "creator") {
+							setCreatorUser(user);
+							setClientUser(null);
+						} else {
+							setClientUser(user);
+							setCreatorUser(null);
+						}
+						localStorage.setItem(
+							"userType",
+							(user.userType as string) ?? "client"
+						);
+					} else {
+						console.error("User not found with phone number:", phoneNumber);
+					}
+				} else if (userId) {
+					const isCreator = storedUserType === "creator";
+
+					if (isCreator) {
+						const response = await getCreatorById(userId);
+						setCreatorUser(response);
+						setClientUser(null);
+					} else {
+						const response = await getUserById(userId);
+						setClientUser(response);
+						setCreatorUser(null);
+					}
+				} else {
+					toast({
+						variant: "destructive",
+						title: "User Not Found",
+						description: "Try Authenticating Again ...",
+					});
+					handleSignout();
+				}
+			} catch (error) {
+				console.error("Error fetching current user:", error);
+				toast({
+					variant: "destructive",
+					title: "User Not Found",
+					description: "Try Authenticating Again ...",
+				});
+				handleSignout();
+			}
+		};
+
+		if (authToken && !isTokenValid(authToken)) {
+			handleSignout();
+		} else {
+			fetchCurrentUser();
+		}
+	}, []);
 
 	const handleSignout = () => {
 		localStorage.removeItem("userType");
@@ -64,94 +146,8 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		// router.push("/authenticate");
 	};
 
-	const isTokenValid = (token: string): boolean => {
-		try {
-			const decodedToken: any = jwt.decode(token);
-
-			if (!decodedToken || typeof decodedToken !== "object") {
-				return false;
-			}
-
-			const currentTime = Math.floor(Date.now() / 1000);
-
-			return decodedToken.exp > currentTime;
-		} catch (error) {
-			console.error("Error decoding token:", error);
-			return false;
-		}
-	};
-
-	const fetchCurrentUser = async () => {
-		try {
-			if (authToken && isTokenValid(authToken)) {
-				const decodedToken: any = jwt.decode(authToken);
-				const phoneNumber = decodedToken.phone;
-
-				// Fetch user details using phone number
-				const response = await axios.post("/api/v1/user/getUserByPhone", {
-					phone: phoneNumber,
-				});
-				const user = response.data;
-
-				if (user) {
-					if (userType === "creator") {
-						setCreatorUser(user);
-						setClientUser(null);
-						localStorage.setItem(
-							"userType",
-							(user.userType as string) ?? "client"
-						);
-					} else {
-						setClientUser(user);
-						setCreatorUser(null);
-						localStorage.setItem(
-							"userType",
-							(user.userType as string) ?? "client"
-						);
-					}
-				} else {
-					console.error("User not found with phone number:", phoneNumber);
-				}
-			} else if (userId) {
-				const isCreator = userType === "creator";
-
-				if (isCreator) {
-					const response = await getCreatorById(userId);
-					setCreatorUser(response);
-					setClientUser(null);
-				} else {
-					const response = await getUserById(userId);
-					setClientUser(response);
-					setCreatorUser(null);
-				}
-			} else {
-				toast({
-					variant: "destructive",
-					title: "User Not Found",
-					description: "Try Authenticating Again ...",
-				});
-				handleSignout();
-			}
-		} catch (error) {
-			console.error("Error fetching current user:", error);
-			toast({
-				variant: "destructive",
-				title: "User Not Found",
-				description: "Try Authenticating Again ...",
-			});
-			handleSignout();
-		}
-	};
-
-	useEffect(() => {
-		if (authToken && !isTokenValid(authToken)) {
-			handleSignout();
-		} else {
-			fetchCurrentUser();
-		}
-	}, []);
-
 	const refreshCurrentUser = async () => {
+		// Re-fetch the current user data
 		await fetchCurrentUser();
 	};
 

@@ -16,9 +16,10 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import Image from "next/image";
 import { success } from "@/constants/icons";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "../ui/use-toast";
 import { CreateCreatorParams, CreateUserParams } from "@/types";
+import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 
 const formSchema = z.object({
 	phone: z
@@ -37,13 +38,17 @@ const FormSchemaOTP = z.object({
 const AuthenticateViaOTP = ({ userType }: { userType: string }) => {
 	const searchParams = useSearchParams();
 	const router = useRouter();
+	const { refreshCurrentUser } = useCurrentUsersContext();
 	const [showOTP, setShowOTP] = useState(false);
 	const [phoneNumber, setPhoneNumber] = useState("");
 	const [token, setToken] = useState<string | null>(null);
 	const [isSendingOTP, setIsSendingOTP] = useState(false);
 	const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
 	const [verificationSuccess, setVerificationSuccess] = useState(false);
-	const [key, setKey] = useState(0);
+
+	const pathname = usePathname();
+	const isAuthenticationPath = pathname.includes("/authenticate");
+
 	useEffect(() => {
 		localStorage.setItem("userType", (userType as string) ?? "client");
 	}, [router, searchParams, userType]);
@@ -112,7 +117,8 @@ const AuthenticateViaOTP = ({ userType }: { userType: string }) => {
 				localStorage.setItem("currentUserID", existingUser.data._id);
 
 				console.log("Existing user found. Proceeding as an existing user.");
-				router.push("/");
+				refreshCurrentUser();
+				isAuthenticationPath && router.push("/");
 			} else {
 				console.log("No user found. Proceeding as a new user.");
 
@@ -219,8 +225,6 @@ const AuthenticateViaOTP = ({ userType }: { userType: string }) => {
 	};
 
 	const handleRouting = (routeType: string) => {
-		setKey((prevKey) => prevKey + 1);
-
 		if (routeType === "client") {
 			router.push("/authenticate");
 		} else if (routeType === "creator") {

@@ -4,7 +4,6 @@ import { creatorUser } from "@/types";
 import { useRouter } from "next/navigation";
 import { useToast } from "../ui/use-toast";
 import { Call, useStreamVideoClient } from "@stream-io/video-react-sdk";
-import { useUser } from "@clerk/nextjs";
 import MeetingModal from "../meeting/MeetingModal";
 import { logEvent } from "firebase/analytics";
 import { Button } from "../ui/button";
@@ -24,6 +23,8 @@ import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
 import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import useChat from "@/hooks/useChat";
 import ContentLoading from "../shared/ContentLoading";
+import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
+import AuthenticationSheet from "../shared/AuthenticationSheet";
 
 interface CallingOptions {
 	creator: creatorUser;
@@ -37,7 +38,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	>(undefined);
 	const client = useStreamVideoClient();
 	const [callType, setCallType] = useState("");
-	const { user } = useUser();
+	const { clientUser } = useCurrentUsersContext();
 	const { toast } = useToast();
 	const [chatRequest, setChatRequest] = useState<any>(null);
 	const [isSheetOpen, setSheetOpen] = useState(false);
@@ -45,8 +46,10 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 
 	const chatRequestsRef = collection(db, "chatRequests");
 	const chatRef = collection(db, "chats");
-	const clientId = user?.publicMetadata?.userId as string;
+	const clientId = clientUser?._id as string;
 	const storedCallId = localStorage.getItem("activeCallId");
+	const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false); // State to manage sheet visibility
+
 	const { createChat } = useChat();
 
 	const [updatedCreator, setUpdatedCreator] = useState<creatorUser>({
@@ -80,6 +83,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			}
 		});
 
+		isAuthSheetOpen && setIsAuthSheetOpen(false);
 		return () => unsubscribe();
 	}, [creator._id]);
 
@@ -93,12 +97,12 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			if (
 				data &&
 				data.status === "accepted" &&
-				user?.publicMetadata?.userId === chatRequest.clientId
+				clientUser?._id === chatRequest.clientId
 			) {
 				unsubscribe();
 				setTimeout(() => {
 					logEvent(analytics, "call_connected", {
-						clientId: user?.publicMetadata?.userId,
+						clientId: clientUser?._id,
 						creatorId: creator._id,
 					});
 					router.push(
@@ -164,7 +168,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	// create new meeting
 
 	const createMeeting = async () => {
-		if (!client || !user) return;
+		if (!client || !clientUser) return;
 		try {
 			const id = crypto.randomUUID();
 			const call =
@@ -189,12 +193,12 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				},
 				// client
 				{
-					user_id: String(user?.publicMetadata?.userId),
+					user_id: String(clientUser?._id),
 					custom: {
-						name: String(user.username),
+						name: String(clientUser?.username),
 						type: "client",
-						image: (user?.unsafeMetadata?.photo as string) || user.imageUrl,
-						phone: user.primaryPhoneNumber,
+						image: clientUser?.photo,
+						phone: clientUser?.phone,
 					},
 					role: "admin",
 				},
@@ -238,7 +242,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			});
 
 			logEvent(analytics, "call_initiated", {
-				clientId: user?.publicMetadata?.usreId,
+				clientId: clientUser?._id,
 				creatorId: creator._id,
 			});
 
@@ -248,7 +252,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 					callId: id as string,
 					type: callType as string,
 					status: "Initiated",
-					creator: String(user?.publicMetadata?.userId),
+					creator: String(clientUser?._id),
 					members: members,
 				}),
 				headers: { "Content-Type": "application/json" },
@@ -265,16 +269,16 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	// handle chat
 	const handleChat = async () => {
 		logEvent(analytics, "chat_now_click", {
-			clientId: user?.publicMetadata?.userId,
+			clientId: clientUser?._id,
 			creatorId: creator._id,
 		});
 
 		logEvent(analytics, "call_click", {
-			clientId: user?.publicMetadata?.userId,
+			clientId: clientUser?._id,
 			creatorId: creator._id,
 		});
 
-		if (!user) router.push("/authenticate");
+		if (!clientUser) router.push("/authenticate");
 		let maxCallDuration =
 			(walletBalance / parseInt(creator?.chatRate, 10)) * 60; // in seconds
 		maxCallDuration =
@@ -332,7 +336,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			await setDoc(newChatRequestRef, {
 				creatorId: "6687f55f290500fb85b7ace0",
 				clientId: "6687f4c5b629a40f8b1ddc4e",
-				clientName: user?.username,
+				clientName: clientUser?.username,
 				status: "pending",
 				chatId: chatId,
 				createdAt: Date.now(),
@@ -349,7 +353,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			setSheetOpen(true);
 
 			logEvent(analytics, "call_initiated", {
-				clientId: user?.publicMetadata?.userId,
+				clientId: clientUser?._id,
 				creatorId: creator._id,
 			});
 
@@ -484,32 +488,33 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		callType: string,
 		modalType: "isJoiningMeeting" | "isInstantMeeting"
 	) => {
-		if (user && !storedCallId) {
+		if (clientUser && !storedCallId) {
 			setMeetingState(`${modalType}`);
 			setCallType(`${callType}`);
 			logEvent(analytics, "call_click", {
-				clientId: user?.publicMetadata?.userId,
+				clientId: clientUser?._id,
 				creatorId: creator._id,
 			});
 			if (callType === "audio") {
 				logEvent(analytics, "audio_now_click", {
-					clientId: user?.publicMetadata?.userId,
+					clientId: clientUser?._id,
 					creatorId: creator._id,
 				});
 			} else {
 				logEvent(analytics, "video_now_click", {
-					clientId: user?.publicMetadata?.userId,
+					clientId: clientUser?._id,
 					creatorId: creator._id,
 				});
 			}
-		} else if (user && storedCallId) {
+		} else if (clientUser && storedCallId) {
 			toast({
 				title: "Ongoing Call or Transaction Pending",
 				description: "Redirecting you back ...",
 			});
 			router.push(`/meeting/${storedCallId}`);
 		} else {
-			router.replace("/authenticate");
+			// router.replace("/authenticate");
+			setIsAuthSheetOpen(true);
 		}
 	};
 
@@ -523,121 +528,129 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		);
 	}
 
+	if (isAuthSheetOpen && !clientUser)
+		return (
+			<AuthenticationSheet
+				isOpen={isAuthSheetOpen}
+				onOpenChange={setIsAuthSheetOpen} // Handle sheet close
+			/>
+		);
 	return (
-		<div className="flex flex-col w-full items-center justify-center gap-4">
-			{!updatedCreator.videoAllowed &&
-				!updatedCreator.audioAllowed &&
-				!updatedCreator.chatAllowed && (
-					<span className="text-red-500 font-medium text-lg">
-						None of the Services are Available Right Now
-					</span>
+		<>
+			<div className="flex flex-col w-full items-center justify-center gap-4">
+				{!updatedCreator.videoAllowed &&
+					!updatedCreator.audioAllowed &&
+					!updatedCreator.chatAllowed && (
+						<span className="text-red-500 font-medium text-lg">
+							None of the Services are Available Right Now
+						</span>
+					)}
+
+				{/* Book Video Call */}
+				{updatedCreator.videoAllowed && (
+					<div
+						className="callOptionContainer"
+						style={{
+							boxShadow: theme,
+						}}
+						onClick={() => handleClickOption("video", "isInstantMeeting")}
+					>
+						<div
+							className={`flex gap-4 items-center font-semibold`}
+							style={{ color: updatedCreator.themeSelected }}
+						>
+							{video}
+							Book Video Call
+						</div>
+						<span className="text-xs tracking-widest">
+							Rs. {updatedCreator.videoRate}/Min
+						</span>
+					</div>
 				)}
 
-			{/* Book Video Call */}
-			{updatedCreator.videoAllowed && (
-				<div
-					className="callOptionContainer"
-					style={{
-						boxShadow: theme,
-					}}
-					onClick={() => handleClickOption("video", "isInstantMeeting")}
-				>
+				{/* Book Audio Call */}
+				{updatedCreator.audioAllowed && (
 					<div
-						className={`flex gap-4 items-center font-semibold`}
-						style={{ color: updatedCreator.themeSelected }}
+						className="callOptionContainer"
+						style={{
+							boxShadow: theme,
+						}}
+						onClick={() => handleClickOption("audio", "isInstantMeeting")}
 					>
-						{video}
-						Book Video Call
+						<div
+							className={`flex gap-4 items-center font-semibold`}
+							style={{ color: updatedCreator.themeSelected }}
+						>
+							{audio}
+							Book Audio Call
+						</div>
+						<span className="text-xs tracking-widest">
+							Rs. {updatedCreator.audioRate}/Min
+						</span>
 					</div>
-					<span className="text-xs tracking-widest">
-						Rs. {updatedCreator.videoRate}/Min
-					</span>
-				</div>
-			)}
+				)}
 
-			{/* Book Audio Call */}
-			{updatedCreator.audioAllowed && (
-				<div
-					className="callOptionContainer"
-					style={{
-						boxShadow: theme,
-					}}
-					onClick={() => handleClickOption("audio", "isInstantMeeting")}
-				>
+				{/* Book Chat */}
+				{updatedCreator.chatAllowed && (
 					<div
-						className={`flex gap-4 items-center font-semibold`}
-						style={{ color: updatedCreator.themeSelected }}
+						className="callOptionContainer"
+						style={{
+							boxShadow: theme,
+						}}
+						onClick={handleChat}
 					>
-						{audio}
-						Book Audio Call
+						<button
+							className={`flex gap-4 items-center font-semibold`}
+							style={{ color: updatedCreator.themeSelected }}
+						>
+							{chat}
+							Chat Now
+						</button>
+						<span className="text-xs tracking-widest">
+							Rs. {updatedCreator.chatRate}/Min
+						</span>
 					</div>
-					<span className="text-xs tracking-widest">
-						Rs. {updatedCreator.audioRate}/Min
-					</span>
-				</div>
-			)}
+				)}
 
-			{/* Book Chat */}
-			{updatedCreator.chatAllowed && (
-				<div
-					className="callOptionContainer"
-					style={{
-						boxShadow: theme,
-					}}
-					onClick={handleChat}
-				>
-					<button
-						className={`flex gap-4 items-center font-semibold`}
-						style={{ color: updatedCreator.themeSelected }}
-					>
-						{chat}
-						Chat Now
-					</button>
-					<span className="text-xs tracking-widest">
-						Rs. {updatedCreator.chatRate}/Min
-					</span>
-				</div>
-			)}
+				{/* Call & Chat Modals */}
+				<MeetingModal
+					isOpen={meetingState === "isInstantMeeting"}
+					onClose={() => setMeetingState(undefined)}
+					title={`Send Request to Expert ${creator.username}`}
+					className="text-center"
+					buttonText="Start Session"
+					image={creator.photo}
+					handleClick={createMeeting}
+					theme={creator.themeSelected}
+				/>
 
-			{/* Call & Chat Modals */}
-			<MeetingModal
-				isOpen={meetingState === "isInstantMeeting"}
-				onClose={() => setMeetingState(undefined)}
-				title={`Send Request to Expert ${creator.username}`}
-				className="text-center"
-				buttonText="Start Session"
-				image={creator.photo}
-				handleClick={createMeeting}
-				theme={creator.themeSelected}
-			/>
-
-			{/* Chat Request Pending  */}
-			{chatRequest &&
-				user?.publicMetadata?.userId === "6687f55f290500fb85b7ace0" && (
+				{/* Chat Request Pending  */}
+				{chatRequest && clientUser?._id === "6687f55f290500fb85b7ace0" && (
 					<div className="chatRequestModal">
 						<p>Incoming chat request from {chatRequest.clientId}</p>
 						<Button onClick={handleAcceptChat}>Accept</Button>
 						<Button onClick={handleRejectChat}>Reject</Button>
 					</div>
 				)}
-			<Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
-				<SheetTrigger asChild>
-					<div className="hidden"></div>
-				</SheetTrigger>
-				<SheetContent
-					side="bottom"
-					className="flex flex-col items-center justify-center border-none rounded-t-xl px-10 py-7 bg-white min-h-[200px] max-h-fit w-full sm:max-w-[444px] mx-auto"
-				>
-					<div className="relative flex flex-col items-center gap-7">
-						<div className="flex flex-col py-5 items-center justify-center gap-4 w-full text-center">
-							<span className="font-semibold text-xl">
-								Waiting for the creator to accept your chat request...
-							</span>
+				<Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
+					<SheetTrigger asChild>
+						<div className="hidden"></div>
+					</SheetTrigger>
+					<SheetContent
+						side="bottom"
+						className="flex flex-col items-center justify-center border-none rounded-t-xl px-10 py-7 bg-white min-h-[200px] max-h-fit w-full sm:max-w-[444px] mx-auto"
+					>
+						<div className="relative flex flex-col items-center gap-7">
+							<div className="flex flex-col py-5 items-center justify-center gap-4 w-full text-center">
+								<span className="font-semibold text-xl">
+									Waiting for the creator to accept your chat request...
+								</span>
+							</div>
 						</div>
-					</div>
-				</SheetContent>
-			</Sheet>
-		</div>
+					</SheetContent>
+				</Sheet>
+			</div>
+		</>
 	);
 };
 
