@@ -1,5 +1,4 @@
 // WalletBalanceContext.tsx
-import { useUser } from "@clerk/nextjs";
 import React, {
 	createContext,
 	useContext,
@@ -62,7 +61,7 @@ export const WalletBalanceProvider = ({
 		if (currentUser) {
 			fetchCurrentUser();
 		}
-	}, [currentUser]);
+	}, []);
 
 	const updateWalletBalance = async () => {
 		if (currentUser) {

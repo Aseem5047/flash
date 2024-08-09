@@ -2,7 +2,6 @@ import { Schema, model, models } from "mongoose";
 
 const ClientSchema = new Schema(
 	{
-		clerkId: { type: String, unique: true },
 		username: { type: String, unique: true },
 		onlineStatus: { type: Boolean, default: false },
 		phone: { type: String, required: true, unique: true },

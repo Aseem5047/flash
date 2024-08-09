@@ -374,7 +374,6 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 								"https://img.clerk.com/eyJ0eXBlIjoiZGVmYXVsdCIsImlpZCI6Imluc18yZ3Y5REx5RkFsSVhIZTZUNUNFQ3FIZlozdVQiLCJyaWQiOiJ1c2VyXzJoUHZmcm1BZHlicUVmdjdyM09xa0w0WnVRRyIsImluaXRpYWxzIjoiQ0cifQ",
 						})
 					);
-					// router.push(`/chat/${data.chatId}?creatorId=${data.creatorId}&clientId=${data.clientId}&startedAt=${data.startedAt}`);
 				}
 			});
 		} catch (error) {

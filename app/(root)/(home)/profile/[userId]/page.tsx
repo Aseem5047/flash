@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { UpdateUserParams } from "@/types";
-import { useUser } from "@clerk/nextjs";
 import { Cursor, Typewriter } from "react-simple-typewriter";
 import Image from "next/image";
 import EditProfile from "@/components/forms/EditProfile";

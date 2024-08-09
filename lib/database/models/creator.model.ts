@@ -2,7 +2,6 @@ import { Schema, model, models } from "mongoose";
 
 const CreatorSchema = new Schema(
 	{
-		clerkId: { type: String, unique: true },
 		username: { type: String, unique: true },
 		phone: { type: String, required: true, unique: true },
 		fullName: { type: String },

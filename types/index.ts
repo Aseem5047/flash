@@ -1,7 +1,6 @@
 // User Params
 
 export type CreateUserParams = {
-	clerkId: string;
 	firstName: string;
 	lastName: string;
 	username: string;
@@ -13,7 +12,6 @@ export type CreateUserParams = {
 
 export type UpdateUserParams = {
 	id?: string;
-	clerkId?: string;
 	fullName?: string;
 	firstName: string;
 	lastName: string;
@@ -71,7 +69,6 @@ export type creatorUser = {
 
 export type CreateCreatorParams = {
 	_id?: string;
-	clerkId?: string;
 	fullName?: string;
 	firstName?: string;
 	lastName?: string;

@@ -127,12 +127,6 @@ const EditProfile = ({
 				formData.append("fileSelected", selectedFile);
 			}
 
-			// await axios.post("/api/update-user", formData, {
-			// 	headers: {
-			// 		"Content-Type": "multipart/form-data",
-			// 	},
-			// });
-
 			let response;
 			console.log("Common Values ... ", commonValues);
 			if (userType === "creator") {

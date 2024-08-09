@@ -35,7 +35,7 @@ const HomePage = () => {
 		if (userType !== "creator") {
 			getCreators();
 		}
-	}, [userType]);
+	}, []);
 
 	return (
 		<main className="flex size-full flex-col gap-5">

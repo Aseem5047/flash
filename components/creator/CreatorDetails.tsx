@@ -3,7 +3,6 @@ import { sparkles } from "@/constants/icons";
 import { creatorUser } from "@/types";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { useUser } from "@clerk/nextjs";
 import { toggleFavorite } from "@/lib/actions/favorites.actions";
 import { useToast } from "../ui/use-toast";
 import Favorites from "../shared/Favorites";

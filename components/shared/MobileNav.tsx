@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/sheet";
 import { sidebarLinks } from "@/constants";
 import { cn } from "@/lib/utils";
-import { useClerk } from "@clerk/nextjs";
 import { Button } from "../ui/button";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 
@@ -21,7 +20,6 @@ const MobileNav = () => {
 	const router = useRouter();
 	const { currentUser, setClientUser, setCreatorUser } =
 		useCurrentUsersContext();
-	// const { signOut } = useClerk();
 	const handleSignout = () => {
 		localStorage.removeItem("userType");
 		localStorage.removeItem("userID");

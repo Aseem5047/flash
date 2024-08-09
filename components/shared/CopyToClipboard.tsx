@@ -1,7 +1,6 @@
 import Image from "next/image";
 import React from "react";
 import { useToast } from "../ui/use-toast";
-import { Button } from "../ui/button";
 
 const CopyToClipboard = ({ link }: { link: string }) => {
 	const { toast } = useToast();
@@ -17,6 +16,27 @@ const CopyToClipboard = ({ link }: { link: string }) => {
 				console.error("Failed to copy text: ", err);
 			});
 	};
+
+	const shareLink = () => {
+		if (navigator.share) {
+			navigator
+				.share({
+					title: "Check out this link!",
+					text: "Here's an awesome link you should check out:",
+					url: link,
+				})
+				.catch((err) => {
+					console.error("Failed to share: ", err);
+				});
+		} else {
+			toast({
+				title: "Sharing not supported",
+				description:
+					"Your device or browser does not support the share feature.",
+			});
+		}
+	};
+
 	return (
 		<div className="flex justify-between items-center w-full gap-2 p-1">
 			<div className="relative flex border w-full rounded-full p-2 bg-white justify-between items-center shadow-sm gap-2">
@@ -48,6 +68,7 @@ const CopyToClipboard = ({ link }: { link: string }) => {
 				height={24}
 				alt="share"
 				className="w-10 h-10 p-2 bg-gray-800 rounded-full hover:bg-black cursor-pointer"
+				onClick={shareLink}
 			/>
 		</div>
 	);

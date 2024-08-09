@@ -92,7 +92,7 @@ const Withdraw: React.FC = () => {
 
 	return (
 		<>
-			<div className="flex flex-col pt-3  text-gray-800 w-full h-full rounded-xl">
+			<div className="flex flex-col pt-3  text-gray-800 w-full h-full rounded-xl ">
 				{/* Sticky Balance and Recharge Section */}
 				<section
 					ref={stickyRef}
@@ -137,7 +137,7 @@ const Withdraw: React.FC = () => {
 											: "text-[25px] font-extrabold"
 									} ${isSticky ? "p-0" : "p-2"} `}
 								>
-									₹ {walletBalance}
+									₹ {walletBalance.toFixed(2)}
 								</p>
 							</div>
 							{isSticky && (
@@ -187,7 +187,7 @@ const Withdraw: React.FC = () => {
 				</section>
 
 				{/* Transaction History List */}
-				<ul className="flex flex-col items-center justify-center space-y-4 w-full h-full px-4 pb-7">
+				<ul className="flex flex-col items-center justify-start space-y-4 w-full h-full px-4 py-5 ">
 					{!loading ? (
 						transactions.size === 0 ? (
 							<p className="flex flex-col items-center justify-center size-full text-xl text-center flex-1 min-h-44 text-red-500 font-semibold">
@@ -199,7 +199,7 @@ const Withdraw: React.FC = () => {
 							Array.from(transactions.keys()).map((date) => (
 								<li
 									key={date}
-									className="p-4 bg-white rounded-lg shadow w-full"
+									className="p-4 bg-white rounded-lg shadow w-full animate-enterFromBottom"
 								>
 									<h3 className="text-base items-start font-normal  text-gray-400">
 										{date}

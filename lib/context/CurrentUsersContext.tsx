@@ -1,3 +1,5 @@
+"use client";
+
 import {
 	ReactNode,
 	createContext,
@@ -108,7 +110,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 				} else {
 					console.error("User not found with phone number:", phoneNumber);
 				}
-			} else if (userId) {
+			} else if (authToken && userId) {
 				const isCreator = storedUserType === "creator";
 
 				if (isCreator) {
