@@ -6,15 +6,18 @@ import { getCreatorById } from "@/lib/actions/creator.actions";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { analytics } from "@/lib/firebase";
 import { logEvent } from "firebase/analytics";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
 const CreatorProfile = () => {
 	const [creator, setCreator] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const { userId } = useParams();
+	const pathname = usePathname();
+
 	const [eventLogged, setEventLogged] = useState(false);
 	const { currentUser } = useCurrentUsersContext();
+
 	useEffect(() => {
 		if (!eventLogged && currentUser) {
 			logEvent(analytics, "visit", {
@@ -38,8 +41,10 @@ const CreatorProfile = () => {
 		};
 
 		setLoading(true);
-		getCreator();
-	}, [userId]);
+		if (currentUser) {
+			getCreator();
+		}
+	}, [pathname]);
 
 	if (loading) {
 		return (
@@ -52,7 +57,9 @@ const CreatorProfile = () => {
 	return (
 		<div className="flex items-start justify-start h-full overflow-scroll no-scrollbar md:pb-14">
 			{!creator ? (
-				<div className="text-center text-gray-500">No Creator found.</div>
+				<div className="size-full flex items-center justify-center text-2xl font-semibold text-center text-red-500">
+					No creators found.
+				</div>
 			) : (
 				<CreatorCard creator={creator} />
 			)}

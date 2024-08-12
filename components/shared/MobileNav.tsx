@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import {
 	Sheet,
@@ -10,15 +10,14 @@ import {
 	SheetContent,
 	SheetTrigger,
 } from "@/components/ui/sheet";
-import { sidebarLinks } from "@/constants";
+import { sidebarLinks, sidebarLinksCreator } from "@/constants";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 
 const MobileNav = () => {
 	const pathname = usePathname();
-	const router = useRouter();
-	const { currentUser, setClientUser, setCreatorUser } =
+	const { currentUser, setClientUser, setCreatorUser, userType } =
 		useCurrentUsersContext();
 	const handleSignout = () => {
 		localStorage.removeItem("userType");
@@ -28,6 +27,9 @@ const MobileNav = () => {
 		setCreatorUser(null);
 		// router.push("/authenticate");
 	};
+
+	const sidebarItems =
+		userType === "creator" ? sidebarLinksCreator : sidebarLinks;
 	return (
 		<section className="w-full  relative">
 			<Sheet>
@@ -72,7 +74,7 @@ const MobileNav = () => {
 						<div className="w-full border border-gray-500 my-7" />
 						<SheetClose asChild>
 							<section className="flex h-full items-start flex-col gap-6 text-white">
-								{sidebarLinks.map((item) => {
+								{sidebarItems.map((item) => {
 									const isActive = pathname === item.route;
 
 									return (
@@ -92,7 +94,7 @@ const MobileNav = () => {
 													alt={item.label}
 													width={20}
 													height={20}
-													className="invert-0 brightness-200"
+													className="invert-0 brightness-200 w-6 h-6 object-cover "
 												/>
 												<p className="font-semibold">{item.label}</p>
 											</Link>

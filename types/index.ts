@@ -125,6 +125,7 @@ export type CreateFeedbackParams = {
 	feedbackText: string;
 	callId: string;
 	createdAt: Date;
+	position: number;
 };
 
 export type CreatorFeedbackParams = {
@@ -134,6 +135,7 @@ export type CreatorFeedbackParams = {
 	feedbackText: string;
 	createdAt: Date;
 	showFeedback: boolean;
+	position: number;
 };
 
 export type Client = {

@@ -1,24 +1,47 @@
 export const sidebarLinks = [
 	{
-		imgURL: "/icons/Home.svg",
-		route: "/",
-		label: "Home",
-	},
-	{
-		imgURL: "/icons/previous.svg",
+		imgURL: "/icons/orderHistory.png",
 		route: "/previous",
-		label: "Previous",
+		label: "Order History",
 	},
 
 	{
-		imgURL: "/images/favorites.png",
+		imgURL: "/icons/favorites.png",
 		route: "/favorites",
 		label: "Favorites",
 	},
 	{
-		imgURL: "/secure.svg",
+		imgURL: "/icons/support.png",
 		route: "/support",
 		label: "Support",
+	},
+];
+
+export const sidebarLinksCreator = [
+	{
+		imgURL: "/icons/orderHistory.png",
+		route: "/previous",
+		label: "User Feedback's",
+	},
+	{
+		imgURL: "/icons/kyc.png",
+		route: "/kyc",
+		label: "KYC",
+	},
+	{
+		imgURL: "/icons/support.png",
+		route: "/support",
+		label: "Support",
+	},
+	{
+		imgURL: "/icons/paymentSettings.png",
+		route: "/payments",
+		label: "Payment Settings",
+	},
+	{
+		imgURL: "/icons/termsConditions.png",
+		route: "/terms&condition",
+		label: "Terms & Conditions",
 	},
 ];
 

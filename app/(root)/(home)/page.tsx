@@ -48,7 +48,7 @@ const HomePage = () => {
 
 		// Cleanup listener on component unmount
 		return () => unsubscribe();
-	}, [authToken]);
+	}, [currentUser?._id, authToken]);
 
 	useEffect(() => {
 		const getCreators = async () => {
@@ -67,7 +67,7 @@ const HomePage = () => {
 		if (userType !== "creator") {
 			getCreators();
 		}
-	}, []);
+	}, [userType, authToken]);
 
 	return (
 		<main className="flex size-full flex-col gap-5">

@@ -38,7 +38,7 @@ const UpdateProfilePage = () => {
 			setUserData(updatedInitialState);
 			setInitialState(updatedInitialState);
 		}
-	}, [currentUser, userType]);
+	}, [currentUser?._id, userType]);
 
 	const handleUpdate = async (newUserData: UpdateUserParams) => {
 		setUserData(newUserData);

@@ -32,6 +32,8 @@ const CreatorCard = ({ creator }: CreatorCardProps) => {
 		getCreatorFeedback();
 	}, [creator._id]);
 
+	console.log(creatorFeedback);
+
 	return (
 		<section
 			key={creator._id}
