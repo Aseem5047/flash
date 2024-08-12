@@ -48,7 +48,7 @@ const HomePage = () => {
 
 		// Cleanup listener on component unmount
 		return () => unsubscribe();
-	}, [currentUser, authToken]);
+	}, [authToken]);
 
 	useEffect(() => {
 		const getCreators = async () => {

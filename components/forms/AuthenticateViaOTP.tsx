@@ -93,7 +93,8 @@ const AuthenticateViaOTP = ({ userType }: { userType: string }) => {
 	// managing single session authentication
 	const updateFirestoreAuthToken = async (token: string) => {
 		try {
-			const authTokenDocRef = doc(db, "authToken", phoneNumber);
+			let updatedPhoneNumber = `+91${phoneNumber}`;
+			const authTokenDocRef = doc(db, "authToken", updatedPhoneNumber);
 			const authTokenDoc = await getDoc(authTokenDocRef);
 			if (authTokenDoc.exists()) {
 				await updateDoc(authTokenDocRef, {
