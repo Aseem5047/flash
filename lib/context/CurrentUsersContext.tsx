@@ -15,7 +15,7 @@ import axios from "axios";
 import jwt from "jsonwebtoken";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 // Define the shape of the context value
 interface CurrentUsersContextValue {
@@ -70,10 +70,12 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	const [userType, setUserType] = useState<string | null>(null);
 	const { toast } = useToast();
 	const router = useRouter();
+	const pathname = usePathname();
 
 	// Function to handle user signout
 	const handleSignout = () => {
 		// localStorage.removeItem("userType");
+		localStorage.setItem("userType", "client");
 		localStorage.removeItem("userID");
 		localStorage.removeItem("authToken");
 		setClientUser(null);
@@ -83,7 +85,9 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 			title: "User Not Found",
 			description: "Try Authenticating Again ...",
 		});
-		// router.push("/authenticate");
+		if (pathname !== "/") {
+			router.push("/");
+		}
 	};
 
 	// Function to fetch the current user
@@ -155,7 +159,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		} else {
 			fetchCurrentUser();
 		}
-	}, []);
+	}, [userType]);
 
 	// Function to refresh the current user data
 	const refreshCurrentUser = async () => {
@@ -181,7 +185,6 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 					const data = doc.data();
 					if (data.token !== authToken) {
 						handleSignout();
-						router.push("/");
 						toast({
 							title: "Another Session Detected",
 							description: "Logging Out...",
