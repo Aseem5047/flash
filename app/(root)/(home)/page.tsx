@@ -6,9 +6,6 @@ import { getUsers } from "@/lib/actions/creator.actions";
 import { creatorUser } from "@/types";
 import CreatorHome from "@/components/creator/CreatorHome";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
-import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { useToast } from "@/components/ui/use-toast";
 
 const CreatorDetails = lazy(
 	() => import("@/components/creator/CreatorDetails")
@@ -19,42 +16,8 @@ const HomePage = () => {
 	const [creators, setCreators] = useState<creatorUser[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(false);
-	const { userType, currentUser, handleSignout } = useCurrentUsersContext();
+	const { userType } = useCurrentUsersContext();
 	const authToken = localStorage.getItem("authToken");
-	const { toast } = useToast();
-
-	// Managing single session authentication
-	// useEffect(() => {
-	// 	if (!currentUser || !authToken) {
-	// 		return;
-	// 	}
-
-	// 	const callDocRef = doc(db, "authToken", currentUser.phone);
-
-	// 	const unsubscribe = onSnapshot(
-	// 		callDocRef,
-	// 		(doc) => {
-	// 			if (doc.exists()) {
-	// 				const data = doc.data();
-	// 				if (data.token !== authToken) {
-	// 					handleSignout();
-	// 					toast({
-	// 						title: "Another Session Detected",
-	// 						description: "Logging Out...",
-	// 					});
-	// 				}
-	// 			} else {
-	// 				console.log("No such document!");
-	// 			}
-	// 		},
-	// 		(error) => {
-	// 			console.error("Error fetching document: ", error);
-	// 		}
-	// 	);
-
-	// 	// Cleanup listener on component unmount
-	// 	return () => unsubscribe();
-	// }, [userType,authToken]);
 
 	useEffect(() => {
 		const getCreators = async () => {

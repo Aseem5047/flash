@@ -198,7 +198,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 
 		// Cleanup listener on component unmount
 		return () => unsubscribe();
-	}, [currentUser?._id]);
+	}, [userType, currentUser?._id]);
 
 	const values: CurrentUsersContextValue = {
 		clientUser,
