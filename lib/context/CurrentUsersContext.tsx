@@ -13,6 +13,9 @@ import { clientUser, creatorUser } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
 import axios from "axios";
 import jwt from "jsonwebtoken";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "../firebase";
+import { useRouter } from "next/navigation";
 
 // Define the shape of the context value
 interface CurrentUsersContextValue {
@@ -66,14 +69,20 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	const [creatorUser, setCreatorUser] = useState<creatorUser | null>(null);
 	const [userType, setUserType] = useState<string | null>(null);
 	const { toast } = useToast();
+	const router = useRouter();
 
 	// Function to handle user signout
 	const handleSignout = () => {
-		localStorage.removeItem("userType");
+		// localStorage.removeItem("userType");
 		localStorage.removeItem("userID");
 		localStorage.removeItem("authToken");
 		setClientUser(null);
 		setCreatorUser(null);
+		toast({
+			variant: "destructive",
+			title: "User Not Found",
+			description: "Try Authenticating Again ...",
+		});
 		// router.push("/authenticate");
 	};
 
@@ -124,11 +133,6 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 					setCreatorUser(null);
 				}
 			} else {
-				toast({
-					variant: "destructive",
-					title: "User Not Found",
-					description: "Try Authenticating Again ...",
-				});
 				handleSignout();
 			}
 		} catch (error) {
@@ -160,6 +164,41 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 
 	// Define the unified currentUser state
 	const currentUser = creatorUser || clientUser;
+
+	// Managing single session authentication
+	useEffect(() => {
+		const authToken = localStorage.getItem("authToken");
+		if (!currentUser || !authToken) {
+			return;
+		}
+
+		const callDocRef = doc(db, "authToken", currentUser.phone);
+
+		const unsubscribe = onSnapshot(
+			callDocRef,
+			(doc) => {
+				if (doc.exists()) {
+					const data = doc.data();
+					if (data.token !== authToken) {
+						handleSignout();
+						router.push("/");
+						toast({
+							title: "Another Session Detected",
+							description: "Logging Out...",
+						});
+					}
+				} else {
+					console.log("No such document!");
+				}
+			},
+			(error) => {
+				console.error("Error fetching document: ", error);
+			}
+		);
+
+		// Cleanup listener on component unmount
+		return () => unsubscribe();
+	}, [currentUser?._id]);
 
 	const values: CurrentUsersContextValue = {
 		clientUser,

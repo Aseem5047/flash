@@ -117,7 +117,6 @@ export type UpdateCreatorParams = {
 };
 
 // Feedback Params
-
 export type CreateFeedbackParams = {
 	creatorId: string;
 	clientId: string;
@@ -125,7 +124,7 @@ export type CreateFeedbackParams = {
 	feedbackText: string;
 	callId: string;
 	createdAt: Date;
-	position: number;
+	position?: number;
 };
 
 export type CreatorFeedbackParams = {
@@ -135,7 +134,7 @@ export type CreatorFeedbackParams = {
 	feedbackText: string;
 	createdAt: Date;
 	showFeedback: boolean;
-	position: number;
+	position?: number;
 };
 
 export type Client = {

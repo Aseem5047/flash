@@ -23,7 +23,7 @@ export async function createFeedback({
 	callId: string;
 	createdAt: Date;
 	showFeedback?: boolean;
-	position: number;
+	position?: number;
 }) {
 	try {
 		await connectToDatabase();
@@ -35,7 +35,7 @@ export async function createFeedback({
 				feedback: feedbackText,
 				createdAt: createdAt,
 				showFeedback: showFeedback,
-				position: position,
+				position: position || -1,
 			};
 
 			const existingCallFeedback = await CallFeedbacks.findOne({

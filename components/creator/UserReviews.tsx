@@ -1,5 +1,4 @@
 "use client";
-import { feedbacks } from "@/constants";
 import React, { useEffect, useRef, useState } from "react";
 import { Rating } from "@smastrom/react-rating";
 import {
