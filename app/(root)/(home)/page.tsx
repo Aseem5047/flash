@@ -6,6 +6,7 @@ import { getUsers } from "@/lib/actions/creator.actions";
 import { creatorUser } from "@/types";
 import CreatorHome from "@/components/creator/CreatorHome";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
+import { usePathname } from "next/navigation";
 
 const CreatorDetails = lazy(
 	() => import("@/components/creator/CreatorDetails")
@@ -17,7 +18,7 @@ const HomePage = () => {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(false);
 	const { userType } = useCurrentUsersContext();
-	const authToken = localStorage.getItem("authToken");
+	const pathname = usePathname();
 
 	useEffect(() => {
 		const getCreators = async () => {
@@ -36,7 +37,7 @@ const HomePage = () => {
 		if (userType !== "creator") {
 			getCreators();
 		}
-	}, [userType, authToken]);
+	}, [pathname]);
 
 	return (
 		<main className="flex size-full flex-col gap-5">

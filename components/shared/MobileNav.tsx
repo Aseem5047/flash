@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import {
 	Sheet,
@@ -17,19 +17,16 @@ import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 
 const MobileNav = () => {
 	const pathname = usePathname();
-	const { currentUser, setClientUser, setCreatorUser, userType } =
-		useCurrentUsersContext();
-	const handleSignout = () => {
-		localStorage.removeItem("userType");
-		localStorage.removeItem("userID");
-		localStorage.removeItem("authToken");
-		setClientUser(null);
-		setCreatorUser(null);
-		// router.push("/authenticate");
-	};
-
+	const { currentUser, userType, handleSignout } = useCurrentUsersContext();
+	const router = useRouter();
 	const sidebarItems =
 		userType === "creator" ? sidebarLinksCreator : sidebarLinks;
+
+	const handleAuthentication = () => {
+		router.push("/");
+		handleSignout();
+	};
+
 	return (
 		<section className="w-full  relative">
 			<Sheet>
@@ -50,7 +47,7 @@ const MobileNav = () => {
 						<SheetClose asChild>
 							<Link
 								href={`/profile/${currentUser?._id}`}
-								className={`flex gap-4 items-center rounded-lg hoverScaleDownEffect lg:px-2 justify-start`}
+								className={`w-fit flex gap-4 items-center rounded-lg hoverScaleEffect lg:px-2 justify-start`}
 							>
 								<Image
 									src={currentUser?.photo || "/images/defaultProfile.png"}
@@ -106,7 +103,7 @@ const MobileNav = () => {
 									className={cn(
 										"absolute bottom-4 md:bottom-6 flex gap-4 items-center p-6 rounded-lg w-[85%] bg-green-1 outline-none focus:ring-0 hoverScaleDownEffect"
 									)}
-									onClick={handleSignout}
+									onClick={handleAuthentication}
 								>
 									<svg
 										xmlns="http://www.w3.org/2000/svg"

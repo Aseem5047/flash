@@ -534,6 +534,8 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				onOpenChange={setIsAuthSheetOpen} // Handle sheet close
 			/>
 		);
+
+	console.log("nice");
 	return (
 		<>
 			<div className="flex flex-col w-full items-center justify-center gap-4">

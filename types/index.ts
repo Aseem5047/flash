@@ -16,6 +16,8 @@ export type UpdateUserParams = {
 	firstName: string;
 	lastName: string;
 	username: string;
+	profession?: string;
+	themeSelected?: string;
 	phone?: string;
 	photo: string;
 	bio?: string;
@@ -37,6 +39,8 @@ export type clientUser = {
 	gender?: string;
 	dob?: string;
 	creatorId?: string;
+	profession?: string;
+	themeSelected?: string;
 };
 
 // Creator Params

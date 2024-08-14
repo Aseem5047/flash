@@ -15,7 +15,7 @@ import axios from "axios";
 import jwt from "jsonwebtoken";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 // Define the shape of the context value
 interface CurrentUsersContextValue {
@@ -70,12 +70,11 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	const [userType, setUserType] = useState<string | null>(null);
 	const { toast } = useToast();
 	const router = useRouter();
-	const pathname = usePathname();
 
 	// Function to handle user signout
 	const handleSignout = () => {
 		// localStorage.removeItem("userType");
-		localStorage.setItem("userType", "client");
+		// localStorage.setItem("userType", "client");
 		localStorage.removeItem("userID");
 		localStorage.removeItem("authToken");
 		setClientUser(null);
@@ -85,9 +84,8 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 			title: "User Not Found",
 			description: "Try Authenticating Again ...",
 		});
-		if (pathname !== "/") {
-			router.push("/");
-		}
+
+		// !pathname.includes("/authenticate") && router.push("/");
 	};
 
 	// Function to fetch the current user
@@ -169,29 +167,48 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	// Define the unified currentUser state
 	const currentUser = creatorUser || clientUser;
 
+	// Redirect to /updateDetails if username is missing
+	useEffect(() => {
+		if (currentUser && !currentUser.username) {
+			router.replace("/updateDetails");
+			setTimeout(() => {
+				toast({
+					title: "Greetings Friend",
+					description: "Complete Your Profile Details...",
+				});
+			}, 2000);
+		}
+	}, [router]);
+
 	// Managing single session authentication
 	useEffect(() => {
 		const authToken = localStorage.getItem("authToken");
 		if (!currentUser || !authToken) {
 			return;
 		}
-
 		const callDocRef = doc(db, "authToken", currentUser.phone);
 
 		const unsubscribe = onSnapshot(
 			callDocRef,
 			(doc) => {
-				if (doc.exists()) {
-					const data = doc.data();
-					if (data.token !== authToken) {
-						handleSignout();
-						toast({
-							title: "Another Session Detected",
-							description: "Logging Out...",
-						});
+				try {
+					if (doc.exists()) {
+						const data = doc.data();
+						if (data?.token && data.token !== authToken) {
+							handleSignout();
+							toast({
+								title: "Another Session Detected",
+								description: "Logging Out...",
+							});
+						}
+					} else {
+						console.log("No such document!");
 					}
-				} else {
-					console.log("No such document!");
+				} catch (error) {
+					console.error(
+						"An error occurred while processing the document: ",
+						error
+					);
 				}
 			},
 			(error) => {

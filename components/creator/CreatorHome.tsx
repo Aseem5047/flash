@@ -216,7 +216,7 @@ const CreatorHome = () => {
 		}
 	}, [services]);
 
-	if (!creatorUser || walletBalance < 0)
+	if (!creatorUser?.username || walletBalance < 0)
 		return (
 			<section className="w-full h-full flex flex-col items-center justify-center">
 				<ContentLoading />
@@ -268,7 +268,7 @@ const CreatorHome = () => {
 						width={1000}
 						height={1000}
 						alt="avatar"
-						className="w-32 h-32 bg-white rounded-full p-2"
+						className="w-32 h-32 bg-white rounded-full p-2 object-cover"
 					/>
 					<section className="flex flex-col items-center p-2">
 						<p className="text-white text-sm">
