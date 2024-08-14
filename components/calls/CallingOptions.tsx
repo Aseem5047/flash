@@ -535,7 +535,6 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			/>
 		);
 
-	console.log("nice");
 	return (
 		<>
 			<div className="flex flex-col w-full items-center justify-center gap-4">

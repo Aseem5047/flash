@@ -6,6 +6,8 @@ import CallingOptions from "../calls/CallingOptions";
 import CreatorDetails from "./CreatorDetails";
 import UserReviews from "./UserReviews";
 import axios from "axios";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 interface CreatorCardProps {
 	creator: creatorUser;
@@ -15,20 +17,21 @@ const CreatorCard = ({ creator }: CreatorCardProps) => {
 	const [creatorFeedback, setCreatorFeedback] = useState<any>([]);
 	const [loading, setLoading] = useState(true);
 
-	useEffect(() => {
-		const getCreatorFeedback = async () => {
-			try {
-				const response = await axios.get(
-					`/api/v1/feedback/creator/selected?creatorId=${creator._id}`
-				);
-				setCreatorFeedback(response.data.feedbacks);
-			} catch (err) {
-				console.error(err);
-			} finally {
-				setLoading(false);
-			}
-		};
+	const getCreatorFeedback = async () => {
+		try {
+			const response = await axios.get(
+				`/api/v1/feedback/creator/selected?creatorId=${creator._id}`
+			);
 
+			setCreatorFeedback(response.data.feedbacks);
+		} catch (err) {
+			console.error(err);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	useEffect(() => {
 		getCreatorFeedback();
 	}, [creator._id]);
 

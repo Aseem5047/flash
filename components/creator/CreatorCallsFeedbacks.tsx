@@ -12,6 +12,8 @@ import { Switch } from "../ui/switch";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 // Function to reorder the array based on the drag result
 const reorder = (
@@ -64,7 +66,7 @@ const CreatorCallsFeedbacks = () => {
 	}, []);
 
 	useEffect(() => {
-		const getCalls = async () => {
+		const getFeedbacks = async () => {
 			try {
 				const response = await fetch(
 					`/api/v1/feedback/call/getFeedbacks?creatorId=${String(
@@ -78,8 +80,40 @@ const CreatorCallsFeedbacks = () => {
 					(item: FeedbackParams, index: number) => ({
 						...item.feedbacks[0],
 						callId: item.callId,
-						position: index + 1, // Initialize the position field
+						position:
+							item.feedbacks[0].position !== -1
+								? item.feedbacks[0].position
+								: index + 1,
 					})
+				);
+
+				// Sort the feedbacks
+				const sortedFeedbacks = feedbacksWithCallId.sort(
+					(a: UserFeedback, b: UserFeedback) => {
+						// Provide default values for position if it's null or undefined
+						const positionA =
+							a.position !== null && a.position !== undefined ? a.position : -1;
+						const positionB =
+							b.position !== null && b.position !== undefined ? b.position : -1;
+
+						// Sort by position first if neither are -1
+						if (positionA !== -1 && positionB !== -1) {
+							return positionA - positionB;
+						}
+
+						// If one position is -1, it goes after the other
+						if (positionA === -1 && positionB !== -1) {
+							return 1; // 'a' should be after 'b'
+						}
+						if (positionB === -1 && positionA !== -1) {
+							return -1; // 'b' should be after 'a'
+						}
+
+						// If both are -1, sort by createdAt
+						return (
+							new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+						);
+					}
 				);
 
 				setFeedbacks(feedbacksWithCallId);
@@ -90,7 +124,7 @@ const CreatorCallsFeedbacks = () => {
 			}
 		};
 		if (creatorUser) {
-			getCalls();
+			getFeedbacks();
 		}
 	}, [pathname]);
 
@@ -273,38 +307,43 @@ const CreatorCallsFeedbacks = () => {
 												ref={provided.innerRef}
 												{...provided.draggableProps}
 												{...provided.dragHandleProps}
-												className={`flex flex-col items-start justify-center gap-4 xl:max-w-[568px]  border  rounded-xl p-4 shadow-lg  border-gray-300  ${
+												className={`relative flex flex-col items-start justify-center gap-4 xl:max-w-[568px]  border  rounded-xl p-4 pl-10 shadow-lg  border-gray-300  ${
 													pathname.includes("/profile") && "mx-auto"
 												}`}
 											>
+												<Image
+													src="/icons/dragIndicator.svg"
+													alt="draggable"
+													height={100}
+													width={100}
+													className="w-7 h-7 absolute top-7 left-2"
+												/>
 												<div className="flex h-full w-full items-start justify-between">
-													<div className="flex flex-col items-start justify-start w-full gap-2">
-														<div className="w-1/2 flex items-center justify-start gap-4">
-															{feedback?.clientId?.photo && (
-																<Image
-																	src={
-																		feedback?.clientId?.photo ||
-																		"/images/defaultProfileImage.png"
-																	}
-																	alt={feedback?.clientId?.username}
-																	height={1000}
-																	width={1000}
-																	className="rounded-full w-12 h-12 object-cover"
-																	onError={(e) => {
-																		e.currentTarget.src =
-																			"/images/defaultProfileImage.png";
-																	}}
-																/>
-															)}
-															<div className="flex flex-col">
-																<span className="text-base text-green-1">
-																	{feedback.clientId.phone ||
-																		feedback.clientId._id}
-																</span>
-																<p className="text-sm tracking-wide">
-																	{feedback.clientId.username}
-																</p>
-															</div>
+													<div className="w-1/2 flex items-center justify-start gap-4">
+														{feedback?.clientId?.photo && (
+															<Image
+																src={
+																	feedback?.clientId?.photo ||
+																	"/images/defaultProfileImage.png"
+																}
+																alt={feedback?.clientId?.username}
+																height={1000}
+																width={1000}
+																className="rounded-full w-12 h-12 object-cover"
+																onError={(e) => {
+																	e.currentTarget.src =
+																		"/images/defaultProfileImage.png";
+																}}
+															/>
+														)}
+														<div className="flex flex-col">
+															<span className="text-base text-green-1">
+																{feedback.clientId.phone ||
+																	feedback.clientId._id}
+															</span>
+															<p className="text-sm tracking-wide">
+																{feedback.clientId.username}
+															</p>
 														</div>
 													</div>
 													<div className="w-1/2 flex flex-col items-end justify-between h-full gap-2">

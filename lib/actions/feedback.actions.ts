@@ -108,22 +108,28 @@ export async function getCallFeedbacks(callId?: string, creatorId?: string) {
 			.populate("feedbacks.clientId")
 			.lean();
 
-		feedbacks.sort((a, b) => {
-			// First, sort by position if neither are -1
-			if (a.position !== -1 && b.position !== -1) {
-				return a.position - b.position;
-			}
+		console.log(feedbacks);
 
-			// If one of the positions is -1, sort that one after the other
-			if (a.position === -1 && b.position !== -1) {
-				return 1; // 'a' should be after 'b'
-			}
-			if (b.position === -1 && a.position !== -1) {
-				return -1; // 'b' should be after 'a'
-			}
+		feedbacks.forEach((feedback: any) => {
+			feedback.feedbacks.sort((a: any, b: any) => {
+				// First, sort by position if neither are -1
+				if (a.position !== -1 && b.position !== -1) {
+					return a.position - b.position;
+				}
 
-			// If both have position -1, sort by createdAt
-			return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+				// If one of the positions is -1, sort that one after the other
+				if (a.position === -1 && b.position !== -1) {
+					return 1; // 'a' should be after 'b'
+				}
+				if (b.position === -1 && a.position !== -1) {
+					return -1; // 'b' should be after 'a'
+				}
+
+				// If both have position -1, sort by createdAt
+				return (
+					new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+				);
+			});
 		});
 
 		// Return the feedbacks as JSON
