@@ -1,15 +1,55 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Call } from "@stream-io/video-react-sdk";
-import Image from "next/image";
 import { useToast } from "../ui/use-toast";
 
 const MyIncomingCallUI = ({ call }: { call: Call }) => {
 	const { toast } = useToast();
-	const handleCallState = (action: string) => {
+	const [callState, setCallState] = useState("incoming");
+	const [shownNotification, setShownNotification] = useState(false);
+
+	useEffect(() => {
+		let audio: HTMLAudioElement | null = null;
+		let notification: Notification | null = null;
+
+		// Play sound and show notification on incoming call
+		if (callState === "incoming") {
+			audio = new Audio("/sounds/notification.mp3");
+			audio.loop = true;
+			audio.play().catch((error) => console.error("Audio play error:", error));
+		}
+
+		if (callState === "incoming" && !shownNotification) {
+			notification = new Notification("Incoming Call", {
+				body: `Call from ${call.state.createdBy?.name}`,
+				icon:
+					call?.state?.createdBy?.image || "/images/defaultProfileImage.png",
+			});
+
+			// Mark notification as shown to prevent re-triggering
+			setShownNotification(true);
+		}
+
+		// Clean up when callState changes or on component unmount
+		return () => {
+			if (audio) {
+				audio.pause();
+				audio.currentTime = 0;
+			}
+			if (notification) {
+				notification.close();
+			}
+		};
+	}, [callState, shownNotification]);
+
+	const handleCallState = async (action: string) => {
 		if (action === "declined") {
-			call.leave({ reject: true });
-		} else {
-			call.accept();
+			await call.leave({ reject: true });
+			setCallState("declined");
+		} else if (action === "accepted") {
+			await call.accept();
+			setCallState("accepted");
+		} else if (action === "ended") {
+			setCallState("ended");
 		}
 
 		toast({
@@ -23,14 +63,14 @@ const MyIncomingCallUI = ({ call }: { call: Call }) => {
 	};
 
 	return (
-		<div className="text-center bg-dark-2 text-white fixed h-full sm:h-fit z-50 w-full sm:w-[35%] 3xl:[25%] flex flex-col items-center justify-between  py-10 sm:rounded-xl bottom-0 right-0 sm:top-4 sm:right-4 gap-5">
+		<div className="text-center bg-dark-2 text-white fixed h-full sm:h-fit z-50 w-full sm:w-[35%] 3xl:[25%] flex flex-col items-center justify-between py-10 sm:rounded-xl bottom-0 right-0 sm:top-4 sm:right-4 gap-5">
 			<h1 className="font-bold text-xl mb-2">Incoming Call ...</h1>
 			<div className="flex flex-col items-center justify-center gap-10">
-				<Image
-					src={call?.state?.createdBy?.image!}
+				<img
+					src={
+						call?.state?.createdBy?.image || "/images/defaultProfileImage.png"
+					}
 					alt=""
-					width={1000}
-					height={1000}
 					className="rounded-full w-28 h-28 object-cover"
 					onError={(e) => {
 						e.currentTarget.src = "/images/defaultProfileImage.png";

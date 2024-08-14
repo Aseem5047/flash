@@ -82,14 +82,6 @@ const CreatorCallsFeedbacks = () => {
 					})
 				);
 
-				// const selectedResponse = await fetch(
-				// 	`/api/v1/feedback/creator/selected?creatorId=${String(
-				// 		creatorUser?._id
-				// 	)}`
-				// );
-
-				// let selectedData = await selectedResponse.json();
-
 				setFeedbacks(feedbacksWithCallId);
 			} catch (error) {
 				console.warn(error);
@@ -171,9 +163,24 @@ const CreatorCallsFeedbacks = () => {
 			result.destination.index
 		);
 
+		// Identify changed feedbacks by comparing the new order with the original order
+		const changedFeedbacks = items.filter((item, index) => {
+			return (
+				new Date(item.createdAt).toISOString() !==
+				new Date(feedbacks[index].createdAt).toISOString()
+			);
+		});
+
+		if (changedFeedbacks.length === 0) {
+			// No changes detected, no need to make API calls
+			return;
+		}
+
+		// Update the local state with the reordered feedbacks
 		setFeedbacks(items);
 
-		const updatedFeedbacks = items.map((feedback) => ({
+		// Prepare the changed feedbacks for the API request
+		const updatedFeedbacks = changedFeedbacks.map((feedback) => ({
 			creatorId: creatorUser?._id,
 			callId: feedback.callId,
 			clientId: feedback.clientId._id,
@@ -226,7 +233,7 @@ const CreatorCallsFeedbacks = () => {
 				})
 			);
 
-			console.log("Feedback positions updated successfully.");
+			console.log("Changed feedback positions updated successfully.");
 		} catch (error) {
 			console.error("Error updating feedback positions:", error);
 		}
@@ -242,7 +249,6 @@ const CreatorCallsFeedbacks = () => {
 
 	const visibleFeedbacks = feedbacks.slice(0, callsCount);
 
-	console.log(feedbacks);
 	return (
 		<>
 			{feedbacks && feedbacks.length > 0 ? (
