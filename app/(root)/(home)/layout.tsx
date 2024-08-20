@@ -9,18 +9,24 @@ export const metadata: Metadata = {
 	icons: {
 		icon: "/icons/logoDarkCircle.png",
 	},
+
 	openGraph: {
+		type: "article",
+		url: "https://flashcall.vercel.app",
 		title: "FlashCall",
 		description: "Application Connecting People",
-		url: "https://flashcall.vercel.app",
-		images: [
-			{
-				url: "/path/to/your/thumbnail.png",
-				width: 800,
-				height: 600,
-				alt: "FlashCall Thumbnail",
-			},
-		],
+		images: "/icons/logoDarkCircle.png",
+		siteName: "Flashcall.me",
+		locale: "en_US",
+	},
+
+	twitter: {
+		card: "summary_large_image",
+		site: "https://flashcall.vercel.app",
+		title: "FlashCall",
+		description: "Application Connecting People",
+		images: "/icons/logoDarkCircle.png",
+		creator: "@johndoe",
 	},
 	metadataBase:
 		process.env.NODE_ENV === "production"
