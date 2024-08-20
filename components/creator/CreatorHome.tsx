@@ -97,7 +97,7 @@ const CreatorHome = () => {
 		}
 	}, [creatorUser?._id]);
 
-	const creatorLink = `http://localhost:3000/expert/${creatorUser?.username}/${creatorUser?._id}/${creatorUser?.creatorId}`;
+	const creatorLink = `https://flashcall.vercel.app/expert/${creatorUser?.username}/${creatorUser?._id}/${creatorUser?.creatorId}`;
 
 	const theme = creatorUser?.themeSelected;
 
