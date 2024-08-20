@@ -11,7 +11,7 @@ import React, { useEffect, useState } from "react";
 
 const CreatorProfile = () => {
 	const [creator, setCreator] = useState(null);
-	const [loading, setLoading] = useState(true);
+	const [loading, setLoading] = useState(false);
 	const { userId } = useParams();
 	const pathname = usePathname();
 
@@ -31,6 +31,7 @@ const CreatorProfile = () => {
 	useEffect(() => {
 		const getCreator = async () => {
 			try {
+				setLoading(true);
 				const response = await getCreatorById(String(userId));
 				setCreator(response);
 			} catch (error) {
@@ -40,11 +41,8 @@ const CreatorProfile = () => {
 			}
 		};
 
-		setLoading(true);
-		if (currentUser) {
-			getCreator();
-		}
-	}, [pathname]);
+		getCreator();
+	}, [pathname, userId]);
 
 	if (loading) {
 		return (
