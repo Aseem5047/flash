@@ -31,6 +31,7 @@ const MyIncomingCallUI = ({ call }: { call: Call }) => {
 					icon:
 						call?.state?.createdBy?.image || "/images/defaultProfileImage.png",
 					tag: "incoming-call",
+					data: { url: `https://www.flashcall.me/meeting/${call.id}` },
 				});
 			});
 		} else if ("Notification" in window) {
@@ -43,6 +44,7 @@ const MyIncomingCallUI = ({ call }: { call: Call }) => {
 								call?.state?.createdBy?.image ||
 								"/images/defaultProfileImage.png",
 							tag: "incoming-call",
+							data: { url: `https://www.flashcall.me/meeting/${call.id}` },
 						});
 					});
 				}
