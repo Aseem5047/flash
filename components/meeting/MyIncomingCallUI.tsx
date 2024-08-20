@@ -8,46 +8,46 @@ const MyIncomingCallUI = ({ call }: { call: Call }) => {
 	const [shownNotification, setShownNotification] = useState(false);
 
 	useEffect(() => {
-		Notification.requestPermission().then((permission) => {
-			if (permission !== "granted") {
-				console.warn("Notification permission not granted.");
+		const requestNotificationPermission = async () => {
+			if ("Notification" in window) {
+				if (Notification.permission !== "granted") {
+					await Notification.requestPermission();
+				}
 			}
-		});
-	}, []);
+		};
 
-	useEffect(() => {
+		const showNotification = () => {
+			if ("Notification" in window && Notification.permission === "granted") {
+				new Notification("Incoming Call", {
+					body: `Call from ${call.state.createdBy?.name}`,
+					icon:
+						call?.state?.createdBy?.image || "/images/defaultProfileImage.png",
+				});
+			}
+		};
+
 		let audio: HTMLAudioElement | null = null;
-		let notification: Notification | null = null;
 
-		// Play sound and show notification on incoming call
 		if (callState === "incoming") {
 			audio = new Audio("/sounds/notification.mp3");
 			audio.loop = true;
 			audio.play().catch((error) => console.error("Audio play error:", error));
+
+			if (!shownNotification) {
+				showNotification();
+				setShownNotification(true);
+			}
 		}
 
-		if (callState === "incoming" && !shownNotification) {
-			notification = new Notification("Incoming Call", {
-				body: `Call from ${call.state.createdBy?.name}`,
-				icon:
-					call?.state?.createdBy?.image || "/images/defaultProfileImage.png",
-			});
+		requestNotificationPermission();
 
-			// Mark notification as shown to prevent re-triggering
-			setShownNotification(true);
-		}
-
-		// Clean up when callState changes or on component unmount
 		return () => {
 			if (audio) {
 				audio.pause();
 				audio.currentTime = 0;
 			}
-			if (notification) {
-				notification.close();
-			}
 		};
-	}, [callState, shownNotification]);
+	}, [callState, shownNotification, call]);
 
 	const handleCallState = async (action: string) => {
 		if (action === "declined") {
