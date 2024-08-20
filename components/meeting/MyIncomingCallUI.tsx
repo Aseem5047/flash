@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Call } from "@stream-io/video-react-sdk";
 import { useToast } from "../ui/use-toast";
 
@@ -6,6 +6,7 @@ const MyIncomingCallUI = ({ call }: { call: Call }) => {
 	const { toast } = useToast();
 	const [callState, setCallState] = useState("incoming");
 	const [shownNotification, setShownNotification] = useState(false);
+	const audioRef = useRef<HTMLAudioElement | null>(null);
 
 	useEffect(() => {
 		const registerServiceWorker = async () => {
@@ -50,22 +51,24 @@ const MyIncomingCallUI = ({ call }: { call: Call }) => {
 	};
 
 	useEffect(() => {
-		let audio: HTMLAudioElement | null = null;
-
-		// Play sound and show notification on incoming call
+		// Initialize audio element only when needed
 		if (callState === "incoming" && !shownNotification) {
-			audio = new Audio("/sounds/notification.mp3");
-			audio.loop = true;
-			audio.play().catch((error) => console.error("Audio play error:", error));
+			if (!audioRef.current) {
+				audioRef.current = new Audio("/sounds/notification.mp3");
+				audioRef.current.loop = true;
+			}
+			audioRef.current
+				.play()
+				.catch((error: any) => console.error("Audio play error:", error));
 			showNotification();
 			setShownNotification(true);
 		}
 
 		// Clean up when callState changes or on component unmount
 		return () => {
-			if (audio) {
-				audio.pause();
-				audio.currentTime = 0;
+			if (audioRef.current) {
+				audioRef.current.pause();
+				audioRef.current.currentTime = 0;
 			}
 		};
 	}, [callState, shownNotification]);
