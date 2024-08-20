@@ -51,24 +51,35 @@ const MyIncomingCallUI = ({ call }: { call: Call }) => {
 	};
 
 	useEffect(() => {
-		// Initialize audio element only when needed
-		if (callState === "incoming" && !shownNotification) {
-			if (!audioRef.current) {
-				audioRef.current = new Audio("/sounds/notification.mp3");
-				audioRef.current.loop = true;
+		let audio: HTMLAudioElement | null = null;
+
+		if (callState === "incoming") {
+			audio = new Audio("/sounds/notification.mp3");
+			audio.loop = true;
+
+			const playPromise = audio.play();
+			if (playPromise !== undefined) {
+				playPromise
+					.then(() => {
+						console.log("Audio autoplay started!");
+					})
+					.catch((error) => {
+						console.error("Audio autoplay was prevented:", error);
+						// Show a UI element or prompt user to play the sound manually if needed
+					});
 			}
-			audioRef.current
-				.play()
-				.catch((error: any) => console.error("Audio play error:", error));
-			showNotification();
-			setShownNotification(true);
+
+			if (!shownNotification) {
+				showNotification();
+				setShownNotification(true);
+			}
 		}
 
 		// Clean up when callState changes or on component unmount
 		return () => {
-			if (audioRef.current) {
-				audioRef.current.pause();
-				audioRef.current.currentTime = 0;
+			if (audio) {
+				audio.pause();
+				audio.currentTime = 0;
 			}
 		};
 	}, [callState, shownNotification]);
