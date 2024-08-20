@@ -8,6 +8,14 @@ const MyIncomingCallUI = ({ call }: { call: Call }) => {
 	const [shownNotification, setShownNotification] = useState(false);
 
 	useEffect(() => {
+		Notification.requestPermission().then((permission) => {
+			if (permission !== "granted") {
+				console.warn("Notification permission not granted.");
+			}
+		});
+	}, []);
+
+	useEffect(() => {
 		let audio: HTMLAudioElement | null = null;
 		let notification: Notification | null = null;
 
