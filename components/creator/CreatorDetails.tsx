@@ -36,13 +36,6 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 		setIsLoading(false);
 	};
 
-	const handleImageError = (
-		e: React.SyntheticEvent<HTMLImageElement, Event>
-	) => {
-		e.currentTarget.src = "/images/defaultProfileImage.png";
-		setIsLoading(false);
-	};
-
 	const handleToggleFavorite = async () => {
 		const clientId = clientUser?._id;
 		setAddingFavorite(true);

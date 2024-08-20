@@ -35,10 +35,18 @@ const Sidebar = () => {
 						<Tooltip key={item.label + index}>
 							<TooltipTrigger asChild>
 								<Link
-									href={item.route}
+									href={
+										item.label === "Home"
+											? "/"
+											: currentUser
+											? item.route
+											: userType === "creator"
+											? "/authenticate?usertype=creator"
+											: "/authenticate"
+									}
 									key={item.label}
 									className={`flex w-full gap-4 items-center p-4 rounded-lg justify-center lg:justify-start 
-							group hover:bg-green-1  ${isActive && "bg-green-1 text-white"}`}
+								group hover:bg-green-1  ${isActive && "bg-green-1 text-white"}`}
 									onClick={handleLogEvent}
 								>
 									<Image
