@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 	openGraph: {
 		title: "FlashCall",
 		description: "Application Connecting People",
-		url: "https://www.flashcall.me",
+		url: "https://flashcall.vercel.app",
 		images: [
 			{
 				url: "/path/to/your/thumbnail.png",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 	},
 	metadataBase:
 		process.env.NODE_ENV === "production"
-			? new URL("https://www.flashcall.me")
+			? new URL("https://flashcall.vercel.app")
 			: new URL("http://localhost:3000"),
 };
 
