@@ -53,17 +53,11 @@ const MyIncomingCallUI = ({ call }: { call: Call }) => {
 		let audio: HTMLAudioElement | null = null;
 
 		// Play sound and show notification on incoming call
-		if (callState === "incoming") {
+		if (callState === "incoming" && !shownNotification) {
 			audio = new Audio("/sounds/notification.mp3");
 			audio.loop = true;
 			audio.play().catch((error) => console.error("Audio play error:", error));
-		}
-
-		if (callState === "incoming" && !shownNotification) {
 			showNotification();
-			setShownNotification(true);
-
-			// Mark notification as shown to prevent re-triggering
 			setShownNotification(true);
 		}
 
