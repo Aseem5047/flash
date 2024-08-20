@@ -8,46 +8,73 @@ const MyIncomingCallUI = ({ call }: { call: Call }) => {
 	const [shownNotification, setShownNotification] = useState(false);
 
 	useEffect(() => {
-		const requestNotificationPermission = async () => {
-			if ("Notification" in window) {
-				if (Notification.permission !== "granted") {
-					await Notification.requestPermission();
+		const registerServiceWorker = async () => {
+			if ("serviceWorker" in navigator) {
+				try {
+					await navigator.serviceWorker.register("/sw.js");
+					console.log("Service Worker registered.");
+				} catch (error) {
+					console.error("Service Worker registration failed:", error);
 				}
 			}
 		};
 
-		const showNotification = () => {
-			if ("Notification" in window && Notification.permission === "granted") {
-				new Notification("Incoming Call", {
+		registerServiceWorker();
+	}, []);
+
+	const showNotification = () => {
+		if ("Notification" in window && Notification.permission === "granted") {
+			navigator.serviceWorker.ready.then((registration) => {
+				registration.showNotification("Incoming Call", {
 					body: `Call from ${call.state.createdBy?.name}`,
 					icon:
 						call?.state?.createdBy?.image || "/images/defaultProfileImage.png",
+					tag: "incoming-call",
 				});
-			}
-		};
+			});
+		} else if ("Notification" in window) {
+			Notification.requestPermission().then((result) => {
+				if (result === "granted") {
+					navigator.serviceWorker.ready.then((registration) => {
+						registration.showNotification("Incoming Call", {
+							body: `Call from ${call.state.createdBy?.name}`,
+							icon:
+								call?.state?.createdBy?.image ||
+								"/images/defaultProfileImage.png",
+							tag: "incoming-call",
+						});
+					});
+				}
+			});
+		}
+	};
 
+	useEffect(() => {
 		let audio: HTMLAudioElement | null = null;
 
+		// Play sound and show notification on incoming call
 		if (callState === "incoming") {
 			audio = new Audio("/sounds/notification.mp3");
 			audio.loop = true;
 			audio.play().catch((error) => console.error("Audio play error:", error));
-
-			if (!shownNotification) {
-				showNotification();
-				setShownNotification(true);
-			}
 		}
 
-		requestNotificationPermission();
+		if (callState === "incoming" && !shownNotification) {
+			showNotification();
+			setShownNotification(true);
 
+			// Mark notification as shown to prevent re-triggering
+			setShownNotification(true);
+		}
+
+		// Clean up when callState changes or on component unmount
 		return () => {
 			if (audio) {
 				audio.pause();
 				audio.currentTime = 0;
 			}
 		};
-	}, [callState, shownNotification, call]);
+	}, [callState, shownNotification]);
 
 	const handleCallState = async (action: string) => {
 		if (action === "declined") {
