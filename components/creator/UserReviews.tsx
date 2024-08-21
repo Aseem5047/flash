@@ -124,7 +124,7 @@ const UserReviews = ({
 							<div className="flex w-fit mx-auto rounded-full items-center justify-center gap-2 bg-black px-4 py-2 z-10">
 								<img
 									src={feedback.clientId.photo}
-									alt={`${feedback.clientId.username}'s profile`}
+									alt={`${feedback.clientId.username} profile`}
 									width={24}
 									height={24}
 									className="w-7 h-7 rounded-full object-cover"
