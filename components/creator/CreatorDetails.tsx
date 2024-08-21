@@ -32,10 +32,6 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 		}
 	}, [creator, isCreatorOrExpertPath]);
 
-	const handleImageLoad = () => {
-		setIsLoading(false);
-	};
-
 	const handleToggleFavorite = async () => {
 		const clientId = clientUser?._id;
 		setAddingFavorite(true);
@@ -64,7 +60,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 	useEffect(() => {
 		setTimeout(() => {
 			setIsLoading(false);
-		}, 500);
+		}, 1000);
 	}, []);
 
 	const imageSrc =
@@ -108,7 +104,6 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 								onError={(e) => {
 									e.currentTarget.src = "/images/defaultProfileImage.png";
 								}}
-								onLoad={handleImageLoad}
 							/>
 
 							<div className="flex flex-col-reverse items-center justify-center gap-2 absolute top-6 right-6 sm:top-9 sm:right-9">

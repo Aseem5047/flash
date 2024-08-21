@@ -134,7 +134,7 @@ const OTPVerification = ({
 			</Form>
 
 			{errors.otpVerificationError && (
-				<span className="text-red-500 cursor-pointer text-sm">
+				<span className="text-red-500 cursor-pointer text-sm text-center">
 					{errors.otpVerificationError ? errors.otpVerificationError : ""}
 				</span>
 			)}

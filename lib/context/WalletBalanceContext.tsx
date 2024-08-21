@@ -38,20 +38,9 @@ export const WalletBalanceProvider = ({
 	const [walletBalance, setWalletBalance] = useState<number>(-1);
 	const { currentUser } = useCurrentUsersContext();
 
-	const storedUserType = localStorage.getItem("userType");
-	const userType = storedUserType ? storedUserType : null;
-
-	let isCreator = userType === "creator";
-	let userId = currentUser?._id as string;
-
 	const fetchCurrentUser = async () => {
 		try {
-			const response = isCreator
-				? await getCreatorById(userId)
-				: await getUserById(userId);
-			setWalletBalance(response.walletBalance || 0);
-
-			// console.log(response);
+			currentUser && setWalletBalance(currentUser.walletBalance || 0);
 		} catch (error) {
 			console.error("Error fetching current user:", error);
 		}
