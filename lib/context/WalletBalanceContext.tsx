@@ -38,7 +38,7 @@ export const WalletBalanceProvider = ({
 	const [walletBalance, setWalletBalance] = useState<number>(-1);
 	const { currentUser } = useCurrentUsersContext();
 
-	const fetchCurrentUser = async () => {
+	const fetchCurrentUserWalletBalance = async () => {
 		try {
 			currentUser && setWalletBalance(currentUser.walletBalance || 0);
 		} catch (error) {
@@ -48,13 +48,13 @@ export const WalletBalanceProvider = ({
 
 	useEffect(() => {
 		if (currentUser) {
-			fetchCurrentUser();
+			fetchCurrentUserWalletBalance();
 		}
-	}, []);
+	}, [currentUser?._id]);
 
 	const updateWalletBalance = async () => {
 		if (currentUser) {
-			await fetchCurrentUser();
+			await fetchCurrentUserWalletBalance();
 		}
 	};
 
