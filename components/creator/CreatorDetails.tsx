@@ -64,7 +64,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 	useEffect(() => {
 		setTimeout(() => {
 			setIsLoading(false);
-		}, 1000);
+		}, 500);
 	}, []);
 
 	const imageSrc =

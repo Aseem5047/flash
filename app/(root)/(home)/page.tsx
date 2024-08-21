@@ -7,13 +7,13 @@ import { creatorUser } from "@/types";
 import CreatorHome from "@/components/creator/CreatorHome";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { usePathname } from "next/navigation";
+import PostLoader from "@/components/shared/PostLoader";
 
 const CreatorDetails = lazy(
 	() => import("@/components/creator/CreatorDetails")
 );
 
 const CreatorsGrid = lazy(() => import("@/components/creator/CreatorsGrid"));
-const PostLoader = lazy(() => import("@/components/shared/PostLoader"));
 
 const HomePage = () => {
 	const [creators, setCreators] = useState<creatorUser[]>([]);
@@ -46,7 +46,7 @@ const HomePage = () => {
 		const [isMobile, setIsMobile] = useState(false);
 
 		const handleResize = () => {
-			setIsMobile(window.innerWidth < 768);
+			setIsMobile(window.innerWidth < 1440);
 		};
 
 		useEffect(() => {
@@ -59,6 +59,8 @@ const HomePage = () => {
 	};
 
 	const isMobile = useScreenSize();
+
+	console.log(isMobile);
 
 	return (
 		<main className="flex size-full flex-col gap-5">
@@ -79,7 +81,7 @@ const HomePage = () => {
 						<section
 							className={`animate-in grid ${
 								isMobile
-									? "grid-cols-2 gap-2 px-2 sm:px-7"
+									? "grid-cols-1 m:grid-cols-2 gap-4 m:gap-2.5 px-4 m:px-2.5"
 									: "grid-cols-1 gap-10"
 							} xl:grid-cols-2 items-center 3xl:items-start justify-start h-fit pb-6`}
 						>
