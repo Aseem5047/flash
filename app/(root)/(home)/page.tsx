@@ -8,6 +8,7 @@ import CreatorHome from "@/components/creator/CreatorHome";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { usePathname } from "next/navigation";
 import PostLoader from "@/components/shared/PostLoader";
+import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 
 const CreatorDetails = lazy(
 	() => import("@/components/creator/CreatorDetails")
@@ -20,6 +21,7 @@ const HomePage = () => {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(false);
 	const { userType } = useCurrentUsersContext();
+	const { walletBalance } = useWalletBalanceContext();
 	const pathname = usePathname();
 
 	useEffect(() => {
@@ -31,7 +33,9 @@ const HomePage = () => {
 				console.error(error);
 				setError(true);
 			} finally {
-				setLoading(false);
+				setTimeout(() => {
+					setLoading(false);
+				}, 1000);
 			}
 		};
 
@@ -64,7 +68,7 @@ const HomePage = () => {
 		<main className="flex size-full flex-col gap-5">
 			{userType !== "creator" ? (
 				<Suspense fallback={<PostLoader count={6} />}>
-					{loading ? (
+					{loading || walletBalance < 0 ? (
 						<PostLoader count={6} />
 					) : error ? (
 						<div className="size-full flex items-center justify-center text-2xl font-semibold text-center text-red-500">

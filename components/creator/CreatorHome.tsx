@@ -34,6 +34,7 @@ const CreatorHome = () => {
 	});
 
 	const [transactionsLoading, setTransactionsLoading] = useState(false);
+	const [loading, setLoading] = useState(true);
 	const [todaysEarning, setTodaysEarning] = useState(0);
 	const [isPriceEditOpen, setIsPriceEditOpen] = useState(false);
 	const [prices, setPrices] = useState({
@@ -216,20 +217,26 @@ const CreatorHome = () => {
 		}
 	}, [services]);
 
-	if (!creatorUser || walletBalance < 0)
+	useEffect(() => {
+		setTimeout(() => {
+			setLoading(false);
+		}, 2000);
+	}, []);
+
+	if (!creatorUser || loading || walletBalance < 0)
 		return (
 			<section className="w-full h-full flex flex-col items-center justify-center">
 				<ContentLoading />
 
-				{!creatorUser && (
+				{!creatorUser && !loading && (
 					<span className="text-red-500 font-semibold text-lg">
 						User Authentication Required
 					</span>
 				)}
 
-				{creatorUser && walletBalance < 0 && (
+				{creatorUser && loading && (
 					<p className="text-green-1 font-semibold text-lg flex items-center gap-2">
-						Fetching Wallet Balance{" "}
+						Fetching Creator's Details{" "}
 						<Image
 							src="/icons/loading-circle.svg"
 							alt="Loading..."
