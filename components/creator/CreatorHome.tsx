@@ -216,7 +216,7 @@ const CreatorHome = () => {
 		}
 	}, [services]);
 
-	if (!creatorUser?.username || walletBalance < 0)
+	if (!creatorUser || walletBalance < 0)
 		return (
 			<section className="w-full h-full flex flex-col items-center justify-center">
 				<ContentLoading />

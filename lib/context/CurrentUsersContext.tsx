@@ -79,11 +79,12 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		localStorage.removeItem("authToken");
 		setClientUser(null);
 		setCreatorUser(null);
-		toast({
-			variant: "destructive",
-			title: "User Not Found",
-			description: "Try Authenticating Again ...",
-		});
+
+		// toast({
+		// 	variant: "destructive",
+		// 	title: "User Not Found",
+		// 	description: "Try Authenticating Again ...",
+		// });
 
 		// !pathname.includes("/authenticate") && router.push("/");
 	};
@@ -139,11 +140,11 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 			}
 		} catch (error) {
 			console.error("Error fetching current user:", error);
-			toast({
-				variant: "destructive",
-				title: "User Not Found",
-				description: "Try Authenticating Again ...",
-			});
+			// toast({
+			// 	variant: "destructive",
+			// 	title: "User Not Found",
+			// 	description: "Try Authenticating Again ...",
+			// });
 			handleSignout();
 		}
 	};

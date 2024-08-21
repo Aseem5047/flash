@@ -17,7 +17,7 @@ const Navbar = () => {
 	const handleRouting = () => {
 		localStorage.setItem("userType", "client");
 
-		router.replace("/authenticate");
+		router.push("/authenticate");
 	};
 	const theme = `5px 5px 0px 0px #000000`;
 	const { walletBalance } = useWalletBalanceContext();
