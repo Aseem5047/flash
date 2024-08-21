@@ -60,8 +60,6 @@ const HomePage = () => {
 
 	const isMobile = useScreenSize();
 
-	console.log(isMobile);
-
 	return (
 		<main className="flex size-full flex-col gap-5">
 			{userType !== "creator" ? (
@@ -81,7 +79,7 @@ const HomePage = () => {
 						<section
 							className={`animate-in grid ${
 								isMobile
-									? "grid-cols-2 gap-7 px-4 sm:px-7"
+									? "grid-cols-2 gap-2 px-2 sm:px-7"
 									: "grid-cols-1 gap-10"
 							} xl:grid-cols-2 items-center 3xl:items-start justify-start h-fit pb-6`}
 						>

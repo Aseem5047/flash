@@ -21,7 +21,7 @@ const CreatorsGrid = ({ creator }: { creator: creatorUser }) => {
 		>
 			<div className="text-white flex flex-col items-start w-full creatorsGirdHighlight">
 				{/* Username */}
-				<p className="font-semibold text-xl sm:text-2xl max-w-[90%] text-ellipsis whitespace-nowrap overflow-hidden">
+				<p className="font-semibold text-base sm:text-2xl max-w-[90%] text-ellipsis whitespace-nowrap overflow-hidden">
 					{creator.firstName ? (
 						<span className="capitalize">
 							{creator.firstName} {creator.lastName}
@@ -32,7 +32,7 @@ const CreatorsGrid = ({ creator }: { creator: creatorUser }) => {
 				</p>
 				{/* Profession and Status */}
 				<div className="flex items-center justify-between w-full mt-2 gap-2">
-					<span className="text-md h-full max-w-[90%] text-ellipsis whitespace-nowrap overflow-hidden">
+					<span className="text-sm sm:text-lg h-full max-w-[90%] text-ellipsis whitespace-nowrap overflow-hidden">
 						{creator.profession ? creator.profession : "Expert"}
 					</span>
 					<div className="bg-green-500 text-xs rounded-full sm:rounded-xl px-1.5 py-1.5 sm:px-4 sm:py-2">
