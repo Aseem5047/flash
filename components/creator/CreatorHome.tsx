@@ -236,7 +236,7 @@ const CreatorHome = () => {
 
 				{creatorUser && loading && (
 					<p className="text-green-1 font-semibold text-lg flex items-center gap-2">
-						Fetching Creator's Details{" "}
+						Fetching Creator&apos;s Details{" "}
 						<Image
 							src="/icons/loading-circle.svg"
 							alt="Loading..."
