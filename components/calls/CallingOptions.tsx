@@ -62,6 +62,10 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		chatAllowed: creator.chatAllowed,
 	});
 
+	useEffect(() => {
+		setAuthenticationSheetOpen(isAuthSheetOpen);
+	}, [isAuthSheetOpen, clientUser]);
+
 	// logic to show the updated creator services in realtime
 	useEffect(() => {
 		const creatorRef = doc(db, "services", creator._id);
@@ -528,10 +532,6 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			</section>
 		);
 	}
-
-	useEffect(() => {
-		setAuthenticationSheetOpen(isAuthSheetOpen);
-	}, [isAuthSheetOpen, clientUser]);
 
 	if (isAuthSheetOpen && !clientUser)
 		return (
