@@ -58,7 +58,7 @@ const Navbar = () => {
 
 	const AppLink = () => (
 		<Button
-			className="flex items-center gap-2 bg-green-1 py-2 px-4 text-white rounded-[4px] hoverScaleDownEffect"
+			className="flex items-center gap-2 bg-green-1 py-2 px-4 ml-2 text-white rounded-[4px] hoverScaleDownEffect"
 			style={{
 				boxShadow: `5px 5px 0px 0px ${userTheme}`,
 			}}
@@ -82,7 +82,7 @@ const Navbar = () => {
 		<nav className="flex-between items-center fixed top-0 left-0 z-40 w-full px-2 sm:px-4 py-4 bg-white shadow-sm">
 			{currentUser ? (
 				userType === "creator" ? (
-					<Link href="/" className="flex items-center gap-4">
+					<Link href="/" className="flex items-center justify-center ml-2">
 						<Image
 							src="/icons/logoDesktop.png"
 							width={100}
