@@ -1,14 +1,10 @@
 "use client";
 
 import CreatorCard from "@/components/creator/CreatorCard";
-import ContentLoading from "@/components/shared/ContentLoading";
 import SinglePostLoader from "@/components/shared/SinglePostLoader";
 import { useToast } from "@/components/ui/use-toast";
 import { getCreatorById } from "@/lib/actions/creator.actions";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
-import { analytics } from "@/lib/firebase";
-import { logEvent } from "firebase/analytics";
-import Image from "next/image";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
@@ -19,8 +15,7 @@ const CreatorProfile = () => {
 	const { toast } = useToast();
 	const pathname = usePathname();
 	const router = useRouter();
-	const [eventLogged, setEventLogged] = useState(false);
-	const { currentUser, userType } = useCurrentUsersContext();
+	const { userType } = useCurrentUsersContext();
 
 	useEffect(() => {
 		if (userType === "creator") {

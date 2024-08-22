@@ -8,7 +8,7 @@ const CreatorsGrid = ({ creator }: { creator: creatorUser }) => {
 	useEffect(() => {
 		setTimeout(() => {
 			setIsLoading(false);
-		}, 1000);
+		}, 500);
 	}, []);
 
 	const imageSrc =

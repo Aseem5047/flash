@@ -22,7 +22,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 	const [isLoading, setIsLoading] = useState(true);
 	const [addingFavorite, setAddingFavorite] = useState(false);
 	const [markedFavorite, setMarkedFavorite] = useState(false);
-	const { clientUser, setCurrentTheme } = useCurrentUsersContext();
+	const { clientUser } = useCurrentUsersContext();
 	const { toast } = useToast();
 	// const [showText, setShowText] = useState(false);
 
@@ -83,9 +83,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 				>
 					{isLoading ? (
 						<div
-							className={`bg-gray-300 opacity-60 animate-pulse rounded-[24px] w-full min-w-[256px] xl:min-w-[320px] max-w-64 h-60 xl:max-w-72 xl:h-80 object-cover ${
-								!isCreatorOrExpertPath && "!max-w-full xl:!max-w-full xl:h-80"
-							}`}
+							className={`bg-gray-300 opacity-60 animate-pulse rounded-[24px] w-full min-w-[256px] xl:min-w-[320px] max-w-64 h-60 xl:max-w-72 xl:h-80 object-cover`}
 						/>
 					) : (
 						<>
@@ -98,8 +96,6 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 									creator.photo.includes("clerk")
 										? "object-scale-down"
 										: "object-cover"
-								} ${
-									!isCreatorOrExpertPath && "!max-w-full xl:!max-w-full xl:h-80"
 								} ${isLoading ? "hidden" : "block"}`}
 								onError={(e) => {
 									e.currentTarget.src = "/images/defaultProfileImage.png";
@@ -107,22 +103,20 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 							/>
 
 							<div className="flex flex-col-reverse items-center justify-center gap-2 absolute top-6 right-6 sm:top-9 sm:right-9">
-								{isCreatorOrExpertPath && (
-									<>
-										<ShareButton />
-										{clientUser && (
-											<Favorites
-												setMarkedFavorite={setMarkedFavorite}
-												markedFavorite={markedFavorite}
-												handleToggleFavorite={handleToggleFavorite}
-												addingFavorite={addingFavorite}
-												creator={creator}
-												user={clientUser}
-												isCreatorOrExpertPath={isCreatorOrExpertPath}
-											/>
-										)}
-									</>
-								)}
+								<>
+									<ShareButton />
+									{clientUser && (
+										<Favorites
+											setMarkedFavorite={setMarkedFavorite}
+											markedFavorite={markedFavorite}
+											handleToggleFavorite={handleToggleFavorite}
+											addingFavorite={addingFavorite}
+											creator={creator}
+											user={clientUser}
+											isCreatorOrExpertPath={isCreatorOrExpertPath}
+										/>
+									)}
+								</>
 							</div>
 						</>
 					)}
@@ -161,19 +155,12 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 
 				{/* User Description */}
 				<div
-					className={`border-2 border-gray-200 p-4 -mt-[5.5rem] pt-24 text-center rounded-[24px] rounded-tr-none  h-full w-full relative bg-white ${
-						isCreatorOrExpertPath
-							? "text-base lg:max-w-[85%] xl:max-w-[50%]"
-							: "text-base lg:text-lg"
-					}`}
+					className={`border-2 border-gray-200 p-4 -mt-[5.5rem] pt-24 text-center rounded-[24px] rounded-tr-none  h-full w-full relative bg-white 
+						text-base lg:max-w-[85%] xl:max-w-[50%]
+							
+					`}
 				>
-					{creator.bio ? (
-						<>{creator.bio}</>
-					) : isCreatorOrExpertPath ? (
-						"Select the Call Type Below ..."
-					) : (
-						"Tap the Card to Visit Creator's Profile"
-					)}
+					{creator.bio ? <>{creator.bio}</> : "Select the Call Type Below ..."}
 
 					<span
 						className="absolute max-xl:top-7 xl:-bottom-2 -left-4"
