@@ -530,9 +530,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	}
 
 	useEffect(() => {
-		if (!clientUser) {
-			setAuthenticationSheetOpen(isAuthSheetOpen);
-		}
+		setAuthenticationSheetOpen(isAuthSheetOpen);
 	}, [isAuthSheetOpen, clientUser]);
 
 	if (isAuthSheetOpen && !clientUser)
