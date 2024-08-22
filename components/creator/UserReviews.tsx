@@ -135,9 +135,12 @@ const UserReviews = ({
 								{/* Rating */}
 								<div className="flex gap-1 items-center">
 									<Rating
-										style={{ maxWidth: 180, fill: "white" }}
+										style={{
+											maxWidth: 180,
+											fill: "white",
+											marginLeft: "-10px",
+										}}
 										value={Math.floor(feedback.rating)}
-										itemStyles={customStyles}
 										items={5}
 										spaceBetween="medium"
 										transition="zoom"
@@ -171,7 +174,7 @@ const UserReviews = ({
 								>
 									{arrowLeft}
 								</button>
-								<div className="flex gap-2 items-center max-w-[50%] md:max-w-[75%] py-2 overflow-x-scroll no-scrollbar">
+								<div className="flex gap-2 items-center max-w-[60%] md:max-w-[80%] py-2 overflow-x-scroll no-scrollbar">
 									{creatorFeedback?.map((_, index) => (
 										<button
 											key={index}

@@ -220,7 +220,7 @@ const CreatorHome = () => {
 	useEffect(() => {
 		setTimeout(() => {
 			setLoading(false);
-		}, 2000);
+		}, 1000);
 	}, []);
 
 	if (!creatorUser || loading || walletBalance < 0)

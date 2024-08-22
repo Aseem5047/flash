@@ -48,7 +48,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	const chatRef = collection(db, "chats");
 	const clientId = clientUser?._id as string;
 	const storedCallId = localStorage.getItem("activeCallId");
-	const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false); // State to manage sheet visibility
+	const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false);
 
 	const { createChat } = useChat();
 

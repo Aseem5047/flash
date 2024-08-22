@@ -33,9 +33,7 @@ const HomePage = () => {
 				console.error(error);
 				setError(true);
 			} finally {
-				setTimeout(() => {
-					setLoading(false);
-				}, 1000);
+				setLoading(false);
 			}
 		};
 

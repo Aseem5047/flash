@@ -35,10 +35,20 @@ const CreatorCard = ({ creator }: CreatorCardProps) => {
 		getCreatorFeedback();
 	}, [creator._id]);
 
+	const backgroundImageStyle = {
+		backgroundImage: `url(/images/grid.png)`,
+		backgroundSize: "contain",
+		backgroundPosition: "top",
+		height: "50%",
+		width: "100%",
+		zIndex: 0,
+	};
+
 	return (
 		<section
 			key={creator._id}
-			className="w-full xl:mx-auto h-full grid grid-cols-1 gap-10 items-start text-center justify-center"
+			className="w-full xl:mx-auto h-full grid grid-cols-1 gap-7 items-start text-center justify-center"
+			style={backgroundImageStyle}
 		>
 			{/* User Details */}
 			<CreatorDetails creator={creator} />

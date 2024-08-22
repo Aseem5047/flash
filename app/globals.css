@@ -251,7 +251,7 @@
 	}
 
 	.callOptionContainer {
-		@apply flex flex-col gap-2 border border-gray-300 w-[80%] rounded-xl py-3 px-4 justify-center items-center xl:w-[50%] transition-all duration-300 hover:scale-105 cursor-pointer;
+		@apply flex flex-col gap-2 border bg-white border-gray-300 rounded-xl py-3 px-4 justify-center items-center w-[85%] xl:w-[50%] transition-all duration-300 hover:scale-105 cursor-pointer;
 	}
 
 	.text-balance {
@@ -260,7 +260,7 @@
 
 	/* File uploader */
 	.file_uploader-img {
-		@apply h-44 w-44 rounded-full object-cover;
+		@apply h-44 min-w-44 max-w-44 rounded-full object-cover;
 	}
 
 	.file_uploader-label {

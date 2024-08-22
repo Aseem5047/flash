@@ -36,11 +36,14 @@ export const WalletBalanceProvider = ({
 	children: ReactNode;
 }) => {
 	const [walletBalance, setWalletBalance] = useState<number>(-1);
-	const { currentUser } = useCurrentUsersContext();
-
+	const { currentUser, userType } = useCurrentUsersContext();
+	const isCreator = userType === "creator";
 	const fetchCurrentUserWalletBalance = async () => {
 		try {
-			currentUser && setWalletBalance(currentUser.walletBalance || 0);
+			const response = isCreator
+				? await getCreatorById(currentUser?._id as string)
+				: await getUserById(currentUser?._id as string);
+			setWalletBalance(response.walletBalance || 0);
 		} catch (error) {
 			console.error("Error fetching current user:", error);
 		}
@@ -50,7 +53,7 @@ export const WalletBalanceProvider = ({
 		if (currentUser) {
 			fetchCurrentUserWalletBalance();
 		}
-	}, [currentUser?._id]);
+	}, []);
 
 	const updateWalletBalance = async () => {
 		if (currentUser) {
