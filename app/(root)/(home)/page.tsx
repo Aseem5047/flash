@@ -20,8 +20,7 @@ const HomePage = () => {
 	const [creators, setCreators] = useState<creatorUser[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(false);
-	const { userType } = useCurrentUsersContext();
-	const { walletBalance } = useWalletBalanceContext();
+	const { userType, setCurrentTheme } = useCurrentUsersContext();
 	const pathname = usePathname();
 
 	useEffect(() => {
@@ -93,14 +92,18 @@ const HomePage = () => {
 										parseInt(creator.chatRate, 10) !== 0 && (
 											<Link
 												href={`/expert/${creator.username}/${creator._id}`}
-												className="min-w-full transition-all duration-500 hover:scale-95"
 												key={creator._id || index}
 											>
-												{isMobile ? (
-													<CreatorsGrid creator={creator} />
-												) : (
-													<CreatorDetails creator={creator} />
-												)}
+												<section
+													className="min-w-full transition-all duration-500 hover:scale-95"
+													onClick={() => setCurrentTheme(creator.themeSelected)}
+												>
+													{isMobile ? (
+														<CreatorsGrid creator={creator} />
+													) : (
+														<CreatorDetails creator={creator} />
+													)}
+												</section>
 											</Link>
 										)
 								)}

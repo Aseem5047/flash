@@ -201,7 +201,7 @@ const AuthenticateViaOTP = ({ userType }: { userType: string }) => {
 							user as CreateCreatorParams
 						);
 						refreshCurrentUser();
-						router.push("/updateDetails");
+						router.push("/");
 					} catch (error: any) {
 						toast({
 							variant: "destructive",

@@ -7,15 +7,18 @@ import { Button } from "../ui/button";
 import MobileNav from "./MobileNav";
 
 import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { creatorUser } from "@/types";
 
 const Navbar = () => {
-	const { currentUser, userType } = useCurrentUsersContext();
+	const { currentUser, userType, currentTheme, authenticationSheetOpen } =
+		useCurrentUsersContext();
 	const router = useRouter();
 	const [userTheme, setUserTheme] = useState("#000000");
-
+	const pathname = usePathname();
+	const isCreatorOrExpertPath =
+		pathname.includes("/creator") || pathname.includes("/expert");
 	const handleRouting = () => {
 		localStorage.setItem("userType", "client");
 
@@ -25,19 +28,13 @@ const Navbar = () => {
 	const { walletBalance } = useWalletBalanceContext();
 
 	useEffect(() => {
-		const storedCreator = localStorage.getItem("currentCreator");
-		let selectedTheme;
-		if (storedCreator) {
-			const parsedCreator: creatorUser = JSON.parse(storedCreator);
-			selectedTheme = parsedCreator.themeSelected;
+		if (currentTheme) {
+			const newTheme = currentTheme === "#50A65C" ? "#000000" : currentTheme;
+			setUserTheme(newTheme);
+		} else {
+			setUserTheme("#000000");
 		}
-		let newTheme = selectedTheme
-			? selectedTheme === "#50A65C"
-				? "#000000"
-				: selectedTheme
-			: "#000000";
-		setUserTheme(newTheme);
-	}, [router]);
+	}, [pathname]);
 
 	const handleAppRedirect = () => {
 		const isAndroid = /Android/i.test(navigator.userAgent);
@@ -79,7 +76,16 @@ const Navbar = () => {
 	);
 
 	return (
-		<nav className="flex-between items-center fixed top-0 left-0 z-40 w-full px-2 sm:px-4 py-4 bg-white shadow-sm">
+		<nav
+			className="flex justify-between items-center fixed top-0 left-0 w-full px-2 sm:px-4 py-4 bg-white shadow-sm"
+			style={{
+				zIndex: `${
+					isCreatorOrExpertPath && !currentUser && authenticationSheetOpen
+						? "-1"
+						: "40"
+				}`,
+			}}
+		>
 			{currentUser ? (
 				userType === "creator" ? (
 					<Link href="/" className="flex items-center justify-center lg:ml-2">

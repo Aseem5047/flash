@@ -38,7 +38,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	>(undefined);
 	const client = useStreamVideoClient();
 	const [callType, setCallType] = useState("");
-	const { clientUser } = useCurrentUsersContext();
+	const { clientUser, setAuthenticationSheetOpen } = useCurrentUsersContext();
 	const { toast } = useToast();
 	const [chatRequest, setChatRequest] = useState<any>(null);
 	const [isSheetOpen, setSheetOpen] = useState(false);
@@ -526,6 +526,12 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			</section>
 		);
 	}
+
+	useEffect(() => {
+		if (!clientUser) {
+			setAuthenticationSheetOpen(isAuthSheetOpen);
+		}
+	}, [isAuthSheetOpen, clientUser]);
 
 	if (isAuthSheetOpen && !clientUser)
 		return (

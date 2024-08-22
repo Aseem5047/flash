@@ -22,7 +22,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 	const [isLoading, setIsLoading] = useState(true);
 	const [addingFavorite, setAddingFavorite] = useState(false);
 	const [markedFavorite, setMarkedFavorite] = useState(false);
-	const { clientUser } = useCurrentUsersContext();
+	const { clientUser, setCurrentTheme } = useCurrentUsersContext();
 	const { toast } = useToast();
 	// const [showText, setShowText] = useState(false);
 
@@ -83,7 +83,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 				>
 					{isLoading ? (
 						<div
-							className={`bg-gray-300 opacity-60 animate-pulse rounded-[24px] w-full min-w-[256px] xl:min-w-[320px] max-w-64 h-60 xl:h-80 object-cover ${
+							className={`bg-gray-300 opacity-60 animate-pulse rounded-[24px] w-full min-w-[256px] xl:min-w-[320px] max-w-64 h-60 xl:max-w-72 xl:h-80 object-cover ${
 								!isCreatorOrExpertPath && "!max-w-full xl:!max-w-full xl:h-80"
 							}`}
 						/>

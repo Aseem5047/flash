@@ -27,6 +27,10 @@ interface CurrentUsersContextValue {
 	userType: string | null;
 	refreshCurrentUser: () => Promise<void>;
 	handleSignout: () => void;
+	currentTheme: string;
+	setCurrentTheme: any;
+	authenticationSheetOpen: boolean;
+	setAuthenticationSheetOpen: any;
 }
 
 // Create the context with a default value of null
@@ -67,6 +71,8 @@ const isTokenValid = (token: string): boolean => {
 export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	const [clientUser, setClientUser] = useState<clientUser | null>(null);
 	const [creatorUser, setCreatorUser] = useState<creatorUser | null>(null);
+	const [currentTheme, setCurrentTheme] = useState("");
+	const [authenticationSheetOpen, setAuthenticationSheetOpen] = useState(false);
 	const [userType, setUserType] = useState<string | null>(null);
 	const { toast } = useToast();
 	const router = useRouter();
@@ -230,6 +236,10 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		userType,
 		refreshCurrentUser,
 		handleSignout,
+		currentTheme,
+		setCurrentTheme,
+		authenticationSheetOpen,
+		setAuthenticationSheetOpen,
 	};
 
 	return (

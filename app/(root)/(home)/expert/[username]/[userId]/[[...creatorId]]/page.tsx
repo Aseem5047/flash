@@ -40,9 +40,7 @@ const CreatorProfile = () => {
 			} catch (error) {
 				console.log(error);
 			} finally {
-				setTimeout(() => {
-					setLoading(false);
-				}, 2000);
+				setLoading(false);
 			}
 		};
 
