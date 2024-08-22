@@ -8,11 +8,6 @@ import CreatorHome from "@/components/creator/CreatorHome";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { usePathname } from "next/navigation";
 import PostLoader from "@/components/shared/PostLoader";
-import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
-
-const CreatorDetails = lazy(
-	() => import("@/components/creator/CreatorDetails")
-);
 
 const CreatorsGrid = lazy(() => import("@/components/creator/CreatorsGrid"));
 
@@ -42,25 +37,6 @@ const HomePage = () => {
 		}
 	}, [pathname]);
 
-	// Custom hook to track screen size
-	const useScreenSize = () => {
-		const [isMobile, setIsMobile] = useState(false);
-
-		const handleResize = () => {
-			setIsMobile(window.innerWidth < 1440);
-		};
-
-		useEffect(() => {
-			handleResize(); // Set initial value
-			window.addEventListener("resize", handleResize);
-			return () => window.removeEventListener("resize", handleResize);
-		}, []);
-
-		return isMobile;
-	};
-
-	const isMobile = useScreenSize();
-
 	return (
 		<main className="flex size-full flex-col gap-5">
 			{userType !== "creator" ? (
@@ -78,10 +54,7 @@ const HomePage = () => {
 						</div>
 					) : (
 						<section
-							className={`grid ${
-								isMobile
-									? "grid-cols-1 m:grid-cols-2 gap-4 m:gap-2.5 px-4 m:px-2.5"
-									: "grid-cols-1 gap-10"
+							className={`grid grid-cols-2 gap-2.5 px-2.5 lg:gap-5 lg:px-5
 							} xl:grid-cols-2 items-center 3xl:items-start justify-start h-fit pb-6`}
 						>
 							{creators &&
@@ -98,11 +71,7 @@ const HomePage = () => {
 													className="min-w-full transition-all duration-500 hover:scale-95"
 													onClick={() => setCurrentTheme(creator.themeSelected)}
 												>
-													{isMobile ? (
-														<CreatorsGrid creator={creator} />
-													) : (
-														<CreatorDetails creator={creator} />
-													)}
+													<CreatorsGrid creator={creator} />
 												</section>
 											</Link>
 										)

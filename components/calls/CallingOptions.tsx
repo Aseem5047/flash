@@ -30,6 +30,10 @@ interface CallingOptions {
 	creator: creatorUser;
 }
 
+interface CreateMeetingParams {
+	callType?: string;
+}
+
 const CallingOptions = ({ creator }: CallingOptions) => {
 	const router = useRouter();
 	const { walletBalance } = useWalletBalanceContext();
@@ -284,20 +288,23 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			creatorId: creator._id,
 		});
 
-		if (!clientUser) router.push("/authenticate");
-		let maxCallDuration =
-			(walletBalance / parseInt(creator?.chatRate, 10)) * 60; // in seconds
-		maxCallDuration =
-			maxCallDuration > 3600 ? 3600 : Math.floor(maxCallDuration);
+		if (clientUser) {
+			let maxCallDuration =
+				(walletBalance / parseInt(creator?.chatRate, 10)) * 60; // in seconds
+			maxCallDuration =
+				maxCallDuration > 3600 ? 3600 : Math.floor(maxCallDuration);
 
-		// Check if maxCallDuration is less than 5 minutes (300 seconds)
-		if (maxCallDuration < 60) {
-			toast({
-				title: "Insufficient Balance",
-				description: "Your balance is below the minimum amount.",
-			});
-			router.push("/payment");
-			return;
+			// Check if maxCallDuration is less than 5 minutes (300 seconds)
+			if (maxCallDuration < 60) {
+				toast({
+					title: "Insufficient Balance",
+					description: "Your balance is below the minimum amount.",
+				});
+				router.push("/payment");
+				return;
+			}
+		} else {
+			setIsAuthSheetOpen(true);
 		}
 		// console.log(chatRef);
 		const chatRequestsRef = collection(db, "chatRequests");
@@ -494,8 +501,11 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		modalType: "isJoiningMeeting" | "isInstantMeeting"
 	) => {
 		if (clientUser && !storedCallId) {
-			setMeetingState(`${modalType}`);
 			setCallType(`${callType}`);
+			setTimeout(() => {
+				createMeeting();
+			}, 1000);
+
 			logEvent(analytics, "call_click", {
 				clientId: clientUser?._id,
 				creatorId: creator._id,

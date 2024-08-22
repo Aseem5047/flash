@@ -64,8 +64,8 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 	}, []);
 
 	const imageSrc =
-		creator.photo && isValidUrl(creator.photo)
-			? creator.photo
+		creator?.photo && isValidUrl(creator?.photo)
+			? creator?.photo
 			: "/images/defaultProfileImage.png";
 
 	return (

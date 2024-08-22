@@ -38,6 +38,8 @@ export const WalletBalanceProvider = ({
 	const [walletBalance, setWalletBalance] = useState<number>(-1);
 	const { currentUser, userType } = useCurrentUsersContext();
 	const isCreator = userType === "creator";
+
+	console.log(currentUser);
 	const fetchCurrentUserWalletBalance = async () => {
 		try {
 			const response = isCreator
