@@ -98,7 +98,7 @@ const CreatorHome = () => {
 		}
 	}, [creatorUser?._id]);
 
-	const creatorLink = `https://flashcall.vercel.app/expert/${creatorUser?.username}/${creatorUser?._id}/${creatorUser?.creatorId}`;
+	const creatorLink = `https://app.flashcall.me/expert/${creatorUser?.username}/${creatorUser?._id}/${creatorUser?.creatorId}`;
 
 	const theme = creatorUser?.themeSelected;
 
