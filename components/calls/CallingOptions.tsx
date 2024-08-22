@@ -30,18 +30,10 @@ interface CallingOptions {
 	creator: creatorUser;
 }
 
-interface CreateMeetingParams {
-	callType?: string;
-}
-
 const CallingOptions = ({ creator }: CallingOptions) => {
 	const router = useRouter();
 	const { walletBalance } = useWalletBalanceContext();
-	const [meetingState, setMeetingState] = useState<
-		"isJoiningMeeting" | "isInstantMeeting" | undefined
-	>(undefined);
 	const client = useStreamVideoClient();
-	const [callType, setCallType] = useState("");
 	const { clientUser, setAuthenticationSheetOpen } = useCurrentUsersContext();
 	const { toast } = useToast();
 	const [chatRequest, setChatRequest] = useState<any>(null);
@@ -175,7 +167,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 
 	// create new meeting
 
-	const createMeeting = async () => {
+	const createMeeting = async (callType: string) => {
 		if (!client || !clientUser) return;
 		try {
 			const id = crypto.randomUUID();
@@ -186,7 +178,6 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 
 			if (!call) throw new Error("Failed to create meeting");
 
-			setMeetingState(undefined);
 			const members = [
 				// creator
 				{
@@ -496,16 +487,9 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	};
 
 	// if any of the calling option is selected open the respective modal
-	const handleClickOption = (
-		callType: string,
-		modalType: "isJoiningMeeting" | "isInstantMeeting"
-	) => {
+	const handleClickOption = (callType: string) => {
 		if (clientUser && !storedCallId) {
-			setCallType(`${callType}`);
-			setTimeout(() => {
-				createMeeting();
-			}, 1000);
-
+			createMeeting(callType);
 			logEvent(analytics, "call_click", {
 				clientId: clientUser?._id,
 				creatorId: creator._id,
@@ -569,7 +553,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 						style={{
 							boxShadow: theme,
 						}}
-						onClick={() => handleClickOption("video", "isInstantMeeting")}
+						onClick={() => handleClickOption("video")}
 					>
 						<div
 							className={`flex gap-4 items-center font-semibold`}
@@ -591,7 +575,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 						style={{
 							boxShadow: theme,
 						}}
-						onClick={() => handleClickOption("audio", "isInstantMeeting")}
+						onClick={() => handleClickOption("audio")}
 					>
 						<div
 							className={`flex gap-4 items-center font-semibold`}
@@ -627,18 +611,6 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 						</span>
 					</div>
 				)}
-
-				{/* Call & Chat Modals */}
-				<MeetingModal
-					isOpen={meetingState === "isInstantMeeting"}
-					onClose={() => setMeetingState(undefined)}
-					title={`Send Request to Expert ${creator.username}`}
-					className="text-center"
-					buttonText="Start Session"
-					image={creator.photo}
-					handleClick={createMeeting}
-					theme={creator.themeSelected}
-				/>
 
 				{/* Chat Request Pending  */}
 				{chatRequest && clientUser?._id === "6687f55f290500fb85b7ace0" && (
