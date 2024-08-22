@@ -176,7 +176,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 
 	// Redirect to /updateDetails if username is missing
 	useEffect(() => {
-		if (currentUser && !currentUser.username) {
+		if (currentUser && userType === "creator" && !currentUser.username) {
 			router.replace("/updateDetails");
 			setTimeout(() => {
 				toast({

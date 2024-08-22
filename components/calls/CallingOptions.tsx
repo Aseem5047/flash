@@ -195,7 +195,9 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				{
 					user_id: String(clientUser?._id),
 					custom: {
-						name: String(clientUser?.username),
+						name: String(
+							clientUser?.username ? clientUser.username : clientUser.phone
+						),
 						type: "client",
 						image: clientUser?.photo,
 						phone: clientUser?.phone,

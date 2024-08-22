@@ -59,7 +59,8 @@ const MobileNav = () => {
 								<div className="flex flex-col items-start justify-center text-white">
 									<span className="text-lg capitalize">
 										{currentUser?.firstName + " " + currentUser?.lastName ||
-											currentUser?.username}
+											currentUser?.username ||
+											"Hello User"}
 									</span>
 									<span className="text-sm text-green-1">
 										{currentUser?.phone ||
