@@ -94,7 +94,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 								alt="profile picture"
 								width={1000}
 								height={1000}
-								className={`relative rounded-xl w-full min-h-full max-w-64 h-72 xl:h-80 border border-white ${
+								className={`relative rounded-xl w-full min-h-full max-w-64 h-72 xl:max-w-72 xl:h-80 ${
 									creator.photo.includes("clerk")
 										? "object-scale-down"
 										: "object-cover"
