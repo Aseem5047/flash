@@ -155,7 +155,7 @@ const AuthenticateViaOTP = ({ userType }: { userType: string }) => {
 						firstName: "",
 						lastName: "",
 						fullName: "",
-						username: formattedPhone as string,
+						username: "",
 						photo: "",
 						phone: formattedPhone,
 						profession: "Astrologer",
