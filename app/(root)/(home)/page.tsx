@@ -14,7 +14,7 @@ const CreatorsGrid = lazy(() => import("@/components/creator/CreatorsGrid"));
 const HomePage = () => {
 	const [creators, setCreators] = useState<creatorUser[]>([]);
 	const [loading, setLoading] = useState(true);
-	const [creatorCount, setCreatorCount] = useState(4);
+	const [creatorCount, setCreatorCount] = useState(6);
 	const [error, setError] = useState(false);
 	const { userType, setCurrentTheme } = useCurrentUsersContext();
 	const pathname = usePathname();

@@ -108,11 +108,11 @@ const Navbar = () => {
 			)}
 
 			{currentUser ? (
-				<div className=" grid grid-cols-[2fr_1fr] items-center h-full gap-2 text-white">
+				<div className=" flex justify-end items-center gap-2 h-full text-white">
 					{walletBalance >= 0 ? (
 						<Link
 							href="/payment"
-							className="w-full flex items-center justify-center gap-2 text-black px-5 py-3 border border-black rounded-[4px] hover:bg-green-1 group"
+							className="w-fit flex items-center justify-center gap-2 text-black px-2 py-3 border border-black rounded-[4px] hover:bg-green-1 group"
 							style={{
 								boxShadow: theme,
 							}}
@@ -129,7 +129,7 @@ const Navbar = () => {
 							</span>
 						</Link>
 					) : (
-						<div className="w-full max-w-[10rem] space-y-3">
+						<div className="w-24 space-y-3">
 							<div className="grid grid-cols-3 gap-4">
 								<div className="h-2 bg-gray-300 rounded col-span-2"></div>
 								<div className="h-2 bg-gray-300 rounded col-span-1"></div>
