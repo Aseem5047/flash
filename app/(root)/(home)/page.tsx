@@ -59,7 +59,7 @@ const HomePage = () => {
 		setCurrentTheme(theme);
 	};
 
-	const visibleCreators = creators.slice(0, creatorCount + 1);
+	const visibleCreators = creators?.slice(0, creatorCount + 1) ?? [];
 
 	return (
 		<main className="flex size-full flex-col gap-5">
