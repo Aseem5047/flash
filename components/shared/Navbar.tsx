@@ -16,7 +16,11 @@ const Navbar = () => {
 	const router = useRouter();
 	const [userTheme, setUserTheme] = useState("#000000");
 	const pathname = usePathname();
-	const isCreatorOrExpertPath = pathname.includes("/creator");
+	const creatorURL = localStorage.getItem("creatorURL");
+	const currentCreatorUsername =
+		creatorURL && creatorURL?.split("/").filter((url) => url)[0];
+
+	const isCreatorOrExpertPath = pathname.includes(`/${currentCreatorUsername}`);
 	const handleRouting = () => {
 		localStorage.setItem("userType", "client");
 

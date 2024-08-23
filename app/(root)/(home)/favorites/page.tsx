@@ -78,7 +78,7 @@ const Favorites = () => {
 						const creator = favorite.creatorId;
 						return (
 							<Link
-								href={`/creator/${creator?.username}`}
+								href={`/${creator?.username}`}
 								className="min-w-full transition-all duration-500 hover:scale-95"
 								key={creator?._id || index}
 							>

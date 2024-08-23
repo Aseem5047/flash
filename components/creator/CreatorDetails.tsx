@@ -16,8 +16,7 @@ interface CreatorDetailsProps {
 
 const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 	const pathname = usePathname();
-	const isCreatorOrExpertPath = pathname.includes("/creator");
-
+	const isCreatorOrExpertPath = pathname.includes(`/${creator.username}`);
 	const [isLoading, setIsLoading] = useState(true);
 	const [addingFavorite, setAddingFavorite] = useState(false);
 	const [markedFavorite, setMarkedFavorite] = useState(false);

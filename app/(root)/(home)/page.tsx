@@ -38,7 +38,7 @@ const HomePage = () => {
 	}, [pathname]);
 
 	const handleCreatorCardClick = (username: string, theme: string) => {
-		localStorage.setItem("creatorURL", `/creator/${username}`);
+		localStorage.setItem("creatorURL", `/${username}`);
 		setCurrentTheme(theme);
 	};
 
@@ -69,7 +69,7 @@ const HomePage = () => {
 										parseInt(creator.videoRate, 10) !== 0 &&
 										parseInt(creator.chatRate, 10) !== 0 && (
 											<Link
-												href={`/creator/${creator.username}`}
+												href={`/${creator.username}`}
 												key={creator._id || index}
 											>
 												<section
