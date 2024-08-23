@@ -81,10 +81,7 @@ const Navbar = () => {
 			className="flex justify-between items-center fixed top-0 left-0 w-full px-2 sm:px-4 py-4 bg-white shadow-sm"
 			style={{
 				zIndex: `${
-					currentUser &&
-					isCreatorOrExpertPath &&
-					!currentUser &&
-					authenticationSheetOpen
+					isCreatorOrExpertPath && !currentUser && authenticationSheetOpen
 						? "-1"
 						: "40"
 				}`,
