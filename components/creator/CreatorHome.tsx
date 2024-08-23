@@ -16,6 +16,8 @@ import { db } from "@/lib/firebase";
 import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import ContentLoading from "../shared/ContentLoading";
 
+import CreatorLinks from "./CreatorLinks";
+
 const CreatorHome = () => {
 	const { creatorUser, refreshCurrentUser } = useCurrentUsersContext();
 	const { walletBalance, updateWalletBalance } = useWalletBalanceContext();
@@ -353,6 +355,9 @@ const CreatorHome = () => {
 							prices={prices}
 						/>
 					</section>
+
+					<CreatorLinks />
+
 					<section className="flex items-center justify-center pt-4">
 						<div className="text-center text-[13px] text-gray-400">
 							If you are interested in learning how to create an account on{" "}

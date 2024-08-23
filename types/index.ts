@@ -69,6 +69,7 @@ export type creatorUser = {
 	referredBy: string;
 	referralAmount: number;
 	creatorId?: string;
+	links?: LinkType[];
 };
 
 export type CreateCreatorParams = {
@@ -118,6 +119,7 @@ export type UpdateCreatorParams = {
 	kyc_status?: string;
 	walletBalance?: number;
 	creatorId?: string;
+	link?: LinkType;
 };
 
 // Feedback Params
@@ -178,6 +180,12 @@ export type MemberRequest = {
 		phone?: string;
 	};
 	role: string;
+};
+
+export type LinkType = {
+	title: string;
+	url: string;
+	isActive: Boolean;
 };
 
 export type RegisterCallParams = {
@@ -322,6 +330,12 @@ export type RegisterUserKycParams = {
 		poa_frontImagePath: string;
 		digilocker_dob: string | null;
 	};
+};
+
+export type LinkType = {
+	title: string;
+	url: string;
+	isActive: Boolean;
 };
 
 export type UpdateUserKycParams = {
