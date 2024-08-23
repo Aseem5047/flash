@@ -44,7 +44,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 
 	useEffect(() => {
 		setAuthenticationSheetOpen(isAuthSheetOpen);
-	}, [isAuthSheetOpen, clientUser]);
+	}, [isAuthSheetOpen]);
 
 	// logic to show the updated creator services in realtime
 	useEffect(() => {

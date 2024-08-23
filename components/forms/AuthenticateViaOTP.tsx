@@ -359,13 +359,21 @@ const AuthenticateViaOTP = ({ userType }: { userType: string }) => {
 			)}
 
 			{!verificationSuccess && (
-				<p className="text-xs text-gray-400 text-center mt-7 w-3/4 leading-loose">
+				<p className="text-xs text-gray-400 text-center mt-7 pb-2 w-3/4 leading-loose">
 					By signing up you agree to our <br />
-					<Link href="#" className="underline hover:text-green-1 text-black">
+					<Link
+						href="https://www.flashcall.me/terms-of-services"
+						target="_blank"
+						className="underline hover:text-green-1 text-black"
+					>
 						Terms of Services
 					</Link>{" "}
 					and{" "}
-					<Link href="#" className="underline hover:text-green-1 text-black">
+					<Link
+						href="https://www.flashcall.me/privacy-policy"
+						target="_blank"
+						className="underline hover:text-green-1 text-black"
+					>
 						Privacy Policy
 					</Link>
 				</p>
