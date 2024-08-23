@@ -20,7 +20,7 @@ const Navbar = () => {
 	const currentCreatorUsername = creatorURL && JSON.parse(creatorURL);
 
 	const isCreatorOrExpertPath = pathname.includes(
-		`/${currentCreatorUsername.username}`
+		`/${currentCreatorUsername?.username}`
 	);
 
 	const handleRouting = () => {
