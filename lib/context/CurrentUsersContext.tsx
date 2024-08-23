@@ -79,10 +79,9 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 
 	// Function to handle user signout
 	const handleSignout = () => {
-		// localStorage.removeItem("userType");
-		// localStorage.setItem("userType", "client");
 		localStorage.removeItem("userID");
 		localStorage.removeItem("authToken");
+		localStorage.removeItem("creatorURL");
 		setClientUser(null);
 		setCreatorUser(null);
 
@@ -91,8 +90,6 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		// 	title: "User Not Found",
 		// 	description: "Try Authenticating Again ...",
 		// });
-
-		// !pathname.includes("/authenticate") && router.push("/");
 	};
 
 	// Function to fetch the current user

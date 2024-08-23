@@ -40,7 +40,8 @@ const FormSchemaOTP = z.object({
 const AuthenticateViaOTP = ({ userType }: { userType: string }) => {
 	const searchParams = useSearchParams();
 	const router = useRouter();
-	const { refreshCurrentUser } = useCurrentUsersContext();
+	const { refreshCurrentUser, setAuthenticationSheetOpen } =
+		useCurrentUsersContext();
 	const [showOTP, setShowOTP] = useState(false);
 	const [phoneNumber, setPhoneNumber] = useState("");
 	const [token, setToken] = useState<string | null>(null);
@@ -122,6 +123,8 @@ const AuthenticateViaOTP = ({ userType }: { userType: string }) => {
 
 			let authToken = response.data.sessionToken;
 
+			const creatorURL = localStorage.getItem("creatorURL");
+
 			// Save the auth token (with 7 days expiry) in localStorage
 			localStorage.setItem("authToken", authToken);
 			console.log("OTP verified and token saved:");
@@ -144,7 +147,7 @@ const AuthenticateViaOTP = ({ userType }: { userType: string }) => {
 
 				console.log("Existing user found. Proceeding as an existing user.");
 				refreshCurrentUser();
-				isAuthenticationPath && router.push("/");
+				isAuthenticationPath && router.push(`${creatorURL ? creatorURL : "/"}`);
 			} else {
 				console.log("No user found. Proceeding as a new user.");
 
@@ -201,7 +204,7 @@ const AuthenticateViaOTP = ({ userType }: { userType: string }) => {
 							user as CreateCreatorParams
 						);
 						refreshCurrentUser();
-						router.push("/");
+						router.push(`${creatorURL ? creatorURL : "/"}`);
 					} catch (error: any) {
 						toast({
 							variant: "destructive",
@@ -226,6 +229,7 @@ const AuthenticateViaOTP = ({ userType }: { userType: string }) => {
 			setIsVerifyingOTP(false);
 		} finally {
 			setIsVerifyingOTP(false);
+			setAuthenticationSheetOpen(false);
 		}
 	};
 
@@ -355,44 +359,16 @@ const AuthenticateViaOTP = ({ userType }: { userType: string }) => {
 			)}
 
 			{!verificationSuccess && (
-				<div className="w-full flex flex-col items-center justify-center">
-					{!showOTP && (
-						<Button
-							className="bg-green-1 text-white text-base rounded-xl mt-4 hoverScaleEffect flex items-center justify-center gap-2"
-							onClick={() =>
-								handleRouting(userType === "creator" ? "client" : "creator")
-							}
-						>
-							<span className="text-sm">
-								Proceed as {userType === "creator" ? "Client" : "Expert"}
-							</span>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								fill="none"
-								viewBox="0 0 24 24"
-								strokeWidth={1.5}
-								stroke="currentColor"
-								className="size-4"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
-								/>
-							</svg>
-						</Button>
-					)}
-					<p className="text-xs text-gray-400 text-center mt-7 w-3/4 leading-loose">
-						By signing up you agree to our <br />
-						<Link href="#" className="underline hover:text-green-1 text-black">
-							Terms of Services
-						</Link>{" "}
-						and{" "}
-						<Link href="#" className="underline hover:text-green-1 text-black">
-							Privacy Policy
-						</Link>
-					</p>
-				</div>
+				<p className="text-xs text-gray-400 text-center mt-7 w-3/4 leading-loose">
+					By signing up you agree to our <br />
+					<Link href="#" className="underline hover:text-green-1 text-black">
+						Terms of Services
+					</Link>{" "}
+					and{" "}
+					<Link href="#" className="underline hover:text-green-1 text-black">
+						Privacy Policy
+					</Link>
+				</p>
 			)}
 		</section>
 	);

@@ -37,6 +37,11 @@ const HomePage = () => {
 		}
 	}, [pathname]);
 
+	const handleCreatorCardClick = (username: string, theme: string) => {
+		localStorage.setItem("creatorURL", `/creator/${username}`);
+		setCurrentTheme(theme);
+	};
+
 	return (
 		<main className="flex size-full flex-col gap-5">
 			{userType !== "creator" ? (
@@ -48,14 +53,14 @@ const HomePage = () => {
 							Failed to fetch creators <br />
 							Please try again later.
 						</div>
-					) : creators && creators.length === 0 ? (
+					) : creators && creators.length === 0 && !loading ? (
 						<div className="size-full flex items-center justify-center text-2xl font-semibold text-center text-gray-500">
 							No creators found.
 						</div>
 					) : (
 						<section
-							className={`grid grid-cols-2 gap-2.5 px-2.5 lg:gap-5 lg:px-5
-							} xl:grid-cols-2 items-center 3xl:items-start justify-start h-fit pb-6`}
+							className={`grid grid-cols-2 gap-2.5 px-2.5 lg:gap-5 lg:px-0
+							 items-center pb-6`}
 						>
 							{creators &&
 								creators.map(
@@ -64,12 +69,17 @@ const HomePage = () => {
 										parseInt(creator.videoRate, 10) !== 0 &&
 										parseInt(creator.chatRate, 10) !== 0 && (
 											<Link
-												href={`/expert/${creator.username}/${creator._id}`}
+												href={`/creator/${creator.username}`}
 												key={creator._id || index}
 											>
 												<section
 													className="min-w-full transition-all duration-500 hover:scale-95"
-													onClick={() => setCurrentTheme(creator.themeSelected)}
+													onClick={() =>
+														handleCreatorCardClick(
+															creator.username,
+															creator.themeSelected
+														)
+													}
 												>
 													<CreatorsGrid creator={creator} />
 												</section>

@@ -47,7 +47,7 @@ const MobileNav = () => {
 						<SheetClose asChild>
 							<Link
 								href={`/profile/${currentUser?._id}`}
-								className={`w-fit flex gap-4 items-center rounded-lg hoverScaleEffect lg:px-2 justify-start`}
+								className={`w-fit flex gap-4 items-center rounded-lg hoverScaleDownEffect lg:px-2 justify-start`}
 							>
 								<Image
 									src={currentUser?.photo || "/images/defaultProfile.png"}

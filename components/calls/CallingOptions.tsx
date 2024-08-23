@@ -4,7 +4,6 @@ import { creatorUser } from "@/types";
 import { useRouter } from "next/navigation";
 import { useToast } from "../ui/use-toast";
 import { Call, useStreamVideoClient } from "@stream-io/video-react-sdk";
-import MeetingModal from "../meeting/MeetingModal";
 import { logEvent } from "firebase/analytics";
 import { Button } from "../ui/button";
 import {
@@ -62,30 +61,32 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		setAuthenticationSheetOpen(isAuthSheetOpen);
 	}, [isAuthSheetOpen, clientUser]);
 
-	// logic to show the updated creator services in realtime
 	useEffect(() => {
+		if (!creator?._id) return;
+
 		const creatorRef = doc(db, "services", creator._id);
 		const unsubscribe = onSnapshot(creatorRef, (doc) => {
 			const data = doc.data();
 
 			if (data) {
-				let prices = data.prices;
-				let services = data.services;
+				const prices = data.prices || {};
+				const services = data.services || {};
+
 				setUpdatedCreator((prev) => ({
 					...prev,
-					videoRate: prices.videoCall,
-					audioRate: prices.audioCall,
-					chatRate: prices.chat,
-					videoAllowed: services.videoCall,
-					audioAllowed: services.audioCall,
-					chatAllowed: services.chat,
+					videoRate: prices.videoCall || 0,
+					audioRate: prices.audioCall || 0,
+					chatRate: prices.chat || 0,
+					videoAllowed: services.videoCall || false,
+					audioAllowed: services.audioCall || false,
+					chatAllowed: services.chat || false,
 				}));
 			}
 		});
 
 		isAuthSheetOpen && setIsAuthSheetOpen(false);
 		return () => unsubscribe();
-	}, [creator._id]);
+	}, [creator?._id]);
 
 	// logic to get the info about the chat
 	useEffect(() => {

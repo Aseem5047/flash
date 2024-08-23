@@ -10,11 +10,12 @@ import {
 } from "@/types";
 import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import Link from "next/link";
-import SinglePostLoader from "@/components/shared/SinglePostLoader";
 import { useToast } from "@/components/ui/use-toast";
 import { logEvent } from "firebase/analytics";
 import { analytics } from "@/lib/firebase";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
+import { Cursor, Typewriter } from "react-simple-typewriter";
+import ContentLoading from "@/components/shared/ContentLoading";
 
 const About: React.FC = () => {
 	const searchParams = useSearchParams();
@@ -170,8 +171,20 @@ const About: React.FC = () => {
 	return (
 		<>
 			{loading ? (
-				<section className="flex-center justify-center items-center h-full w-full z-40">
-					<SinglePostLoader />
+				<section className="w-full h-full flex flex-col items-center justify-center gap-4">
+					<ContentLoading />
+					<h1 className="text-xl md:text-2xl font-semibold">
+						<Typewriter
+							words={["Processing Current Transaction", "Please Wait ..."]}
+							loop={true}
+							cursor
+							cursorStyle="_"
+							typeSpeed={50}
+							deleteSpeed={50}
+							delaySpeed={2000}
+						/>
+						<Cursor cursorColor="#50A65C" />
+					</h1>
 				</section>
 			) : (
 				<div className="overflow-y-scroll no-scrollbar p-4 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col items-center justify-center w-full">

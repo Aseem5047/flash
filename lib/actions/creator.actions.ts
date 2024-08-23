@@ -68,6 +68,19 @@ export async function getUserByPhone(phone: string) {
 	}
 }
 
+export async function getUserByUsername(username: string) {
+	try {
+		await connectToDatabase();
+
+		const user = await Creator.find({ username });
+
+		if (!user) throw new Error("User not found");
+		return JSON.parse(JSON.stringify(user));
+	} catch (error) {
+		handleError(error);
+	}
+}
+
 export async function updateCreatorUser(
 	userId: string,
 	user: UpdateCreatorParams

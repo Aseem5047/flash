@@ -9,7 +9,6 @@ import MobileNav from "./MobileNav";
 import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import { usePathname, useRouter } from "next/navigation";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
-import { creatorUser } from "@/types";
 
 const Navbar = () => {
 	const { currentUser, userType, currentTheme, authenticationSheetOpen } =
@@ -17,8 +16,7 @@ const Navbar = () => {
 	const router = useRouter();
 	const [userTheme, setUserTheme] = useState("#000000");
 	const pathname = usePathname();
-	const isCreatorOrExpertPath =
-		pathname.includes("/creator") || pathname.includes("/expert");
+	const isCreatorOrExpertPath = pathname.includes("/creator");
 	const handleRouting = () => {
 		localStorage.setItem("userType", "client");
 
@@ -46,7 +44,6 @@ const Navbar = () => {
 		} else if (isIOS) {
 			url = "https://flashcall.me";
 		} else {
-			// For other devices (like laptops, Windows machines), redirect to a fallback URL
 			url = "https://flashcall.me";
 		}
 
@@ -105,8 +102,8 @@ const Navbar = () => {
 			)}
 
 			{currentUser ? (
-				walletBalance >= 0 ? (
-					<div className=" w-fit h-full flex-between gap-2 text-white animate-enterFromRight">
+				<div className=" w-fit h-full flex-between gap-2 text-white">
+					{walletBalance >= 0 ? (
 						<Link
 							href="/payment"
 							className="w-full flex items-center justify-center gap-2 text-black px-5 py-3 border border-black rounded-[4px] hover:bg-green-1 group"
@@ -125,17 +122,17 @@ const Navbar = () => {
 								{`Rs. ${walletBalance.toFixed(2)}`}
 							</span>
 						</Link>
-						<MobileNav />
-					</div>
-				) : (
-					<div className="w-full max-w-[10rem] space-y-3">
-						<div className="grid grid-cols-3 gap-4">
-							<div className="h-2 bg-gray-300 rounded col-span-2"></div>
-							<div className="h-2 bg-gray-300 rounded col-span-1"></div>
+					) : (
+						<div className="w-full max-w-[10rem] space-y-3">
+							<div className="grid grid-cols-3 gap-4">
+								<div className="h-2 bg-gray-300 rounded col-span-2"></div>
+								<div className="h-2 bg-gray-300 rounded col-span-1"></div>
+							</div>
+							<div className="h-2 bg-gray-300 rounded"></div>
 						</div>
-						<div className="h-2 bg-gray-300 rounded"></div>
-					</div>
-				)
+					)}
+					<MobileNav />
+				</div>
 			) : (
 				<Button
 					className="hover:!bg-green-1 hover:!text-white transition-all duration-300 hover:bg-green-700font-semibold w-fit mr-1 rounded-md"

@@ -16,13 +16,12 @@ interface CreatorDetailsProps {
 
 const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 	const pathname = usePathname();
-	const isCreatorOrExpertPath =
-		pathname.includes("/creator") || pathname.includes("/expert");
+	const isCreatorOrExpertPath = pathname.includes("/creator");
 
 	const [isLoading, setIsLoading] = useState(true);
 	const [addingFavorite, setAddingFavorite] = useState(false);
 	const [markedFavorite, setMarkedFavorite] = useState(false);
-	const { clientUser } = useCurrentUsersContext();
+	const { clientUser, authenticationSheetOpen } = useCurrentUsersContext();
 	const { toast } = useToast();
 	// const [showText, setShowText] = useState(false);
 
@@ -31,6 +30,19 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 			localStorage.setItem("currentCreator", JSON.stringify(creator));
 		}
 	}, [creator, isCreatorOrExpertPath]);
+
+	useEffect(() => {
+		if (authenticationSheetOpen) {
+			document.body.style.overflow = "hidden";
+		} else {
+			document.body.style.overflow = "";
+		}
+
+		// Cleanup the effect when the component unmounts
+		return () => {
+			document.body.style.overflow = "";
+		};
+	}, [authenticationSheetOpen]);
 
 	const handleToggleFavorite = async () => {
 		const clientId = clientUser?._id;
@@ -72,9 +84,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 		<>
 			<div className="flex flex-col items-center px-5 sm:px-7 justify-center">
 				<div
-					className={`relative flex flex-col items-center w-fit mx-auto gap-4 p-4  rounded-[24px] z-10 ${
-						!isCreatorOrExpertPath && "!w-[85%]"
-					}`}
+					className={`relative flex flex-col items-center w-full max-w-[75%] md:max-w-[60%] xl:max-w-[35%] mx-auto gap-4 p-4 rounded-[24px] z-10`}
 					style={{
 						backgroundColor: creator.themeSelected
 							? creator.themeSelected
@@ -83,7 +93,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 				>
 					{isLoading ? (
 						<div
-							className={`bg-gray-300 opacity-60 animate-pulse rounded-[24px] w-full min-w-[256px] xl:min-w-[320px] max-w-64 h-60 xl:max-w-72 xl:h-80 object-cover`}
+							className={`bg-gray-300 opacity-60 animate-pulse rounded-[24px] w-full min-w-[256px] max-w-full h-72 xl:h-80 object-cover`}
 						/>
 					) : (
 						<>
@@ -92,8 +102,8 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 								alt="profile picture"
 								width={1000}
 								height={1000}
-								className={`relative rounded-xl w-full min-h-full max-w-64 h-72 xl:max-w-72 xl:h-80 ${
-									creator.photo.includes("clerk")
+								className={`relative rounded-xl min-w-full min-h-full max-w-64 h-72 xl:max-w-72 xl:h-80 bg-center ${
+									creator?.photo?.includes("clerk")
 										? "object-scale-down"
 										: "object-cover"
 								} ${isLoading ? "hidden" : "block"}`}
