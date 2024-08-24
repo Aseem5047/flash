@@ -16,12 +16,11 @@ const Navbar = () => {
 	const router = useRouter();
 	const [userTheme, setUserTheme] = useState("#000000");
 	const pathname = usePathname();
-	const creatorURL = localStorage.getItem("currentCreator");
-	const currentCreatorUsername = creatorURL && JSON.parse(creatorURL);
+	const creatorURL = localStorage.getItem("creatorURL");
+	const currentCreatorUsername =
+		creatorURL && creatorURL.split("/").filter((url) => url)[0];
 
-	const isCreatorOrExpertPath = pathname.includes(
-		`/${currentCreatorUsername?.username}`
-	);
+	const isCreatorOrExpertPath = pathname.includes(`/${currentCreatorUsername}`);
 
 	const handleRouting = () => {
 		localStorage.setItem("userType", "client");
@@ -108,7 +107,7 @@ const Navbar = () => {
 			)}
 
 			{currentUser ? (
-				<div className=" flex justify-end items-center gap-2 h-full text-white">
+				<div className=" flex justify-end items-center gap-4 h-full text-white">
 					{walletBalance >= 0 ? (
 						<Link
 							href="/payment"
