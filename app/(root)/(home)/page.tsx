@@ -8,6 +8,7 @@ import CreatorHome from "@/components/creator/CreatorHome";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { usePathname } from "next/navigation";
 import PostLoader from "@/components/shared/PostLoader";
+import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 
 const CreatorsGrid = lazy(() => import("@/components/creator/CreatorsGrid"));
 
@@ -17,6 +18,7 @@ const HomePage = () => {
 	const [creatorCount, setCreatorCount] = useState(6);
 	const [error, setError] = useState(false);
 	const { userType, setCurrentTheme } = useCurrentUsersContext();
+	const { updateWalletBalance } = useWalletBalanceContext();
 	const pathname = usePathname();
 	const loaderRef = useRef<HTMLDivElement | null>(null);
 
@@ -65,6 +67,10 @@ const HomePage = () => {
 		};
 	}, []);
 
+	useEffect(() => {
+		updateWalletBalance();
+	}, []);
+
 	const handleCreatorCardClick = (username: string, theme: string) => {
 		localStorage.setItem("creatorURL", `/${username}`);
 		setCurrentTheme(theme);
@@ -75,9 +81,9 @@ const HomePage = () => {
 	return (
 		<main className="flex size-full flex-col gap-5">
 			{userType !== "creator" ? (
-				<Suspense fallback={<PostLoader count={4} />}>
+				<Suspense fallback={<PostLoader count={6} />}>
 					{loading ? (
-						<PostLoader count={4} />
+						<PostLoader count={6} />
 					) : error ? (
 						<div className="size-full flex items-center justify-center text-2xl font-semibold text-center text-red-500">
 							Failed to fetch creators <br />
