@@ -23,7 +23,8 @@ const MobileNav = () => {
 		userType === "creator" ? sidebarLinksCreator : sidebarLinks;
 
 	const handleAuthentication = () => {
-		router.push("/");
+		// router.push("/");
+		localStorage.setItem("userType", "client");
 		handleSignout();
 	};
 
@@ -54,7 +55,7 @@ const MobileNav = () => {
 									alt="Profile"
 									width={1000}
 									height={1000}
-									className="rounded-full w-12 h-12 max-w-[56px]"
+									className="rounded-full w-12 h-12 max-w-[56px] object-cover"
 								/>
 								<div className="flex flex-col items-start justify-center text-white">
 									<span className="text-lg capitalize">
