@@ -9,6 +9,7 @@ import React, {
 import { getUserById } from "../actions/client.actions";
 import { getCreatorById } from "../actions/creator.actions";
 import { useCurrentUsersContext } from "./CurrentUsersContext";
+import { usePathname } from "next/navigation";
 
 interface WalletBalanceContextProps {
 	walletBalance: number;
@@ -35,7 +36,7 @@ export const WalletBalanceProvider = ({
 }: {
 	children: ReactNode;
 }) => {
-	const [walletBalance, setWalletBalance] = useState<number>(-1);
+	const [walletBalance, setWalletBalance] = useState<number>(0);
 	const { currentUser, userType } = useCurrentUsersContext();
 	const isCreator = userType === "creator";
 
