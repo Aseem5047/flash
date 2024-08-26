@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, Suspense, lazy } from "react";
+import React, { useEffect, useState, Suspense, lazy, useRef } from "react";
 import Link from "next/link";
 import { getUsers } from "@/lib/actions/creator.actions";
 import { creatorUser } from "@/types";
@@ -18,6 +18,7 @@ const HomePage = () => {
 	const [error, setError] = useState(false);
 	const { userType, setCurrentTheme } = useCurrentUsersContext();
 	const pathname = usePathname();
+	const loaderRef = useRef<HTMLDivElement | null>(null);
 
 	useEffect(() => {
 		const getCreators = async () => {
@@ -39,18 +40,28 @@ const HomePage = () => {
 	}, [pathname]);
 
 	useEffect(() => {
-		const handleScroll = () => {
-			if (
-				window.innerHeight + window.scrollY >=
-				document.body.offsetHeight - 2
-			) {
-				setCreatorCount((prevCount) => prevCount + 2);
+		const observer = new IntersectionObserver(
+			(entries) => {
+				const entry = entries[0];
+				if (entry.isIntersecting) {
+					setCreatorCount((prevCount) => prevCount + 2);
+				}
+			},
+			{
+				root: null, // Use the viewport as the root
+				rootMargin: "0px",
+				threshold: 1.0, // Trigger when the loader is fully visible
 			}
-		};
+		);
 
-		window.addEventListener("scroll", handleScroll);
+		if (loaderRef.current) {
+			observer.observe(loaderRef.current);
+		}
+
 		return () => {
-			window.removeEventListener("scroll", handleScroll);
+			if (loaderRef.current) {
+				observer.unobserve(loaderRef.current);
+			}
 		};
 	}, []);
 
@@ -78,8 +89,7 @@ const HomePage = () => {
 						</div>
 					) : (
 						<section
-							className={`grid grid-cols-2 gap-2.5 px-2.5 lg:gap-5 lg:px-0
-							 items-center pb-6`}
+							className={`grid grid-cols-2 gap-2.5 px-2.5 lg:gap-5 lg:px-0 items-center pb-6`}
 						>
 							{creators &&
 								visibleCreators.map(
@@ -107,6 +117,8 @@ const HomePage = () => {
 								)}
 						</section>
 					)}
+					{/* Loader for Intersection Observer */}
+					<div ref={loaderRef} className="w-full h-10" />
 				</Suspense>
 			) : (
 				<CreatorHome />
