@@ -21,11 +21,11 @@ const SupportPage = () => {
 				>
 					{currentUser?.username}
 				</span>{" "}
-				We're Here to Help
+				We&apos;re Here to Help
 			</h2>
 			<p className="text-base text-gray-700">
-				If you have any questions or need assistance, don't hesitate to reach
-				out to our support team.
+				If you have any questions or need assistance, don&apos;t hesitate to
+				reach out to our support team.
 			</p>
 
 			<section className="flex flex-col items-start justify-start gap-2">
