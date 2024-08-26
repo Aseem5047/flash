@@ -165,7 +165,7 @@ const UserReviews = ({
 										{feedback?.clientId?.username}
 									</p>
 									<p className="text-sm font-semibold">
-										{feedback.clientId.phone.replace(
+										{feedback?.clientId?.phone?.replace(
 											/(\+91)(\d+)/,
 											(match, p1, p2) =>
 												`${p1} ${p2.replace(/(\d{5})$/, "xxxxx")}`
