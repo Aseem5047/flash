@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { audio, chat, video } from "@/constants/icons";
 import { creatorUser } from "@/types";
 import { useRouter } from "next/navigation";
@@ -260,34 +261,51 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	const handleClickOption = (callType: string) => {
 		if (isProcessing) return; // Prevent double-click
 		setIsProcessing(true); // Set processing state
-		if (clientUser && !storedCallId) {
-			createMeeting(callType);
-			logEvent(analytics, "call_click", {
-				clientId: clientUser?._id,
-				creatorId: creator._id,
-			});
-			if (callType === "audio") {
-				logEvent(analytics, "audio_now_click", {
-					clientId: clientUser?._id,
-					creatorId: creator._id,
-				});
-			} else {
-				logEvent(analytics, "video_now_click", {
-					clientId: clientUser?._id,
-					creatorId: creator._id,
-				});
-			}
-		} else if (clientUser && storedCallId) {
-			toast({
-				title: "Ongoing Call or Transaction Pending",
-				description: "Redirecting you back ...",
-			});
-			router.push(`/meeting/${storedCallId}`);
-		} else {
-			setIsAuthSheetOpen(true);
-		}
 
-		setIsProcessing(false); // Reset processing state after completion
+		try {
+			if (clientUser && !storedCallId) {
+				createMeeting(callType);
+				logEvent(analytics, "call_click", {
+					clientId: clientUser?._id,
+					creatorId: creator._id,
+				});
+				if (callType === "audio") {
+					logEvent(analytics, "audio_now_click", {
+						clientId: clientUser?._id,
+						creatorId: creator._id,
+					});
+				} else {
+					logEvent(analytics, "video_now_click", {
+						clientId: clientUser?._id,
+						creatorId: creator._id,
+					});
+				}
+			} else if (clientUser && storedCallId) {
+				toast({
+					title: "Ongoing Call or Transaction Pending",
+					description: "Redirecting you back ...",
+				});
+				router.push(`/meeting/${storedCallId}`);
+			} else {
+				setIsAuthSheetOpen(true);
+			}
+
+			// Optionally log a success message to Sentry
+			Sentry.captureMessage("handleClickOption executed successfully", {
+				level: "info",
+				extra: {
+					callType,
+					clientUserId: clientUser?._id,
+					creatorId: creator._id,
+				},
+			});
+		} catch (error) {
+			// Capture the exception and log it to Sentry
+			Sentry.captureException(error);
+			console.error("Error in handleClickOption:", error);
+		} finally {
+			setIsProcessing(false); // Reset processing state after completion
+		}
 	};
 
 	const handleChatClick = () => {
@@ -300,7 +318,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		}
 	};
 
-	const theme = `5px 5px 5px 0px ${creator.themeSelected}`;
+	const theme = `5px 5px 0px 0px ${creator.themeSelected}`;
 
 	if (isAuthSheetOpen && !clientUser)
 		return (
@@ -338,7 +356,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 							{video}
 							Book Video Call
 						</div>
-						<span className="text-xs tracking-widest">
+						<span className="text-sm tracking-widest">
 							Rs. {updatedCreator.videoRate}/Min
 						</span>
 					</div>
@@ -362,7 +380,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 							{audio}
 							Book Audio Call
 						</div>
-						<span className="text-xs tracking-widest">
+						<span className="text-sm tracking-widest">
 							Rs. {updatedCreator.audioRate}/Min
 						</span>
 					</div>
@@ -384,7 +402,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 							{chat}
 							Chat Now
 						</button>
-						<span className="text-xs tracking-widest">
+						<span className="text-sm tracking-widest">
 							Rs. {updatedCreator.chatRate}/Min
 						</span>
 					</div>

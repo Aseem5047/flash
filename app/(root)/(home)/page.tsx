@@ -1,8 +1,16 @@
 "use client";
 
-import React, { useEffect, useState, Suspense, lazy, useRef } from "react";
+import React, {
+	useEffect,
+	useState,
+	Suspense,
+	lazy,
+	useCallback,
+	useRef,
+} from "react";
+import * as Sentry from "@sentry/nextjs";
 import Link from "next/link";
-import { getUsers } from "@/lib/actions/creator.actions";
+import { getUsersPaginated } from "@/lib/actions/creator.actions";
 import { creatorUser } from "@/types";
 import CreatorHome from "@/components/creator/CreatorHome";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
@@ -14,66 +22,94 @@ const CreatorsGrid = lazy(() => import("@/components/creator/CreatorsGrid"));
 const HomePage = () => {
 	const [creators, setCreators] = useState<creatorUser[]>([]);
 	const [loading, setLoading] = useState(true);
-	const [creatorCount, setCreatorCount] = useState(6);
+	const [creatorCount, setCreatorCount] = useState(0); // Offset for fetching more users
+	const [isFetching, setIsFetching] = useState(false); // To handle API call in progress
 	const [error, setError] = useState(false);
+	const [hasMore, setHasMore] = useState(true);
 	const { userType, setCurrentTheme } = useCurrentUsersContext();
 	const pathname = usePathname();
-	const loaderRef = useRef<HTMLDivElement | null>(null);
+
+	// Ref for the empty div acting as a scroll trigger
+	const bottomRef = useRef<HTMLDivElement>(null);
+
+	const fetchCreators = useCallback(async (offset: number, limit: number) => {
+		console.log("Fetching creators ... ", offset, limit);
+		try {
+			setIsFetching(true); // Set fetching state
+			const response = await getUsersPaginated(offset, limit);
+			console.log(response);
+			setCreators((prevCreators) => [...prevCreators, ...response]);
+			if (response.length > 0) {
+				setCreatorCount((prevCount) => prevCount + limit); // Increase the offset
+			} else {
+				setHasMore(false);
+			}
+		} catch (error) {
+			console.error(error);
+			Sentry.captureException(error);
+			setError(true);
+		} finally {
+			setLoading(false);
+			setIsFetching(false); // Reset fetching state
+		}
+	}, []); // Empty dependency array to keep it stable
 
 	useEffect(() => {
-		const getCreators = async () => {
-			try {
-				const response = await getUsers();
-				setCreators(response);
-			} catch (error) {
-				console.error(error);
-				setError(true);
-			} finally {
-				setLoading(false);
+		// Initial fetch for creators
+		if (userType !== "creator") {
+			fetchCreators(0, 7); // Fetch the first few users
+		}
+	}, [pathname, fetchCreators]); // Depend on pathname and fetchCreators
+
+	useEffect(() => {
+		const handleScroll = () => {
+			if (
+				window.innerHeight + window.scrollY >=
+					document.body.offsetHeight - 100 &&
+				!isFetching
+			) {
+				fetchCreators(creatorCount, 2);
 			}
 		};
 
-		// Fetch creators if the user is not a creator
-		if (userType !== "creator") {
-			getCreators();
-		}
-	}, [pathname]);
+		window.addEventListener("scroll", handleScroll);
+		return () => {
+			window.removeEventListener("scroll", handleScroll);
+		};
+	}, [isFetching, creatorCount]);
 
+	// Intersection Observer to trigger fetching when the bottom div is in view
 	useEffect(() => {
 		const observer = new IntersectionObserver(
 			(entries) => {
 				const entry = entries[0];
-				if (entry.isIntersecting) {
-					setCreatorCount((prevCount) => prevCount + 2);
+				if (entry.isIntersecting && hasMore && !isFetching) {
+					fetchCreators(creatorCount, 2);
 				}
 			},
 			{
-				root: null, // Use the viewport as the root
-				rootMargin: "0px",
-				threshold: 1.0, // Trigger when the loader is fully visible
+				rootMargin: "0px", // Trigger 0px before the div is in view
 			}
 		);
 
-		if (loaderRef.current) {
-			observer.observe(loaderRef.current);
+		if (bottomRef.current) {
+			observer.observe(bottomRef.current);
 		}
 
 		return () => {
-			if (loaderRef.current) {
-				observer.unobserve(loaderRef.current);
+			if (bottomRef.current) {
+				observer.unobserve(bottomRef.current);
 			}
 		};
-	}, []);
+	}, [creatorCount, isFetching, hasMore, fetchCreators]);
 
 	const handleCreatorCardClick = (username: string, theme: string) => {
 		localStorage.setItem("creatorURL", `/${username}`);
 		setCurrentTheme(theme);
 	};
 
-	const visibleCreators = creators?.slice(0, creatorCount + 1);
-
 	return (
-		<main className="flex size-full flex-col gap-5">
+		<main className="flex size-full flex-col gap-2">
 			{userType !== "creator" ? (
 				<Suspense fallback={<PostLoader count={6} />}>
 					{loading ? (
@@ -89,10 +125,10 @@ const HomePage = () => {
 						</div>
 					) : (
 						<section
-							className={`grid grid-cols-2 gap-2.5 px-2.5 lg:gap-5 lg:px-0 items-center pb-6`}
+							className={`grid grid-cols-2 gap-2.5 px-2.5 lg:gap-5 lg:px-0 items-center`}
 						>
 							{creators &&
-								visibleCreators.map(
+								creators.map(
 									(creator, index) =>
 										parseInt(creator.audioRate, 10) !== 0 &&
 										parseInt(creator.videoRate, 10) !== 0 &&
@@ -118,7 +154,15 @@ const HomePage = () => {
 						</section>
 					)}
 					{/* Loader for Intersection Observer */}
-					<div ref={loaderRef} className="w-full h-10" />
+					{hasMore && isFetching && <PostLoader count={2} />}
+					{/* Show a message when there's no more data to fetch */}
+					{!hasMore && (
+						<div className="text-center text-gray-500 py-4">
+							You have reached the end of the list.
+						</div>
+					)}
+					{/* Empty div to trigger scroll action */}
+					<div ref={bottomRef} className="w-full" />
 				</Suspense>
 			) : (
 				<CreatorHome />

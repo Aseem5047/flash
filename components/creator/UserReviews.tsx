@@ -1,22 +1,8 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import { Rating } from "@smastrom/react-rating";
-import {
-	HappyFace,
-	NeutralFace,
-	SadFace,
-	SmilingFace,
-	arrowLeft,
-	arrowRight,
-} from "@/constants/icons";
 import SinglePostLoader from "../shared/SinglePostLoader";
 import { CreatorFeedback } from "@/types";
-
-const customStyles = {
-	itemShapes: [SadFace, NeutralFace, NeutralFace, SmilingFace, HappyFace],
-	activeFillColor: ["#ff3300", "#ffcc00", "#ffcc00", "#79ff4d", "#00cc99"],
-	inactiveFillColor: "#a8a8a8",
-};
 
 const UserReviews = ({
 	theme,
@@ -32,6 +18,44 @@ const UserReviews = ({
 	const [direction, setDirection] = useState("right");
 	const [isHovering, setIsHovering] = useState(false);
 	const sliderIntervalRef = useRef<any>(null);
+	const [isExpanded, setIsExpanded] = useState(false);
+
+	const useScreenSize = () => {
+		const [isMobile, setIsMobile] = useState(false);
+
+		const handleResize = () => {
+			setIsMobile(window.innerWidth < 600);
+		};
+
+		useEffect(() => {
+			handleResize(); // Set initial value
+			window.addEventListener("resize", handleResize);
+			return () => window.removeEventListener("resize", handleResize);
+		}, []);
+
+		return isMobile;
+	};
+
+	const isMobile = useScreenSize();
+
+	const toggleReadMore = () => {
+		setIsExpanded(!isExpanded);
+	};
+
+	const getClampedText = (text: string) => {
+		// Create a temporary element to measure text
+
+		// Check if the text exceeds the clamped height
+		let charLen = isMobile ? 100 : 200;
+		if (text.length > 100) {
+			// Use a reasonable number of characters to truncate
+			return text.slice(0, charLen) + "... "; // Adjust the slicing length if needed
+		}
+		return text;
+	};
+
+	let dummyFeedback =
+		"Lorem ipsum dolor sit amet consect adipisicing elit. Culpa consequuntur ducimus repellendus non nam, laboriosam et ullam veniam? Voluptatum laboriosam mollitia expedita fugit iste repellendus suscipit nostrum. Inventore repudiandae, quibusdam voluptatibus facere minus officiis tenetur, obcaecati quos assumenda similique commodi magni maxime nobis suscipit distinctio eaque quisquam vel omnis. Eos, temporibus odit! Odit mollitia dolores repudiandae, pariatur magni dolorem, vel necessitatibus, beatae sequi aut iste culpa doloribus. Ab iusto quaerat officiis, id maxime ratione voluptatum quasi ex voluptas beatae ipsam et quo quia esse facilis quibusdam inventore error, magnam atque totam tenetur. Sed, vel delectus voluptatum earum autem quia inventore!";
 
 	// Auto slider
 	useEffect(() => {
@@ -47,7 +71,8 @@ const UserReviews = ({
 			clearInterval(sliderIntervalRef.current);
 		}
 
-		if (creatorFeedback?.length > 1 && !isHovering) {
+		if (creatorFeedback?.length > 1 && !isHovering && !isExpanded) {
+			setIsExpanded(false);
 			sliderIntervalRef.current = setInterval(() => {
 				setCurrentIndex((prev) => (prev + 1 > lastIndex ? 0 : prev + 1));
 			}, 5000);
@@ -88,7 +113,7 @@ const UserReviews = ({
 
 	return (
 		<div
-			className="flex overflow-x-scroll no-scrollbar items-center text-white w-full rounded-t-xl md:rounded-xl xl:w-[60%]"
+			className="flex overflow-x-scroll no-scrollbar items-center text-white w-full rounded-t-[24px] md:rounded-[24px] xl:w-[60%]"
 			style={{ backgroundColor: theme }}
 			onMouseEnter={() => setIsHovering(true)}
 			onMouseLeave={() => setIsHovering(false)}
@@ -137,7 +162,7 @@ const UserReviews = ({
 								/>
 								<span className="text-3xl">😍</span>
 							</div>
-							<div className="flex flex-col items-start justfy-center gap-4 w-full rounded-xl px-5 pb-5 pt-10 -mt-4 bg-black/10">
+							<div className="flex flex-col items-start justfy-center gap-4 w-full rounded-[24px] px-5 pb-5 pt-10 -mt-4 bg-black/10">
 								{/* Rating */}
 								<div className="flex gap-1 items-center">
 									<Rating
@@ -155,54 +180,79 @@ const UserReviews = ({
 								</div>
 
 								{/* Feedback */}
-								<p className="w-full h-[125px] overflow-y-scroll no-scrollbar text-start">
-									{feedback.feedback}
-								</p>
+
+								<div className="pl-1 flex flex-col items-start justify-start gap-2 w-full h-full overflow-hidden -ml-1 min-h-[4rem]">
+									<span
+										className={`text-start block ${
+											isExpanded ? "whitespace-pre-wrap" : "line-clamp-3"
+										} ${
+											isExpanded
+												? "overflow-y-scroll no-scrollbar"
+												: "overflow-hidden"
+										}`}
+										style={{ maxHeight: isExpanded ? "10rem" : "7rem" }}
+									>
+										{getClampedText(feedback.feedback)}
+										{!isExpanded && feedback.feedback.length > 100 && (
+											<span className="text-white">
+												<button
+													onClick={toggleReadMore}
+													className="underline underline-offset-2 hover:opacity-80"
+												>
+													Read more
+												</button>
+											</span>
+										)}
+									</span>
+
+									{isExpanded && (
+										<button
+											onClick={toggleReadMore}
+											className="text-red-400 hover:opacity-80 text-sm font-bold mt-2"
+										>
+											Show Less
+										</button>
+									)}
+								</div>
 
 								{/* User Details */}
 								<div className="flex flex-col items-start justify-center gap-1">
-									<p className="text-lg font-semibold">
-										{feedback?.clientId?.username}
-									</p>
-									<p className="text-sm font-semibold">
-										{feedback?.clientId?.phone?.replace(
-											/(\+91)(\d+)/,
-											(match, p1, p2) =>
-												`${p1} ${p2.replace(/(\d{5})$/, "xxxxx")}`
-										)}
-									</p>
+									{feedback?.clientId?.username ? (
+										<p className="text-sm font-semibold">
+											{feedback?.clientId?.username}
+										</p>
+									) : (
+										<p className="text-sm font-semibold">
+											{feedback?.clientId?.phone?.replace(
+												/(\+91)(\d+)/,
+												(match, p1, p2) =>
+													`${p1} ${p2.replace(/(\d{5})$/, "xxxxx")}`
+											)}
+										</p>
+									)}
 								</div>
 							</div>
 						</div>
 
-						{/* navigation arrow */}
+						{/* navigation */}
 						{creatorFeedback?.length > 1 && (
-							<div className="flex items-center justify-evenly">
-								<button
-									className="bg-black/10 text-white w-10 h-10 rounded-full p-2 hoverScaleEffect hover:bg-black/50"
-									onClick={previousSlide}
-								>
-									{arrowLeft}
-								</button>
-								<div className="flex gap-2 items-center max-w-[60%] md:max-w-[80%] py-2 overflow-x-scroll no-scrollbar">
+							<div className="flex items-center justify-center w-full">
+								<div className="flex gap-2 items-center max-w-[60%] md:max-w-[80%] py-[0.75px] overflow-x-scroll no-scrollbar bg-black/10 px-1 rounded-xl">
 									{creatorFeedback?.map((_, index) => (
 										<button
 											key={index}
 											className={`${
-												index === currentIndex && "!bg-black/50"
-											} bg-black/10 w-5 h-5 rounded-full p-5 flex items-center justify-center hoverScaleEffect hover:bg-black/50`}
-											onClick={() => setCurrentIndex(index)}
-										>
-											<span className="mx-auto">{index + 1}</span>
-										</button>
+												index === currentIndex
+													? "!bg-[#F6B656]"
+													: "opacity-0 hover:opacity-100"
+											} w-10 h-1 rounded-xl flex items-center justify-center hoverScaleEffect hover:bg-black/20`}
+											onClick={() => {
+												setCurrentIndex(index);
+												setIsExpanded(false);
+											}}
+										/>
 									))}
 								</div>
-								<button
-									className="bg-black/10 text-white w-10 h-10 rounded-full p-2 hoverScaleEffect hover:bg-black/50"
-									onClick={nextSlide}
-								>
-									{arrowRight}
-								</button>
 							</div>
 						)}
 					</div>

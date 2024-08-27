@@ -12,8 +12,6 @@ import { Switch } from "../ui/switch";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 
 // Function to reorder the array based on the drag result
 const reorder = (

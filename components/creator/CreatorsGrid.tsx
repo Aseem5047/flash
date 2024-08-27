@@ -17,13 +17,10 @@ const CreatorsGrid = ({ creator }: { creator: creatorUser }) => {
 
 		img.onload = () => {
 			setIsImageLoaded(true);
-			setTimeout(() => {
-				setIsLoading(false);
-			}, 500);
+			setIsLoading(false);
 		};
 
 		img.onerror = () => {
-			// Handle image loading error (optional)
 			setIsImageLoaded(true);
 			setIsLoading(false);
 		};

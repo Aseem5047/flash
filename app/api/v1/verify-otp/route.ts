@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserByPhone } from "@/lib/actions/creator.actions";
 import jwt from "jsonwebtoken";
+import axios from "axios";
 
 export async function POST(req: NextRequest) {
 	try {
@@ -36,6 +36,8 @@ export async function POST(req: NextRequest) {
 		);
 
 		const data = await response.json();
+
+		console.log(process.env.NEXT_PUBLIC_BASE_URL);
 
 		if (response.ok && data.Status === "Success") {
 			// OTP verified successfully

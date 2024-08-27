@@ -9,7 +9,6 @@ import React, {
 import { getUserById } from "../actions/client.actions";
 import { getCreatorById } from "../actions/creator.actions";
 import { useCurrentUsersContext } from "./CurrentUsersContext";
-import { usePathname } from "next/navigation";
 
 interface WalletBalanceContextProps {
 	walletBalance: number;
@@ -42,7 +41,7 @@ export const WalletBalanceProvider = ({
 	const isCreator = userType === "creator";
 
 	const fetchAndSetWalletBalance = async () => {
-		if (currentUser) {
+		if (currentUser?._id) {
 			try {
 				const response = isCreator
 					? await getCreatorById(currentUser._id)
@@ -56,8 +55,16 @@ export const WalletBalanceProvider = ({
 	};
 
 	useEffect(() => {
-		fetchAndSetWalletBalance();
-	}, [userType, authenticationSheetOpen]);
+		const handler = setTimeout(() => {
+			if (currentUser?._id) {
+				fetchAndSetWalletBalance();
+			}
+		}, 300);
+
+		return () => {
+			clearTimeout(handler);
+		};
+	}, [userType, authenticationSheetOpen, currentUser?._id]);
 
 	const updateWalletBalance = async () => {
 		await fetchAndSetWalletBalance();

@@ -41,7 +41,13 @@ const CreatorProfile = () => {
 			}
 		};
 
-		getCreator();
+		const handler = setTimeout(() => {
+			getCreator();
+		}, 300);
+
+		return () => {
+			clearTimeout(handler);
+		};
 	}, [pathname, username]);
 
 	if (loading || !creator) {

@@ -106,9 +106,7 @@ const CreatorHome = () => {
 		}
 	}, [creatorUser?._id]);
 
-	const creatorLink = `https://app.flashcall.me/${creatorUser?.username}${
-		creatorUser?.creatorId ? `/${creatorUser?.creatorId}` : ""
-	}`;
+	const creatorLink = `https://app.flashcall.me/${creatorUser?.username}`;
 
 	const theme = creatorUser?.themeSelected;
 

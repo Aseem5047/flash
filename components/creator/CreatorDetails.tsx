@@ -146,8 +146,8 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 							<span className="text-md h-full">
 								{creator.profession ? creator.profession : "Expert"}
 							</span>
-							<span className="bg-green-500 text-[10px] rounded-[4px] py-1 px-2 font-semibold">
-								Available
+							<span className="bg-green-500 text-[10px] rounded-[4px] border border-white py-1 px-2 font-semibold">
+								Online
 							</span>
 						</div>
 					</div>

@@ -22,12 +22,34 @@ const ShareButton = () => {
 				});
 			});
 	};
+
+	const shareLink = () => {
+		const link = window.location.href;
+		if (navigator.share) {
+			navigator
+				.share({
+					title: "Check out this link",
+					text: "Here's a link to my Creator's Page:",
+					url: link,
+				})
+				.catch((err) => {
+					console.error("Failed to share: ", err);
+				});
+		} else {
+			toast({
+				title: "Sharing not supported",
+				description:
+					"Your device or browser does not support the share feature.",
+			});
+		}
+	};
+
 	return (
 		<Tooltip>
 			<TooltipTrigger asChild>
 				<Button
 					className={` px-3 py-6 rounded-xl transition-all duration-300  hover:scale-105 group bg-[#232323]/35 hover:bg-green-1 flex gap-2 items-center`}
-					onClick={handleShareClick}
+					onClick={shareLink}
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"

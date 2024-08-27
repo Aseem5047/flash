@@ -9,12 +9,19 @@ import MobileNav from "./MobileNav";
 import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import { usePathname, useRouter } from "next/navigation";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
+import AuthenticationSheet from "../shared/AuthenticationSheet";
 
 const Navbar = () => {
-	const { currentUser, userType, currentTheme, authenticationSheetOpen } =
-		useCurrentUsersContext();
+	const {
+		currentUser,
+		userType,
+		currentTheme,
+		authenticationSheetOpen,
+		setAuthenticationSheetOpen,
+	} = useCurrentUsersContext();
 	const router = useRouter();
 	const [userTheme, setUserTheme] = useState("#000000");
+	const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false); // State to manage sheet visibility
 	const [isCreatorOrExpertPath, setIsCreatorOrExpertPath] = useState(false);
 	const pathname = usePathname();
 	const creatorURL = localStorage.getItem("creatorURL");
@@ -25,8 +32,12 @@ const Navbar = () => {
 	// const isCreatorOrExpertPath = pathname.includes(`/${currentCreatorUsername}`);
 
 	const handleRouting = () => {
-		localStorage.setItem("userType", "client");
-		router.push("/authenticate");
+		// localStorage.setItem("userType", "client");
+		if (userType === "creator") {
+			router.push("/authenticate?usertype=creator");
+		} else {
+			setIsAuthSheetOpen(true);
+		}
 	};
 	const theme = `5px 5px 0px 0px #000000`;
 	const { walletBalance } = useWalletBalanceContext();
@@ -40,6 +51,10 @@ const Navbar = () => {
 			setUserTheme("#000000");
 		}
 	}, [pathname]);
+
+	useEffect(() => {
+		setAuthenticationSheetOpen(isAuthSheetOpen);
+	}, [isAuthSheetOpen]);
 
 	const handleAppRedirect = () => {
 		const isAndroid = /Android/i.test(navigator.userAgent);
@@ -79,11 +94,17 @@ const Navbar = () => {
 		</Button>
 	);
 
-	console.log(walletBalance);
+	if (isAuthSheetOpen && !currentUser)
+		return (
+			<AuthenticationSheet
+				isOpen={isAuthSheetOpen}
+				onOpenChange={setIsAuthSheetOpen} // Handle sheet close
+			/>
+		);
 
 	return (
 		<nav
-			className="animate-enterFromTop justify-between items-center fixed z-40 top-0 left-0 w-full px-2 sm:px-4 py-4 bg-white shadow-sm"
+			className="justify-between items-center fixed z-40 top-0 left-0 w-full px-2 sm:px-4 py-4 bg-white shadow-sm"
 			style={{
 				display: `${
 					isCreatorOrExpertPath && authenticationSheetOpen ? "none" : "flex"
