@@ -16,6 +16,8 @@ import CreatorHome from "@/components/creator/CreatorHome";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { usePathname } from "next/navigation";
 import PostLoader from "@/components/shared/PostLoader";
+import Loader from "@/components/shared/Loader";
+import Image from "next/image";
 
 const CreatorsGrid = lazy(() => import("@/components/creator/CreatorsGrid"));
 
@@ -78,31 +80,6 @@ const HomePage = () => {
 		};
 	}, [isFetching, creatorCount]);
 
-	// Intersection Observer to trigger fetching when the bottom div is in view
-	useEffect(() => {
-		const observer = new IntersectionObserver(
-			(entries) => {
-				const entry = entries[0];
-				if (entry.isIntersecting && hasMore && !isFetching) {
-					fetchCreators(creatorCount, 2);
-				}
-			},
-			{
-				rootMargin: "0px", // Trigger 0px before the div is in view
-			}
-		);
-
-		if (bottomRef.current) {
-			observer.observe(bottomRef.current);
-		}
-
-		return () => {
-			if (bottomRef.current) {
-				observer.unobserve(bottomRef.current);
-			}
-		};
-	}, [creatorCount, isFetching, hasMore, fetchCreators]);
-
 	const handleCreatorCardClick = (username: string, theme: string) => {
 		localStorage.setItem("creatorURL", `/${username}`);
 		setCurrentTheme(theme);
@@ -154,7 +131,16 @@ const HomePage = () => {
 						</section>
 					)}
 					{/* Loader for Intersection Observer */}
-					{hasMore && isFetching && <PostLoader count={2} />}
+					{hasMore && isFetching && (
+						<Image
+							src="/icons/loading-circle.svg"
+							alt="Loading..."
+							width={50}
+							height={50}
+							className="mx-auto invert my-4"
+							priority
+						/>
+					)}
 					{/* Show a message when there's no more data to fetch */}
 					{!hasMore && (
 						<div className="text-center text-gray-500 py-4">
@@ -162,7 +148,7 @@ const HomePage = () => {
 						</div>
 					)}
 					{/* Empty div to trigger scroll action */}
-					<div ref={bottomRef} className="h-1 w-full" />
+					<div ref={bottomRef} className="w-full" />
 				</Suspense>
 			) : (
 				<CreatorHome />
