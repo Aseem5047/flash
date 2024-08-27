@@ -17,12 +17,14 @@ import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 
 const MobileNav = () => {
 	const pathname = usePathname();
-	const { currentUser, userType, handleSignout } = useCurrentUsersContext();
+	const { currentUser, userType, handleSignout, setAuthenticationSheetOpen } =
+		useCurrentUsersContext();
 	// const router = useRouter();
 	const sidebarItems =
 		userType === "creator" ? sidebarLinksCreator : sidebarLinks;
 
 	const handleAuthentication = () => {
+		setAuthenticationSheetOpen(false);
 		handleSignout();
 	};
 

@@ -162,7 +162,7 @@ const HomePage = () => {
 						</div>
 					)}
 					{/* Empty div to trigger scroll action */}
-					<div ref={bottomRef} className="w-full" />
+					<div ref={bottomRef} className="h-1 w-full" />
 				</Suspense>
 			) : (
 				<CreatorHome />
