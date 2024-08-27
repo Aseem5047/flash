@@ -18,13 +18,11 @@ import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 const MobileNav = () => {
 	const pathname = usePathname();
 	const { currentUser, userType, handleSignout } = useCurrentUsersContext();
-	const router = useRouter();
+	// const router = useRouter();
 	const sidebarItems =
 		userType === "creator" ? sidebarLinksCreator : sidebarLinks;
 
 	const handleAuthentication = () => {
-		// router.push("/");
-		localStorage.setItem("userType", "client");
 		handleSignout();
 	};
 

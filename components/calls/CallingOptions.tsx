@@ -30,6 +30,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false); // State to manage sheet visibility
 	const { handleChat, chatRequestsRef } = useChatRequest();
 	const { chatRequest, setChatRequest } = useChatRequestContext();
+	const [isProcessing, setIsProcessing] = useState(false); // Add a state for processing
 	const { fetchCreatorToken } = useFcmToken();
 
 	const [updatedCreator, setUpdatedCreator] = useState<creatorUser>({
@@ -133,6 +134,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	// defining the actions for call accept and call reject
 
 	const handleCallAccepted = async (call: Call) => {
+		setIsProcessing(false); // Reset processing state
 		toast({
 			variant: "destructive",
 			title: "Call Accepted",
@@ -144,6 +146,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	};
 
 	const handleCallRejected = () => {
+		setIsProcessing(false); // Reset processing state
 		toast({
 			variant: "destructive",
 			title: "Call Rejected",
@@ -255,6 +258,8 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 
 	// if any of the calling option is selected open the respective modal
 	const handleClickOption = (callType: string) => {
+		if (isProcessing) return; // Prevent double-click
+		setIsProcessing(true); // Set processing state
 		if (clientUser && !storedCallId) {
 			createMeeting(callType);
 			logEvent(analytics, "call_click", {
@@ -281,6 +286,8 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		} else {
 			setIsAuthSheetOpen(true);
 		}
+
+		setIsProcessing(false); // Reset processing state after completion
 	};
 
 	const handleChatClick = () => {
@@ -316,7 +323,9 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				{/* Book Video Call */}
 				{updatedCreator.videoAllowed && (
 					<div
-						className="callOptionContainer"
+						className={`callOptionContainer ${
+							isProcessing ? "opacity-50 cursor-not-allowed" : ""
+						}`}
 						style={{
 							boxShadow: theme,
 						}}
@@ -338,7 +347,9 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				{/* Book Audio Call */}
 				{updatedCreator.audioAllowed && (
 					<div
-						className="callOptionContainer"
+						className={`callOptionContainer ${
+							isProcessing ? "opacity-50 cursor-not-allowed" : ""
+						}`}
 						style={{
 							boxShadow: theme,
 						}}

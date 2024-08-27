@@ -123,15 +123,15 @@ const AuthenticateViaOTP = ({ userType }: { userType: string }) => {
 
 			let authToken = response.data.sessionToken;
 
+			updateFirestoreAuthToken(authToken);
+
 			const creatorURL = localStorage.getItem("creatorURL");
 
 			// Save the auth token (with 7 days expiry) in localStorage
 			localStorage.setItem("authToken", authToken);
 			console.log("OTP verified and token saved:");
 
-			updateFirestoreAuthToken(authToken);
-
-			setVerificationSuccess(true); // Set success state
+			setVerificationSuccess(true);
 
 			const existingUser = await axios.post("/api/v1/user/getUserByPhone", {
 				phone: phoneNumber,

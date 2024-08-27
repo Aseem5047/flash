@@ -319,7 +319,7 @@ const CreatorCallsFeedbacks = () => {
 													className="w-7 h-7 absolute top-7 left-2"
 												/>
 												<div className="flex h-full w-full items-start justify-between">
-													<div className="w-1/2 flex items-center justify-start gap-4">
+													<div className="w-full flex items-center justify-start gap-4">
 														{feedback?.clientId?.photo && (
 															<Image
 																src={
@@ -346,7 +346,7 @@ const CreatorCallsFeedbacks = () => {
 															</p>
 														</div>
 													</div>
-													<div className="w-1/2 flex flex-col items-end justify-between h-full gap-2">
+													<div className="w-fit flex flex-col items-end justify-between h-full gap-2">
 														{loadingFeedbackId === feedback?.callId ? (
 															<Image
 																src="/icons/loading-circle.svg"
@@ -368,7 +368,7 @@ const CreatorCallsFeedbacks = () => {
 																}
 															/>
 														)}
-														<span className="text-xs text-[#A7A8A1] ">
+														<span className="text-xs text-[#A7A8A1] whitespace-nowrap">
 															{!feedback.showFeedback && "Add to Website"}
 														</span>
 													</div>

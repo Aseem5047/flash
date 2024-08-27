@@ -15,22 +15,24 @@ const Navbar = () => {
 		useCurrentUsersContext();
 	const router = useRouter();
 	const [userTheme, setUserTheme] = useState("#000000");
+	const [isCreatorOrExpertPath, setIsCreatorOrExpertPath] = useState(false);
 	const pathname = usePathname();
 	const creatorURL = localStorage.getItem("creatorURL");
-	const currentCreatorUsername =
-		creatorURL && creatorURL.split("/").filter((url) => url)[0];
+	const currentCreatorUsername = creatorURL
+		? creatorURL.split("/").filter((url) => url)[0]
+		: pathname.split("/")[1];
 
-	const isCreatorOrExpertPath = pathname.includes(`/${currentCreatorUsername}`);
+	// const isCreatorOrExpertPath = pathname.includes(`/${currentCreatorUsername}`);
 
 	const handleRouting = () => {
 		localStorage.setItem("userType", "client");
-
 		router.push("/authenticate");
 	};
 	const theme = `5px 5px 0px 0px #000000`;
 	const { walletBalance } = useWalletBalanceContext();
 
 	useEffect(() => {
+		setIsCreatorOrExpertPath(pathname.includes(`/${currentCreatorUsername}`));
 		if (currentTheme) {
 			const newTheme = currentTheme === "#50A65C" ? "#000000" : currentTheme;
 			setUserTheme(newTheme);
@@ -77,9 +79,11 @@ const Navbar = () => {
 		</Button>
 	);
 
+	console.log(walletBalance);
+
 	return (
 		<nav
-			className="justify-between items-center fixed z-40 top-0 left-0 w-full px-2 sm:px-4 py-4 bg-white shadow-sm"
+			className="animate-enterFromTop justify-between items-center fixed z-40 top-0 left-0 w-full px-2 sm:px-4 py-4 bg-white shadow-sm"
 			style={{
 				display: `${
 					isCreatorOrExpertPath && authenticationSheetOpen ? "none" : "flex"

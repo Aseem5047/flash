@@ -18,6 +18,7 @@ const CreatorProfile = () => {
 	const { userType } = useCurrentUsersContext();
 
 	useEffect(() => {
+		localStorage.setItem("creatorURL", `/${username}`);
 		if (userType === "creator") {
 			toast({
 				variant: "destructive",
@@ -28,8 +29,6 @@ const CreatorProfile = () => {
 			return;
 		}
 
-		localStorage.setItem("creatorURL", `/${username}`);
-
 		const getCreator = async () => {
 			try {
 				const response = await getUserByUsername(String(username));
@@ -37,6 +36,7 @@ const CreatorProfile = () => {
 			} catch (error) {
 				console.log(error);
 			} finally {
+				localStorage.setItem("creatorURL", `/${username}`);
 				setLoading(false);
 			}
 		};
