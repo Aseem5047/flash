@@ -12,7 +12,7 @@ export async function generateMetadata({
 
 	return {
 		title: params.username || "FlashCall",
-		description: params.username || "Creator | Expert | Flashcall.me",
+		description: "Creator | Expert | Flashcall.me",
 
 		openGraph: {
 			type: "website",

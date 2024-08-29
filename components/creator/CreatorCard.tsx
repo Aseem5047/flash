@@ -16,6 +16,7 @@ const CreatorCard: React.FC = () => {
 	const [creator, setCreator] = useState<creatorUser | null>(null);
 	const [creatorFeedback, setCreatorFeedback] = useState<any[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [feedbacksLoading, setFeedbacksLoading] = useState(true);
 	const { username } = useParams();
 	const { toast } = useToast();
 	const pathname = usePathname();
@@ -57,6 +58,8 @@ const CreatorCard: React.FC = () => {
 					setCreatorFeedback(response.data.feedbacks || []);
 				} catch (err) {
 					console.error("Error fetching feedback:", err);
+				} finally {
+					setFeedbacksLoading(false);
 				}
 			}
 		};
@@ -103,7 +106,7 @@ const CreatorCard: React.FC = () => {
 				<CallingOptions creator={creator} />
 
 				{/* User Reviews */}
-				{loading ? (
+				{feedbacksLoading ? (
 					<section className="w-full h-full flex items-center justify-center">
 						<SinglePostLoader />
 					</section>
