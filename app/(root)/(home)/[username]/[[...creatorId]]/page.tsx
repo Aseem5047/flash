@@ -1,11 +1,19 @@
 import CreatorCard from "@/components/creator/CreatorCard";
 import { getUserByUsername } from "@/lib/actions/creator.actions";
-import { isValidUrl } from "@/lib/utils";
 import { Metadata } from "next";
 
 export const imageSrc = (creator: any) => {
-	if (creator[0]?.photo && isValidUrl(creator[0]?.photo)) {
-		return creator[0]?.photo;
+	const isValidUrl = (url: string) => {
+		try {
+			new URL(url);
+			return true;
+		} catch {
+			return false;
+		}
+	};
+
+	if (creator.photo && isValidUrl(creator.photo)) {
+		return creator.photo;
 	} else {
 		return "/images/defaultProfileImage.png";
 	}
@@ -18,16 +26,20 @@ export async function generateMetadata({
 	params: { username: string };
 }): Promise<Metadata> {
 	const creator = await getUserByUsername(String(params.username));
-	let imageURL = imageSrc(creator[0]);
+	let imageURL = await imageSrc(creator[0]);
+	const fullName =
+		`${creator[0].firstName || ""} ${creator[0].lastName || ""}`.trim() ||
+		creator[0].username;
+
 	try {
 		return {
-			title: `Creator | ${creator[0].username}` || "FlashCall",
+			title: `Creator | ${fullName}` || "FlashCall",
 			description: "Creator | Expert | Flashcall.me",
 			openGraph: {
 				type: "website",
-				url: `https://app.flashcall.me/${creator[0].username}`,
-				title: `Creator | ${creator[0].username}` || "FlashCall",
-				description: `Book your first consultation with ${creator[0].username}`,
+				url: `https://app.flashcall.me/${fullName}`,
+				title: `Creator | ${fullName}` || "FlashCall",
+				description: `Book your first consultation with ${fullName}`,
 				images: [
 					{
 						url: `${imageURL}`,

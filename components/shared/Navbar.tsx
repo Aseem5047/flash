@@ -45,7 +45,7 @@ const Navbar = () => {
 
 	useEffect(() => {
 		setIsCreatorOrExpertPath(pathname.includes(`/${currentCreatorUsername}`));
-
+		// Todo theme ka jugaad krna hai
 		if (currentTheme) {
 			const newTheme = currentTheme === "#50A65C" ? "#000000" : currentTheme;
 			setUserTheme(newTheme);
@@ -73,8 +73,6 @@ const Navbar = () => {
 
 		window.open(url, "_blank");
 	};
-
-	console.log(currentTheme);
 
 	const AppLink = () => (
 		<Button

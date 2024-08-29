@@ -17,7 +17,6 @@ const ShareButton = ({
 	lastName: string;
 }) => {
 	const { toast } = useToast();
-
 	const fullName = `${firstName || ""} ${lastName || ""}`.trim() || username;
 
 	const shareLink = async () => {
