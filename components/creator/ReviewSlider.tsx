@@ -96,8 +96,8 @@ const ReviewSlider = ({
 										}`}
 										style={{ maxHeight: isExpanded ? "10rem" : "7rem" }}
 									>
-										{getClampedText(dummyFeedback)}
-										{!isExpanded && dummyFeedback.length > 100 && (
+										{getClampedText(feedback.feedback)}
+										{!isExpanded && feedback.feedback.length > 100 && (
 											<span className="text-white">
 												<button
 													onClick={toggleReadMore}

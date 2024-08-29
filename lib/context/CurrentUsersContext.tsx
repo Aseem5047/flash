@@ -193,6 +193,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 					if (doc.exists()) {
 						const data = doc.data();
 						if (data?.token && data.token !== authToken) {
+							console.log(data.token, authToken);
 							handleSignout();
 							toast({
 								title: "Another Session Detected",

@@ -279,8 +279,6 @@ const AuthenticateViaOTP = ({
 		};
 	}, []);
 
-	console.log(onOpenChange);
-
 	return (
 		<section
 			ref={sectionRef}

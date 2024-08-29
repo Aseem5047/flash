@@ -2,21 +2,43 @@ import React from "react";
 import { Button } from "../ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { useToast } from "../ui/use-toast";
-const ShareButton = () => {
+
+const ShareButton = ({
+	username,
+	profession,
+	gender,
+	imageUrl,
+}: {
+	username: string;
+	profession: string;
+	gender: string;
+	imageUrl: string;
+}) => {
 	const { toast } = useToast();
 
-	const shareLink = () => {
+	const shareLink = async () => {
 		const link = window.location.href;
+		const pronounPart = gender
+			? `I had a wonderful session with ${gender === "male" ? "him" : "her"}.`
+			: `I had a wonderful session with ${username}.`;
+		const message = `Hi 👋,\n\n${username} is an amazing ${profession}. ${pronounPart}\n\nYou should consult with ${
+			gender ? `${gender === "male" ? "him" : "her"}` : "them"
+		} too.\n\nClick here to talk to ${username}.👇\n${link}`;
+
 		if (navigator.share) {
-			navigator
-				.share({
-					title: "Check out this link",
-					text: "Here's a link to my Creator's Page:",
+			try {
+				await navigator.share({
+					title: `Consult with ${username}`,
+					text: message,
 					url: link,
-				})
-				.catch((err) => {
-					console.error("Failed to share: ", err);
 				});
+			} catch (err) {
+				console.error("Failed to share: ", err);
+				toast({
+					title: "Failed to share",
+					description: `There was an error sharing the content. Please try again.`,
+				});
+			}
 		} else {
 			toast({
 				title: "Sharing not supported",
@@ -30,7 +52,7 @@ const ShareButton = () => {
 		<Tooltip>
 			<TooltipTrigger asChild>
 				<Button
-					className={` px-3 py-6 rounded-xl transition-all duration-300  hover:scale-105 group bg-[#232323]/35 hover:bg-green-1 flex gap-2 items-center`}
+					className={`px-3 py-6 rounded-xl transition-all duration-300 hover:scale-105 group bg-[#232323]/35 hover:bg-green-1 flex gap-2 items-center`}
 					onClick={shareLink}
 				>
 					<svg

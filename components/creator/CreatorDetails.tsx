@@ -113,9 +113,16 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 							className={`relative rounded-xl w-full h-72 xl:h-80 bg-center`}
 							style={backgroundImageStyle}
 						>
-							<div className="flex flex-col-reverse items-center justify-center gap-2 absolute top-6 right-6 sm:top-9 sm:right-9">
+							<div className="flex flex-col-reverse items-center justify-center gap-2 absolute top-4 right-4">
 								<>
-									<ShareButton />
+									<ShareButton
+										username={
+											creator.username ? creator.username : creator.phone
+										}
+										profession={creator.profession ?? "Astrologer"}
+										gender={creator.gender ?? ""}
+										imageUrl={imageSrc}
+									/>
 									{clientUser && (
 										<Favorites
 											setMarkedFavorite={setMarkedFavorite}

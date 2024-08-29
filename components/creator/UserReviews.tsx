@@ -44,19 +44,21 @@ const UserReviewsCopy = ({
 
 	return (
 		<div
-			className="text-white size-full py-10 rounded-t-[24px] md:rounded-[24px] xl:w-[60%]"
+			className="text-white size-full py-10 rounded-t-[24px] md:rounded-[24px] xl:w-[60%] cursor-grabbing"
 			style={{ backgroundColor: theme }}
 		>
 			<h2 className="text-2xl font-semibold">Happy Client&apos;s</h2>
 
 			{/* main section */}
-			<ReviewSlider
-				creatorFeedback={creatorFeedback}
-				getClampedText={getClampedText}
-				isExpanded={isExpanded}
-				setIsExpanded={setIsExpanded}
-				toggleReadMore={toggleReadMore}
-			/>
+			{creatorFeedback && (
+				<ReviewSlider
+					creatorFeedback={creatorFeedback}
+					getClampedText={getClampedText}
+					isExpanded={isExpanded}
+					setIsExpanded={setIsExpanded}
+					toggleReadMore={toggleReadMore}
+				/>
+			)}
 		</div>
 	);
 };

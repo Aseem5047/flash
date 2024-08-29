@@ -112,6 +112,14 @@ export default function RootLayout({
 
 	return (
 		<html lang="en">
+			<meta property="og:title" content="Flashcall.me" />
+			<meta property="og:description" content="Connecting People" />
+			<meta
+				property="og:image"
+				content="https://drive.google.com/file/d/161hwsCCq9AQ66m6nNEIm3gV5D8R40nki/view?usp=sharing"
+			/>
+			<meta property="og:url" content="https://flashcall.me" />
+			<meta property="og:type" content="website" />
 			<GoogleAnalytics />
 			<GoogleTagManager gtmId={`${process.env.NEXT_PUBLIC_MEASUREMENT_ID}`} />
 			<TooltipProvider>

@@ -36,11 +36,10 @@ const HomePage = () => {
 	const bottomRef = useRef<HTMLDivElement>(null);
 
 	const fetchCreators = useCallback(async (offset: number, limit: number) => {
-		console.log("Fetching creators ... ", offset, limit);
 		try {
 			setIsFetching(true); // Set fetching state
 			const response = await getUsersPaginated(offset, limit);
-			console.log(response);
+
 			setCreators((prevCreators) => [...prevCreators, ...response]);
 			if (response.length > 0) {
 				setCreatorCount((prevCount) => prevCount + limit); // Increase the offset
