@@ -1,5 +1,4 @@
 import CreatorCard from "@/components/creator/CreatorCard";
-import { getUserByUsername } from "@/lib/actions/creator.actions";
 import { Metadata } from "next";
 
 // Function to generate metadata dynamically
@@ -8,10 +7,8 @@ export async function generateMetadata({
 }: {
 	params: { username: string };
 }): Promise<Metadata> {
-	const creatorData = await getUserByUsername(params.username);
-
 	return {
-		title: params.username || "FlashCall",
+		title: `Creator | ${params.username}` || "FlashCall",
 		description: "Creator | Expert | Flashcall.me",
 
 		openGraph: {

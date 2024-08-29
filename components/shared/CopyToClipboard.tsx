@@ -1,33 +1,47 @@
-import Image from "next/image";
 import React from "react";
+import { Button } from "../ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { useToast } from "../ui/use-toast";
 
-const CopyToClipboard = ({ link }: { link: string }) => {
+const CopyToClipboard = ({
+	link,
+	username,
+	profession,
+	gender,
+}: {
+	link: string;
+	username: string;
+	profession: string;
+	gender: string;
+}) => {
 	const { toast } = useToast();
-	const copyToClipboard = (text: string) => {
-		navigator.clipboard
-			.writeText(text)
-			.then(() => {
-				toast({
-					title: "Creator Link Copied",
-				});
-			})
-			.catch((err) => {
-				console.error("Failed to copy text: ", err);
-			});
-	};
 
-	const shareLink = () => {
+	const shareLink = async () => {
+		const pronounPart = gender
+			? `I had a wonderful session with ${
+					gender === "other" ? username : gender === "male" ? "him" : "her"
+			  }.`
+			: `I had a wonderful session with ${username}.`;
+		const message = `Hi 👋,\n\n${username} is an amazing ${profession}. ${pronounPart}\n\nYou should consult with ${
+			gender
+				? `${gender === "other" ? username : gender === "male" ? "him" : "her"}`
+				: "them"
+		} too.\n\nClick here to talk to ${username}.👇\n`;
+
 		if (navigator.share) {
-			navigator
-				.share({
-					title: "Check out this link",
-					text: "Here's a link to my Creator's Page:",
+			try {
+				await navigator.share({
+					title: `Consult with ${username}`,
+					text: message,
 					url: link,
-				})
-				.catch((err) => {
-					console.error("Failed to share: ", err);
 				});
+			} catch (err) {
+				console.error("Failed to share: ", err);
+				toast({
+					title: "Failed to share",
+					description: `There was an error sharing the content. Please try again.`,
+				});
+			}
 		} else {
 			toast({
 				title: "Sharing not supported",
@@ -38,39 +52,32 @@ const CopyToClipboard = ({ link }: { link: string }) => {
 	};
 
 	return (
-		<div className="flex justify-between items-center w-full gap-2 p-1">
-			<div className="relative flex border w-full rounded-full p-2 bg-white justify-between items-center shadow-sm gap-2">
-				<Image
-					src={"/link.svg"}
-					width={24}
-					height={24}
-					alt="link"
-					className="w-5 h-5"
-				/>
-				<div className="grid items-start justify-start overflow-x-hidden w-full ">
-					<p className="text-ellipsis whitespace-nowrap min-w-0 overflow-hidden">
-						{link}
-					</p>
-				</div>
-
-				<Image
-					src={"/copy.svg"}
-					width={24}
-					height={24}
-					alt="copy"
-					className="w-10 h-10 p-2 rounded-full hover:bg-gray-100 cursor-pointer"
-					onClick={() => copyToClipboard(link)}
-				/>
-			</div>
-			<Image
-				src="/share.svg"
-				width={24}
-				height={24}
-				alt="share"
-				className="w-10 h-10 p-2 bg-gray-800 rounded-full hover:bg-black cursor-pointer"
-				onClick={shareLink}
-			/>
-		</div>
+		<Tooltip>
+			<TooltipTrigger asChild>
+				<Button
+					className={`px-3 py-6 rounded-xl transition-all duration-300 hover:scale-105 group bg-[#232323]/35 hover:bg-green-1 flex gap-2 items-center`}
+					onClick={shareLink}
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+						strokeWidth={1.5}
+						stroke="white"
+						className="size-6"
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
+						/>
+					</svg>
+				</Button>
+			</TooltipTrigger>
+			<TooltipContent className="bg-green-1 border-none text-white">
+				<p>Share Link</p>
+			</TooltipContent>
+		</Tooltip>
 	);
 };
 

@@ -17,18 +17,11 @@ export const metadata: Metadata = {
 	description: "Application Connecting People",
 
 	openGraph: {
-		type: "website",
+		type: "article",
 		url: "https://app.flashcall.me",
-		title: "FlashCall",
-		description: "Application Connecting People",
-		images: [
-			{
-				url: "./logoMobile.png",
-				width: 800,
-				height: 600,
-				alt: "FlashCall Logo",
-			},
-		],
+		title: "Flashcall.me",
+		description: "Book your first consultation",
+		images: "/icons/logoDarkCircle.png",
 		siteName: "Flashcall.me",
 		locale: "en_US",
 	},

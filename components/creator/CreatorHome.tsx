@@ -287,7 +287,14 @@ const CreatorHome = () => {
 					</section>
 				</div>
 				<div className="flex-grow flex flex-col gap-4 bg-gray-50 rounded-t-3xl animate-enterFromBottom p-4">
-					<CopyToClipboard link={creatorLink} />
+					<CopyToClipboard
+						link={creatorLink}
+						username={
+							creatorUser.username ? creatorUser.username : creatorUser.phone
+						}
+						profession={creatorUser.profession ?? "Astrologer"}
+						gender={creatorUser.gender ?? ""}
+					/>
 
 					<section className="flex flex-row justify-between border rounded-lg bg-white p-2 shadow-sm">
 						<div className="flex flex-row pl-2 gap-3">
