@@ -15,6 +15,7 @@ const Navbar = () => {
 	const {
 		currentUser,
 		userType,
+		setCurrentTheme,
 		currentTheme,
 		authenticationSheetOpen,
 		setAuthenticationSheetOpen,
@@ -44,6 +45,7 @@ const Navbar = () => {
 
 	useEffect(() => {
 		setIsCreatorOrExpertPath(pathname.includes(`/${currentCreatorUsername}`));
+
 		if (currentTheme) {
 			const newTheme = currentTheme === "#50A65C" ? "#000000" : currentTheme;
 			setUserTheme(newTheme);
@@ -71,6 +73,8 @@ const Navbar = () => {
 
 		window.open(url, "_blank");
 	};
+
+	console.log(currentTheme);
 
 	const AppLink = () => (
 		<Button

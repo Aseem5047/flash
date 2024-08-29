@@ -21,9 +21,10 @@ const CreatorCard: React.FC = () => {
 	const { toast } = useToast();
 	const pathname = usePathname();
 	const router = useRouter();
-	const { userType } = useCurrentUsersContext();
+	const { userType, setCurrentTheme } = useCurrentUsersContext();
 
 	useEffect(() => {
+		creator?.themeSelected && setCurrentTheme(creator?.themeSelected);
 		if (userType === "creator") {
 			toast({
 				variant: "destructive",

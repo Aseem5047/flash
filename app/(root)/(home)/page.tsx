@@ -1,13 +1,6 @@
 "use client";
 
-import React, {
-	useEffect,
-	useState,
-	Suspense,
-	lazy,
-	useCallback,
-	useRef,
-} from "react";
+import React, { useEffect, useState, Suspense, lazy, useCallback } from "react";
 import { useInView } from "react-intersection-observer";
 import * as Sentry from "@sentry/nextjs";
 import Link from "next/link";
@@ -32,9 +25,6 @@ const HomePage = () => {
 	const pathname = usePathname();
 	const { ref, inView } = useInView();
 
-	// Ref for the empty div acting as a scroll trigger
-	const bottomRef = useRef<HTMLDivElement>(null);
-
 	const fetchCreators = useCallback(async (offset: number, limit: number) => {
 		try {
 			setIsFetching(true); // Set fetching state
@@ -42,7 +32,7 @@ const HomePage = () => {
 
 			setCreators((prevCreators) => [...prevCreators, ...response]);
 			if (response.length > 0) {
-				setCreatorCount((prevCount) => prevCount + limit); // Increase the offset
+				setCreatorCount((prevCount) => prevCount + limit);
 			} else {
 				setHasMore(false);
 			}
@@ -52,16 +42,16 @@ const HomePage = () => {
 			setError(true);
 		} finally {
 			setLoading(false);
-			setIsFetching(false); // Reset fetching state
+			setIsFetching(false);
 		}
-	}, []); // Empty dependency array to keep it stable
+	}, []);
 
 	useEffect(() => {
 		// Initial fetch for creators
 		if (userType !== "creator") {
-			fetchCreators(0, 7); // Fetch the first few users
+			fetchCreators(0, 7);
 		}
-	}, [pathname, fetchCreators]); // Depend on pathname and fetchCreators
+	}, [pathname, fetchCreators]);
 
 	useEffect(() => {
 		if (inView && !isFetching) {

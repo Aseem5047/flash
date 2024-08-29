@@ -294,6 +294,8 @@ const CreatorHome = () => {
 						}
 						profession={creatorUser.profession ?? "Astrologer"}
 						gender={creatorUser.gender ?? ""}
+						firstName={creatorUser.firstName}
+						lastName={creatorUser.lastName}
 					/>
 
 					<section className="flex flex-row justify-between border rounded-lg bg-white p-2 shadow-sm">

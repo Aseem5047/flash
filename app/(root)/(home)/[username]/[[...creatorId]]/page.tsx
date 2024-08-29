@@ -1,7 +1,15 @@
 import CreatorCard from "@/components/creator/CreatorCard";
 import { getUserByUsername } from "@/lib/actions/creator.actions";
-import axios from "axios";
+import { isValidUrl } from "@/lib/utils";
 import { Metadata } from "next";
+
+export const imageSrc = (creator: any) => {
+	if (creator[0]?.photo && isValidUrl(creator[0]?.photo)) {
+		return creator[0]?.photo;
+	} else {
+		return "/images/defaultProfileImage.png";
+	}
+};
 
 // Function to generate metadata dynamically
 export async function generateMetadata({
@@ -9,9 +17,9 @@ export async function generateMetadata({
 }: {
 	params: { username: string };
 }): Promise<Metadata> {
+	const creator = await getUserByUsername(String(params.username));
+	let imageURL = imageSrc(creator[0]);
 	try {
-		const creator = await getUserByUsername(String(params.username));
-
 		return {
 			title: `Creator | ${creator[0].username}` || "FlashCall",
 			description: "Creator | Expert | Flashcall.me",
@@ -22,7 +30,7 @@ export async function generateMetadata({
 				description: `Book your first consultation with ${creator[0].username}`,
 				images: [
 					{
-						url: `${creator[0].photo}`,
+						url: `${imageURL}`,
 						width: 800,
 						height: 600,
 						alt: "Profile Picture",

@@ -7,30 +7,36 @@ const ShareButton = ({
 	username,
 	profession,
 	gender,
+	firstName,
+	lastName,
 }: {
 	username: string;
 	profession: string;
 	gender: string;
+	firstName: string;
+	lastName: string;
 }) => {
 	const { toast } = useToast();
+
+	const fullName = `${firstName || ""} ${lastName || ""}`.trim() || username;
 
 	const shareLink = async () => {
 		const link = window.location.href;
 		const pronounPart = gender
 			? `I had a wonderful session with ${
-					gender === "other" ? username : gender === "male" ? "him" : "her"
+					gender === "other" ? "them" : gender === "male" ? "him" : "her"
 			  }.`
-			: `I had a wonderful session with ${username}.`;
-		const message = `Hi 👋,\n\n${username} is an amazing ${profession}. ${pronounPart}\n\nYou should consult with ${
+			: `I had a wonderful session with ${fullName}.`;
+		const message = `Hi 👋,\n\n${fullName} is an amazing ${profession}. ${pronounPart}\n\nYou should consult with ${
 			gender
-				? `${gender === "other" ? username : gender === "male" ? "him" : "her"}`
+				? `${gender === "other" ? "them" : gender === "male" ? "him" : "her"}`
 				: "them"
-		} too.\n\nClick here to talk to ${username}.👇\n`;
+		} too.\n\nClick here to talk to ${fullName}.👇\n`;
 
 		if (navigator.share) {
 			try {
 				await navigator.share({
-					title: `Consult with ${username}`,
+					title: `Consult with ${fullName}`,
 					text: message,
 					url: link,
 				});

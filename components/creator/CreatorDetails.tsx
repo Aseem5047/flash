@@ -8,6 +8,7 @@ import Favorites from "../shared/Favorites";
 import ShareButton from "../shared/ShareButton";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { isValidUrl } from "@/lib/utils";
+import AuthenticationSheet from "../shared/AuthenticationSheet";
 
 interface CreatorDetailsProps {
 	creator: creatorUser;
@@ -19,7 +20,10 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 	const [isImageLoaded, setIsImageLoaded] = useState(false);
 	const [addingFavorite, setAddingFavorite] = useState(false);
 	const [markedFavorite, setMarkedFavorite] = useState(false);
-	const { clientUser, authenticationSheetOpen } = useCurrentUsersContext();
+	const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false);
+
+	const { clientUser, authenticationSheetOpen, setAuthenticationSheetOpen } =
+		useCurrentUsersContext();
 	const { toast } = useToast();
 
 	useEffect(() => {
@@ -29,18 +33,26 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 	}, [creator, isCreatorOrExpertPath]);
 
 	useEffect(() => {
-		if (authenticationSheetOpen) {
-			document.body.style.overflow = "hidden";
-		} else {
-			document.body.style.overflow = "";
-		}
+		setAuthenticationSheetOpen(isAuthSheetOpen);
+	}, [isAuthSheetOpen]);
 
-		return () => {
-			document.body.style.overflow = "";
-		};
-	}, [authenticationSheetOpen]);
+	// useEffect(() => {
+	// 	if (authenticationSheetOpen) {
+	// 		document.body.style.overflow = "hidden";
+	// 	} else {
+	// 		document.body.style.overflow = "";
+	// 	}
+
+	// 	return () => {
+	// 		document.body.style.overflow = "";
+	// 	};
+	// }, [authenticationSheetOpen]);
 
 	const handleToggleFavorite = async () => {
+		if (!clientUser) {
+			setIsAuthSheetOpen(true);
+			return;
+		}
 		const clientId = clientUser?._id;
 		setAddingFavorite(true);
 		try {
@@ -93,6 +105,14 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 		transition: "opacity 0.5s ease-in-out, transform 0.5s ease-in-out",
 	};
 
+	if (isAuthSheetOpen && !clientUser)
+		return (
+			<AuthenticationSheet
+				isOpen={isAuthSheetOpen}
+				onOpenChange={setIsAuthSheetOpen} // Handle sheet close
+			/>
+		);
+
 	return (
 		<>
 			<div className="flex flex-col items-center px-5 sm:px-7 justify-center">
@@ -121,18 +141,19 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 										}
 										profession={creator.profession ?? "Astrologer"}
 										gender={creator.gender ?? ""}
+										firstName={creator.firstName}
+										lastName={creator.lastName}
 									/>
-									{clientUser && (
-										<Favorites
-											setMarkedFavorite={setMarkedFavorite}
-											markedFavorite={markedFavorite}
-											handleToggleFavorite={handleToggleFavorite}
-											addingFavorite={addingFavorite}
-											creator={creator}
-											user={clientUser}
-											isCreatorOrExpertPath={isCreatorOrExpertPath}
-										/>
-									)}
+
+									<Favorites
+										setMarkedFavorite={setMarkedFavorite}
+										markedFavorite={markedFavorite}
+										handleToggleFavorite={handleToggleFavorite}
+										addingFavorite={addingFavorite}
+										creator={creator}
+										user={clientUser}
+										isCreatorOrExpertPath={isCreatorOrExpertPath}
+									/>
 								</>
 							</div>
 						</div>

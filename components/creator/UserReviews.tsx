@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { CreatorFeedback } from "@/types";
 import ReviewSlider from "./ReviewSlider";
 
-const UserReviewsCopy = ({
+const UserReviews = ({
 	theme,
 	creatorFeedback,
 }: {
@@ -43,24 +43,32 @@ const UserReviewsCopy = ({
 	};
 
 	return (
-		<div
-			className="text-white size-full py-10 rounded-t-[24px] md:rounded-[24px] xl:w-[60%] "
-			style={{ backgroundColor: theme }}
-		>
-			<h2 className="text-2xl font-semibold">Happy Client&apos;s</h2>
+		<>
+			{creatorFeedback.length > 0 ? (
+				<div
+					className={`text-white size-full ${
+						creatorFeedback.length > 1 ? "py-10" : "pt-10 pb-4"
+					} rounded-t-[24px] md:rounded-[24px] xl:w-[60%]`}
+					style={{ backgroundColor: theme }}
+				>
+					<h2 className="text-2xl font-semibold">Happy Client&apos;s</h2>
 
-			{/* main section */}
-			{creatorFeedback && (
-				<ReviewSlider
-					creatorFeedback={creatorFeedback}
-					getClampedText={getClampedText}
-					isExpanded={isExpanded}
-					setIsExpanded={setIsExpanded}
-					toggleReadMore={toggleReadMore}
-				/>
+					{/* main section */}
+					{creatorFeedback && (
+						<ReviewSlider
+							creatorFeedback={creatorFeedback}
+							getClampedText={getClampedText}
+							isExpanded={isExpanded}
+							setIsExpanded={setIsExpanded}
+							toggleReadMore={toggleReadMore}
+						/>
+					)}
+				</div>
+			) : (
+				<div />
 			)}
-		</div>
+		</>
 	);
 };
 
-export default UserReviewsCopy;
+export default UserReviews;

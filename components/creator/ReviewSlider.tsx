@@ -21,7 +21,7 @@ const ReviewSlider = ({
 
 	// Carousel settings
 	const settings = {
-		infinite: true,
+		infinite: creatorFeedback.length > 1,
 		centerPadding: "60px",
 		slidesToShow: 1,
 		speed: 500,
@@ -48,7 +48,7 @@ const ReviewSlider = ({
 					>
 						<div className={`flex flex-col items-center justify-center`}>
 							{/* Profile Image */}
-							<div className="flex w-fit mx-auto rounded-full items-center justify-center gap-2 bg-black p-2 z-10">
+							<div className="flex w-fit mx-auto rounded-full items-center justify-center  bg-black p-1 z-10">
 								<img
 									src={
 										feedback?.clientId?.photo ||
@@ -57,12 +57,12 @@ const ReviewSlider = ({
 									alt={`${feedback?.clientId?.username} profile`}
 									width={24}
 									height={24}
-									className="w-7 h-7 rounded-full object-cover"
+									className="w-8 h-8 rounded-full object-cover"
 									onError={(e) => {
 										e.currentTarget.src = "/images/defaultProfileImage.png";
 									}}
 								/>
-								<span className="text-3xl">😍</span>
+								<span className="text-3xl -mr-1">😍</span>
 							</div>
 
 							{/* feedback section */}

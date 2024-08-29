@@ -28,10 +28,10 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	const { toast } = useToast();
 	const [isSheetOpen, setSheetOpen] = useState(false);
 	const storedCallId = localStorage.getItem("activeCallId");
-	const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false); // State to manage sheet visibility
+	const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false);
 	const { handleChat, chatRequestsRef } = useChatRequest();
 	const { chatRequest, setChatRequest } = useChatRequestContext();
-	const [isProcessing, setIsProcessing] = useState(false); // Add a state for processing
+	const [isProcessing, setIsProcessing] = useState(false);
 	const { fetchCreatorToken } = useFcmToken();
 
 	const [updatedCreator, setUpdatedCreator] = useState<creatorUser>({
