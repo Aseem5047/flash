@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 		icon: "/icons/logoDarkCircle.png",
 	},
 	openGraph: {
-		type: "article",
+		type: "website",
 		url: "https://app.flashcall.me",
 		title: "Flashcall.me",
 		description: "Book your first consultation",

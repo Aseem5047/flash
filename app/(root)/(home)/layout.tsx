@@ -1,6 +1,51 @@
 import Navbar from "@/components/shared/Navbar";
 import Sidebar from "@/components/shared/Sidebar";
+import { Metadata } from "next";
 import React, { ReactNode } from "react";
+
+export const metadata: Metadata = {
+	title: "Flashcall.me",
+	description: "Book your first consultation",
+	icons: {
+		icon: "/icons/logoDarkCircle.png",
+	},
+
+	openGraph: {
+		type: "website",
+		url: "https://app.flashcall.me",
+		title: "FlashCall",
+		description: "Book your first consultation",
+		images: [
+			{
+				url: "/icons/logoDarkCircle.png",
+				width: 800,
+				height: 600,
+				alt: "FlashCall Logo",
+			},
+		],
+		siteName: "Flashcall.me",
+		locale: "en_US",
+	},
+
+	twitter: {
+		card: "summary_large_image",
+		site: "@flashcall",
+		title: "FlashCall",
+		description: "Book your first consultation",
+		images: [
+			{
+				url: "/icons/logoDarkCircle.png",
+				alt: "FlashCall Logo",
+			},
+		],
+		creator: "@johndoe",
+	},
+
+	metadataBase:
+		process.env.NODE_ENV === "production"
+			? new URL("https://app.flashcall.me")
+			: new URL("http://localhost:3000"),
+};
 
 const HomeLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
 	return (

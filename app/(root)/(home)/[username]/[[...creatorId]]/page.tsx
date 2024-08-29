@@ -10,24 +10,6 @@ export async function generateMetadata({
 	return {
 		title: `Creator | ${params.username}` || "FlashCall",
 		description: "Creator | Expert | Flashcall.me",
-
-		openGraph: {
-			type: "website",
-			url: `https://flashcall.me/creator-profile/${params.username}`,
-			title: params.username || "FlashCall",
-			description: params.username || "Application Connecting People",
-			images: [
-				{
-					url: "https://drive.google.com/file/d/161hwsCCq9AQ66m6nNEIm3gV5D8R40nki/view?usp=sharing",
-					width: 800,
-					height: 600,
-					alt: "FlashCall Logo",
-				},
-			],
-			siteName: "Flashcall.me",
-			locale: "en_US",
-		},
-		metadataBase: new URL("https://flashcall.me"),
 	};
 }
 
