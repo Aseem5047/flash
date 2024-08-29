@@ -90,6 +90,7 @@ export async function getUserByUsername(username: string) {
 		const user = await Creator.find({ username });
 
 		if (!user) throw new Error("User not found");
+
 		return JSON.parse(JSON.stringify(user));
 	} catch (error) {
 		console.log(error);

@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 		description: "Book your first consultation",
 		images: [
 			{
-				url: "/icons/logoDarkCircle.png",
+				url: "/icons/metadataBg.png",
 				width: 800,
 				height: 600,
 				alt: "FlashCall Logo",
@@ -25,20 +25,6 @@ export const metadata: Metadata = {
 		],
 		siteName: "Flashcall.me",
 		locale: "en_US",
-	},
-
-	twitter: {
-		card: "summary_large_image",
-		site: "@flashcall",
-		title: "FlashCall",
-		description: "Book your first consultation",
-		images: [
-			{
-				url: "/icons/logoDarkCircle.png",
-				alt: "FlashCall Logo",
-			},
-		],
-		creator: "@johndoe",
 	},
 
 	metadataBase:
