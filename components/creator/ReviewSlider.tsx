@@ -48,7 +48,7 @@ const ReviewSlider = ({
 					>
 						<div className={`flex flex-col items-center justify-center`}>
 							{/* Profile Image */}
-							<div className="flex w-fit mx-auto rounded-full items-center justify-center  bg-black p-1 z-10">
+							<div className="flex w-fit mx-auto rounded-full items-center justify-center  bg-black py-1 px-2 z-10">
 								<img
 									src={
 										feedback?.clientId?.photo ||

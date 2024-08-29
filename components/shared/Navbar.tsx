@@ -15,7 +15,6 @@ const Navbar = () => {
 	const {
 		currentUser,
 		userType,
-		setCurrentTheme,
 		currentTheme,
 		authenticationSheetOpen,
 		setAuthenticationSheetOpen,
@@ -45,14 +44,14 @@ const Navbar = () => {
 
 	useEffect(() => {
 		setIsCreatorOrExpertPath(pathname.includes(`/${currentCreatorUsername}`));
-		// Todo theme ka jugaad krna hai
+		// Todo theme ko ek jaisa krne ka jugaad krna hai
 		if (currentTheme) {
 			const newTheme = currentTheme === "#50A65C" ? "#000000" : currentTheme;
 			setUserTheme(newTheme);
 		} else {
 			setUserTheme("#000000");
 		}
-	}, [pathname]);
+	}, [pathname, currentTheme]);
 
 	useEffect(() => {
 		setAuthenticationSheetOpen(isAuthSheetOpen);
@@ -73,6 +72,8 @@ const Navbar = () => {
 
 		window.open(url, "_blank");
 	};
+
+	console.log(currentTheme);
 
 	const AppLink = () => (
 		<Button

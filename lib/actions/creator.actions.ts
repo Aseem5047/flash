@@ -4,8 +4,6 @@ import { revalidatePath } from "next/cache";
 
 import { connectToDatabase } from "@/lib/database";
 
-import { handleError } from "@/lib/utils";
-
 import { CreateCreatorParams, LinkType, UpdateCreatorParams } from "@/types";
 import Creator from "../database/models/creator.model";
 

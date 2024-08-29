@@ -22,13 +22,14 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 	const [markedFavorite, setMarkedFavorite] = useState(false);
 	const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false);
 
-	const { clientUser, authenticationSheetOpen, setAuthenticationSheetOpen } =
+	const { clientUser, setAuthenticationSheetOpen, setCurrentTheme } =
 		useCurrentUsersContext();
 	const { toast } = useToast();
 
 	useEffect(() => {
 		if (isCreatorOrExpertPath) {
 			localStorage.setItem("currentCreator", JSON.stringify(creator));
+			setCurrentTheme(creator?.themeSelected);
 		}
 	}, [creator, isCreatorOrExpertPath]);
 
