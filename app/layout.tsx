@@ -15,27 +15,6 @@ import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 export const metadata: Metadata = {
 	title: "FlashCall",
 	description: "Application Connecting People",
-	icons: {
-		icon: "./logoMobile.png",
-	},
-
-	openGraph: {
-		type: "website",
-		url: "https://app.flashcall.me",
-		title: "FlashCall",
-		description: "Application Connecting People",
-		images: [
-			{
-				url: "./logoMobile.png",
-				width: 800,
-				height: 600,
-				alt: "FlashCall Logo",
-			},
-		],
-		siteName: "Flashcall.me",
-		locale: "en_US",
-	},
-
 	metadataBase: new URL("https://app.flashcall.me"),
 };
 
