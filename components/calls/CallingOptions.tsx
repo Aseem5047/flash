@@ -13,8 +13,6 @@ import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import AuthenticationSheet from "../shared/AuthenticationSheet";
 import useChatRequest from "@/hooks/useChatRequest";
-import { useChatRequestContext } from "@/lib/context/ChatRequestContext";
-import useFcmToken from "@/hooks/useFcmToken";
 
 interface CallingOptions {
 	creator: creatorUser;
@@ -30,9 +28,9 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	const storedCallId = localStorage.getItem("activeCallId");
 	const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false);
 	const { handleChat, chatRequestsRef } = useChatRequest();
-	const { chatRequest, setChatRequest } = useChatRequestContext();
+	const [chatState, setChatState] = useState();
+	const [chatReqSent, setChatReqSent] = useState(false);
 	const [isProcessing, setIsProcessing] = useState(false);
-	const { fetchCreatorToken } = useFcmToken();
 
 	const [updatedCreator, setUpdatedCreator] = useState<creatorUser>({
 		...creator,
@@ -73,8 +71,9 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		return () => unsubscribe();
 	}, [creator._id]);
 
-	// logic to get the info about the chat
 	useEffect(() => {
+		if (!chatReqSent) return;
+
 		const intervalId = setInterval(() => {
 			const chatRequestId = localStorage.getItem("chatRequestId");
 
@@ -86,54 +85,64 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				const unsubscribe = onSnapshot(chatRequestDoc, (docSnapshot) => {
 					const data = docSnapshot.data();
 					if (data) {
-						if (
+						if (data.status === "ended" || data.status === "rejected") {
+							setSheetOpen(false);
+							setChatReqSent(false);
+							setChatState(data.status);
+							localStorage.removeItem("chatRequestId");
+							unsubscribe();
+						} else if (
 							data.status === "accepted" &&
 							clientUser?._id === data.clientId
 						) {
-							unsubscribe(); // Clean up the listener
+							setChatState(data.status);
+							unsubscribe();
 							logEvent(analytics, "call_connected", {
 								clientId: clientUser?._id,
 								creatorId: data.creatorId,
 							});
+							setChatReqSent(false);
 							router.push(
 								`/chat/${data.chatId}?creatorId=${data.creatorId}&clientId=${data.clientId}`
 							);
+						} else {
+							setChatState(data.status);
 						}
 					}
 				});
 			}
-		}, 1000); // Check every second
+		}, 1000);
 
-		return () => clearInterval(intervalId); // Clean up the interval when the component unmounts
-	}, [clientUser, router]);
+		return () => clearInterval(intervalId);
+	}, [clientUser, router, chatReqSent]);
 
-	// Example of calling the sendNotification API route
-	const sendPushNotification = async () => {
-		const token = await fetchCreatorToken(creator);
+	useEffect(() => {
+		let audio: HTMLAudioElement | null = null;
 
-		try {
-			const response = await fetch("/api/send-notification", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					token: token,
-					title: "Test Notification",
-					message: "This is a test notification",
-					link: "/",
-				}),
-			});
+		if (chatState === "pending") {
+			audio = new Audio("/sounds/outgoing.mp3");
+			audio.loop = true;
 
-			const data = await response.json();
-			console.log(data);
-		} catch (error) {
-			console.error("Failed to send notification:", error);
+			const playPromise = audio.play();
+			if (playPromise !== undefined) {
+				playPromise
+					.then(() => {
+						console.log("Audio autoplay started!");
+					})
+					.catch((error) => {
+						console.error("Audio autoplay was prevented:", error);
+					});
+			}
 		}
-	};
+		return () => {
+			if (audio) {
+				audio.pause();
+				audio.currentTime = 0;
+			}
+		};
+	}, [chatState]);
 
 	// defining the actions for call accept and call reject
-
 	const handleCallAccepted = async (call: Call) => {
 		setIsProcessing(false); // Reset processing state
 		toast({
@@ -310,9 +319,10 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 
 	const handleChatClick = () => {
 		if (clientUser) {
+			setChatReqSent(true);
 			handleChat(creator, clientUser);
 			setSheetOpen(true);
-			sendPushNotification();
+			// sendPushNotification();
 		} else {
 			setIsAuthSheetOpen(true);
 		}
@@ -413,13 +423,13 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 					onOpenChange={async () => {
 						setSheetOpen(false);
 						try {
-							await updateDoc(doc(chatRequestsRef, chatRequest.id), {
+							const chatRequestId = localStorage.getItem("chatRequestId");
+							await updateDoc(doc(chatRequestsRef, chatRequestId as string), {
 								status: "ended",
 							});
 						} catch (error) {
 							console.error(error);
 						}
-						setChatRequest(null);
 					}}
 				>
 					<SheetTrigger asChild>
