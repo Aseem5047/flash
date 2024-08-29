@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 	title: "FlashCall",
 	description: "Application Connecting People",
 	icons: {
-		icon: "https://drive.google.com/file/d/161hwsCCq9AQ66m6nNEIm3gV5D8R40nki/view?usp=sharing",
+		icon: "./logoMobile.png",
 	},
 
 	openGraph: {
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 		description: "Application Connecting People",
 		images: [
 			{
-				url: "https://drive.google.com/file/d/161hwsCCq9AQ66m6nNEIm3gV5D8R40nki/view?usp=sharing",
+				url: "./logoMobile.png",
 				width: 800,
 				height: 600,
 				alt: "FlashCall Logo",

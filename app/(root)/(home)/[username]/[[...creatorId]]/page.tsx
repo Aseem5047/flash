@@ -3,8 +3,8 @@ import { Metadata } from "next";
 import React from "react";
 
 export const metadata: Metadata = {
-	title: "FlashCall",
-	description: "Creator | Flashcall.me",
+	title: "Creator | Flashcall.me",
+	description: "Checkout This Profile",
 	icons: {
 		icon: "https://drive.google.com/file/d/161hwsCCq9AQ66m6nNEIm3gV5D8R40nki/view?usp=sharing",
 	},
