@@ -43,7 +43,7 @@ const ReviewSlider = ({
 			<Slider {...settings} ref={sliderRef} className="py-7">
 				{creatorFeedback.map((feedback, index) => (
 					<div
-						className="flex flex-col items-center justify-center px-4"
+						className="flex flex-col items-center justify-center px-4 cursor-grabbing"
 						key={index}
 					>
 						<div className={`flex flex-col items-center justify-center`}>

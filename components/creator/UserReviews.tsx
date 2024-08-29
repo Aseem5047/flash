@@ -44,7 +44,7 @@ const UserReviewsCopy = ({
 
 	return (
 		<div
-			className="text-white size-full py-10 rounded-t-[24px] md:rounded-[24px] xl:w-[60%] cursor-grabbing"
+			className="text-white size-full py-10 rounded-t-[24px] md:rounded-[24px] xl:w-[60%] "
 			style={{ backgroundColor: theme }}
 		>
 			<h2 className="text-2xl font-semibold">Happy Client&apos;s</h2>

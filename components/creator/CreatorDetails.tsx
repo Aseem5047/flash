@@ -121,7 +121,6 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 										}
 										profession={creator.profession ?? "Astrologer"}
 										gender={creator.gender ?? ""}
-										imageUrl={imageSrc}
 									/>
 									{clientUser && (
 										<Favorites
