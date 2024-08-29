@@ -13,9 +13,11 @@ import { GoogleTagManager } from "@next/third-parties/google";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 
 export const metadata: Metadata = {
-	title: "FlashCall",
-	description: "Application Connecting People",
-
+	title: "Flashcall.me",
+	description: "Book your first consultation",
+	icons: {
+		icon: "/icons/logoDarkCircle.png",
+	},
 	openGraph: {
 		type: "article",
 		url: "https://app.flashcall.me",
