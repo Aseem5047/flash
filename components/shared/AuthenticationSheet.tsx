@@ -24,7 +24,7 @@ const AuthenticationSheet = ({
 	}, []);
 	return (
 		<section
-			className="fixed w-screen z-50 inset-0 bg-black/50 top-0 flex flex-col items-center justify-end md:justify-center"
+			className="fixed w-full z-50 inset-0 bg-black/50 top-0 flex flex-col items-center justify-end md:justify-center"
 			style={{ height: "calc(var(--vh, 1vh) * 100)" }}
 		>
 			<div className="flex relative items-center justify-center">

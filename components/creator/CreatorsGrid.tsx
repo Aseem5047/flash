@@ -3,7 +3,6 @@ import { creatorUser } from "@/types";
 import { useEffect, useState } from "react";
 
 const CreatorsGrid = ({ creator }: { creator: creatorUser }) => {
-	const [isLoading, setIsLoading] = useState(true);
 	const [isImageLoaded, setIsImageLoaded] = useState(false);
 
 	const imageSrc =
@@ -17,12 +16,10 @@ const CreatorsGrid = ({ creator }: { creator: creatorUser }) => {
 
 		img.onload = () => {
 			setIsImageLoaded(true);
-			setIsLoading(false);
 		};
 
 		img.onerror = () => {
 			setIsImageLoaded(true);
-			setIsLoading(false);
 		};
 	}, [creator.photo]);
 
@@ -32,12 +29,13 @@ const CreatorsGrid = ({ creator }: { creator: creatorUser }) => {
 		backgroundPosition: "center",
 		backgroundRepeat: "no-repeat",
 		opacity: isImageLoaded ? 1 : 0,
-		transition: "opacity 0.5s ease-in-out",
+		transform: isImageLoaded ? "scale(1)" : "scale(0.95)",
+		transition: "opacity 0.5s ease-in-out, transform 0.5s ease-in-out",
 	};
 
 	return (
 		<>
-			{isLoading ? (
+			{!isImageLoaded ? (
 				<div className="bg-gray-300 animate-pulse rounded-xl w-full mx-auto h-72 lg:h-96 object-cover" />
 			) : (
 				<div

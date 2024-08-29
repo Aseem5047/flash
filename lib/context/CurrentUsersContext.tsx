@@ -169,7 +169,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 					title: "Greetings Friend",
 					description: "Complete Your Profile Details...",
 				});
-			}, 2000);
+			}, 1000);
 		}
 	}, [router]);
 

@@ -1,6 +1,8 @@
 "use client";
 import "@stream-io/video-react-sdk/dist/css/styles.css";
 import "@smastrom/react-rating/style.css";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
@@ -10,8 +12,6 @@ import MovePageToTop from "@/components/shared/MovePageToTop";
 import { Analytics } from "@vercel/analytics/react";
 import { GoogleTagManager } from "@next/third-parties/google";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
-import StreamVideoProvider from "@/providers/streamClientProvider";
-import { CurrentUsersProvider } from "@/lib/context/CurrentUsersContext";
 import Image from "next/image";
 import { throttle } from "lodash";
 
@@ -114,18 +114,14 @@ export default function RootLayout({
 		<html lang="en">
 			<GoogleAnalytics />
 			<GoogleTagManager gtmId={`${process.env.NEXT_PUBLIC_MEASUREMENT_ID}`} />
-			<CurrentUsersProvider>
-				<StreamVideoProvider>
-					<TooltipProvider>
-						<body className="overflow-y-scroll no-scrollbar">
-							<Analytics />
-							<Toaster />
-							<MovePageToTop />
-							{renderContent()}
-						</body>
-					</TooltipProvider>
-				</StreamVideoProvider>
-			</CurrentUsersProvider>
+			<TooltipProvider>
+				<body className="overflow-y-scroll no-scrollbar">
+					<Analytics />
+					<Toaster />
+					<MovePageToTop />
+					{renderContent()}
+				</body>
+			</TooltipProvider>
 		</html>
 	);
 }

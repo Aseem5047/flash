@@ -4,24 +4,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { useToast } from "../ui/use-toast";
 const ShareButton = () => {
 	const { toast } = useToast();
-	const handleShareClick = () => {
-		const url = window.location.href;
-		navigator.clipboard
-			.writeText(url)
-			.then(() => {
-				toast({
-					title: "Copied to Clipboard",
-					description: `Creator's Profile Link Copied`,
-				});
-			})
-			.catch((err) => {
-				console.error("Failed to copy URL: ", err);
-				toast({
-					title: "Failed to Copy Link",
-					description: `Please Try Again`,
-				});
-			});
-	};
 
 	const shareLink = () => {
 		const link = window.location.href;

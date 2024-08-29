@@ -153,6 +153,7 @@ const AuthenticateViaOTP = ({
 
 				console.log("Existing user found. Proceeding as an existing user.");
 				refreshCurrentUser();
+				setAuthenticationSheetOpen(false);
 				isAuthenticationPath && router.push(`${creatorURL ? creatorURL : "/"}`);
 			} else {
 				console.log("No user found. Proceeding as a new user.");
@@ -194,6 +195,7 @@ const AuthenticateViaOTP = ({
 							user as CreateCreatorParams
 						);
 						refreshCurrentUser();
+						setAuthenticationSheetOpen(false);
 						router.push("/updateDetails");
 					} catch (error: any) {
 						toast({
@@ -210,6 +212,7 @@ const AuthenticateViaOTP = ({
 							user as CreateCreatorParams
 						);
 						refreshCurrentUser();
+						setAuthenticationSheetOpen(false);
 						router.push(`${creatorURL ? creatorURL : "/"}`);
 					} catch (error: any) {
 						toast({
@@ -230,7 +233,6 @@ const AuthenticateViaOTP = ({
 			setIsVerifyingOTP(false);
 		} finally {
 			setIsVerifyingOTP(false);
-			setAuthenticationSheetOpen(false);
 		}
 	};
 

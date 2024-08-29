@@ -48,7 +48,7 @@ const CreatorHome = () => {
 	useEffect(() => {
 		setTimeout(() => {
 			setLoading(false);
-		}, 1000);
+		}, 300);
 	}, []);
 
 	useEffect(() => {
@@ -224,12 +224,6 @@ const CreatorHome = () => {
 			updateServices();
 		}
 	}, [services]);
-
-	useEffect(() => {
-		setTimeout(() => {
-			setLoading(false);
-		}, 1000);
-	}, []);
 
 	if (!creatorUser || loading || walletBalance < 0)
 		return (

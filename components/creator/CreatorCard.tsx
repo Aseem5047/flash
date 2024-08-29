@@ -6,6 +6,7 @@ import CallingOptions from "../calls/CallingOptions";
 import CreatorDetails from "./CreatorDetails";
 import UserReviews from "./UserReviews";
 import axios from "axios";
+import SinglePostLoader from "../shared/SinglePostLoader";
 
 interface CreatorCardProps {
 	creator: creatorUser;
@@ -55,11 +56,16 @@ const CreatorCard = ({ creator }: CreatorCardProps) => {
 				{/* Calling Options */}
 				<CallingOptions creator={creator} />
 				{/* User Reviews */}
-				<UserReviews
-					theme={creator.themeSelected}
-					creatorFeedback={creatorFeedback[0]?.feedbacks}
-					loading={loading}
-				/>
+				{loading ? (
+					<section className="w-full h-full flex items-center justify-center">
+						<SinglePostLoader />
+					</section>
+				) : (
+					<UserReviews
+						theme={creator.themeSelected}
+						creatorFeedback={creatorFeedback[0]?.feedbacks}
+					/>
+				)}
 			</div>
 		</section>
 	);

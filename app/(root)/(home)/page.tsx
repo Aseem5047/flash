@@ -8,6 +8,7 @@ import React, {
 	useCallback,
 	useRef,
 } from "react";
+import { useInView } from "react-intersection-observer";
 import * as Sentry from "@sentry/nextjs";
 import Link from "next/link";
 import { getUsersPaginated } from "@/lib/actions/creator.actions";
@@ -16,7 +17,6 @@ import CreatorHome from "@/components/creator/CreatorHome";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { usePathname } from "next/navigation";
 import PostLoader from "@/components/shared/PostLoader";
-import Loader from "@/components/shared/Loader";
 import Image from "next/image";
 
 const CreatorsGrid = lazy(() => import("@/components/creator/CreatorsGrid"));
@@ -30,6 +30,7 @@ const HomePage = () => {
 	const [hasMore, setHasMore] = useState(true);
 	const { userType, setCurrentTheme } = useCurrentUsersContext();
 	const pathname = usePathname();
+	const { ref, inView } = useInView();
 
 	// Ref for the empty div acting as a scroll trigger
 	const bottomRef = useRef<HTMLDivElement>(null);
@@ -64,21 +65,10 @@ const HomePage = () => {
 	}, [pathname, fetchCreators]); // Depend on pathname and fetchCreators
 
 	useEffect(() => {
-		const handleScroll = () => {
-			if (
-				window.innerHeight + window.scrollY >=
-					document.body.offsetHeight - 100 &&
-				!isFetching
-			) {
-				fetchCreators(creatorCount, 2);
-			}
-		};
-
-		window.addEventListener("scroll", handleScroll);
-		return () => {
-			window.removeEventListener("scroll", handleScroll);
-		};
-	}, [isFetching, creatorCount]);
+		if (inView && !isFetching) {
+			fetchCreators(creatorCount, 2);
+		}
+	}, [inView]);
 
 	const handleCreatorCardClick = (username: string, theme: string) => {
 		localStorage.setItem("creatorURL", `/${username}`);
@@ -137,8 +127,7 @@ const HomePage = () => {
 							alt="Loading..."
 							width={50}
 							height={50}
-							className="mx-auto invert my-4"
-							priority
+							className="mx-auto invert my-4 z-20"
 						/>
 					)}
 					{/* Show a message when there's no more data to fetch */}
@@ -148,7 +137,7 @@ const HomePage = () => {
 						</div>
 					)}
 					{/* Empty div to trigger scroll action */}
-					<div ref={bottomRef} className="w-full" />
+					{hasMore && <div ref={ref} className=" mt-10 w-full" />}
 				</Suspense>
 			) : (
 				<CreatorHome />
