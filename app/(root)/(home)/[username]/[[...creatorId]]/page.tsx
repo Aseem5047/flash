@@ -2,29 +2,28 @@ import CreatorCard from "@/components/creator/CreatorCard";
 import { getUserByUsername } from "@/lib/actions/creator.actions";
 import { Metadata } from "next";
 
-export const imageSrc = (creator: any) => {
-	const isValidUrl = (url: string) => {
-		try {
-			new URL(url);
-			return true;
-		} catch {
-			return false;
-		}
-	};
-
-	if (creator.photo && isValidUrl(creator.photo)) {
-		return creator.photo;
-	} else {
-		return "/images/defaultProfileImage.png";
-	}
-};
-
 // Function to generate metadata dynamically
 export async function generateMetadata({
 	params,
 }: {
 	params: { username: string };
 }): Promise<Metadata> {
+	const imageSrc = (creator: any) => {
+		const isValidUrl = (url: string) => {
+			try {
+				new URL(url);
+				return true;
+			} catch {
+				return false;
+			}
+		};
+
+		if (creator.photo && isValidUrl(creator.photo)) {
+			return creator.photo;
+		} else {
+			return "/images/defaultProfileImage.png";
+		}
+	};
 	const creator = await getUserByUsername(String(params.username));
 	let imageURL = await imageSrc(creator[0]);
 	const fullName =
