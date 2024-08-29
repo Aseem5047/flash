@@ -1,72 +1,38 @@
-"use client";
-
 import CreatorCard from "@/components/creator/CreatorCard";
-import SinglePostLoader from "@/components/shared/SinglePostLoader";
-import { useToast } from "@/components/ui/use-toast";
-import { getUserByUsername } from "@/lib/actions/creator.actions";
-import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
-import { useParams, usePathname, useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { Metadata } from "next";
+import React from "react";
+
+export const metadata: Metadata = {
+	title: "FlashCall",
+	description: "Creator | Flashcall.me",
+	icons: {
+		icon: "https://drive.google.com/file/d/161hwsCCq9AQ66m6nNEIm3gV5D8R40nki/view?usp=sharing",
+	},
+
+	openGraph: {
+		type: "website",
+		url: "https://app.flashcall.me",
+		title: "FlashCall",
+		description: "Application Connecting People",
+		images: [
+			{
+				url: "https://drive.google.com/file/d/161hwsCCq9AQ66m6nNEIm3gV5D8R40nki/view?usp=sharing",
+				width: 800,
+				height: 600,
+				alt: "FlashCall Logo",
+			},
+		],
+		siteName: "Flashcall.me",
+		locale: "en_US",
+	},
+
+	metadataBase: new URL("https://app.flashcall.me"),
+};
 
 const CreatorProfile = () => {
-	const [creator, setCreator] = useState(null);
-	const [loading, setLoading] = useState(true);
-	const { username } = useParams();
-	const { toast } = useToast();
-	const pathname = usePathname();
-	const router = useRouter();
-	const { userType } = useCurrentUsersContext();
-
-	useEffect(() => {
-		localStorage.setItem("creatorURL", `/${username}`);
-		if (userType === "creator") {
-			toast({
-				variant: "destructive",
-				title: "You are a Creator",
-				description: "Redirecting to HomePage ...",
-			});
-			router.push("/"); // Redirect to homepage if userType is creator
-			return;
-		}
-
-		const getCreator = async () => {
-			try {
-				const response = await getUserByUsername(String(username));
-				setCreator(response[0]);
-			} catch (error) {
-				console.log(error);
-			} finally {
-				localStorage.setItem("creatorURL", `/${username}`);
-				setLoading(false);
-			}
-		};
-
-		const handler = setTimeout(() => {
-			getCreator();
-		}, 300);
-
-		return () => {
-			clearTimeout(handler);
-		};
-	}, [pathname, username]);
-
-	if (loading || !creator) {
-		return (
-			<section className="w-full h-full flex flex-col items-center justify-center">
-				<SinglePostLoader />
-
-				{!creator && !loading && (
-					<div className="w-full flex items-center justify-center text-2xl font-semibold text-center text-red-500">
-						No creators found
-					</div>
-				)}
-			</section>
-		);
-	}
-
 	return (
 		<div className="flex items-start justify-start h-full overflow-scroll no-scrollbar md:pb-14">
-			<CreatorCard creator={creator} />
+			<CreatorCard />
 		</div>
 	);
 };
