@@ -37,18 +37,6 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 		setAuthenticationSheetOpen(isAuthSheetOpen);
 	}, [isAuthSheetOpen]);
 
-	// useEffect(() => {
-	// 	if (authenticationSheetOpen) {
-	// 		document.body.style.overflow = "hidden";
-	// 	} else {
-	// 		document.body.style.overflow = "";
-	// 	}
-
-	// 	return () => {
-	// 		document.body.style.overflow = "";
-	// 	};
-	// }, [authenticationSheetOpen]);
-
 	const handleToggleFavorite = async () => {
 		if (!clientUser) {
 			setIsAuthSheetOpen(true);
@@ -113,6 +101,8 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 				onOpenChange={setIsAuthSheetOpen} // Handle sheet close
 			/>
 		);
+
+	console.log(creator._id);
 
 	return (
 		<>

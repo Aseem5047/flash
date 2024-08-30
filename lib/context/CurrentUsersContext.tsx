@@ -13,7 +13,7 @@ import { clientUser, creatorUser } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
 import axios from "axios";
 import jwt from "jsonwebtoken";
-import { doc, onSnapshot } from "firebase/firestore";
+import { deleteDoc, doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { useRouter } from "next/navigation";
 
@@ -79,6 +79,17 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 
 	// Function to handle user signout
 	const handleSignout = () => {
+		if (currentUser) {
+			const callDocRef = doc(db, "authToken", currentUser.phone);
+			deleteDoc(callDocRef)
+				.then(() => {
+					console.log("Document successfully deleted!");
+				})
+				.catch((error: any) => {
+					console.error("Error removing document: ", error);
+				});
+		}
+
 		localStorage.removeItem("userID");
 		localStorage.removeItem("authToken");
 		localStorage.removeItem("creatorURL");
@@ -148,7 +159,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		if (authToken && !isTokenValid(authToken)) {
 			handleSignout();
 		} else {
-			if(userType) fetchCurrentUser();
+			if (userType) fetchCurrentUser();
 		}
 	}, [userType]);
 
@@ -173,15 +184,10 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		}
 	}, [router]);
 
-	// Managing single session authentication
 	useEffect(() => {
-
 		const authToken = localStorage.getItem("authToken");
-		if (!currentUser || !authToken) {
-			return;
-		}
 
-		if (!currentUser.phone) {
+		if (!currentUser || !currentUser.phone) {
 			return;
 		}
 
