@@ -11,6 +11,7 @@ import { isValidUrl } from "@/lib/utils";
 import AuthenticationSheet from "../shared/AuthenticationSheet";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import Image from "next/image";
 
 interface CreatorDetailsProps {
 	creator: creatorUser;
@@ -97,7 +98,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 			: "/images/defaultProfileImage.png";
 
 	useEffect(() => {
-		const img = new Image();
+		const img = new window.Image();
 		img.src = imageSrc;
 
 		img.onload = () => {
@@ -107,7 +108,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 		img.onerror = () => {
 			setIsImageLoaded(true);
 		};
-	}, [creator.photo]);
+	}, [imageSrc]);
 
 	const backgroundImageStyle = {
 		backgroundImage: `url(${imageSrc})`,
@@ -143,10 +144,14 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 							className={`bg-gray-300 opacity-60 animate-pulse rounded-[24px]  w-full h-72 xl:h-80 object-cover`}
 						/>
 					) : (
-						<div
-							className={`relative rounded-xl w-full h-72 xl:h-80 bg-center`}
-							style={backgroundImageStyle}
-						>
+						<div className={`relative rounded-xl w-full h-72 xl:h-80`}>
+							<Image
+								src={imageSrc}
+								alt="Creator Profile"
+								height={1000}
+								width={1000}
+								className="w-full h-72 xl:h-80 object-cover rounded-xl bg-center"
+							/>
 							<div className="flex flex-col-reverse items-center justify-center gap-2 absolute top-4 right-4">
 								<>
 									<ShareButton

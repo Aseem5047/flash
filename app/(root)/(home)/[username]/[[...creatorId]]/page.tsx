@@ -18,7 +18,7 @@ export async function generateMetadata({
 			}
 		};
 
-		if (creator.photo && isValidUrl(creator.photo)) {
+		if (creator?.photo && isValidUrl(creator.photo)) {
 			return creator.photo;
 		} else {
 			return "/images/defaultProfileImage.png";
@@ -27,8 +27,8 @@ export async function generateMetadata({
 	const creator = await getUserByUsername(String(params.username));
 	let imageURL = await imageSrc(creator[0]);
 	const fullName =
-		`${creator[0].firstName || ""} ${creator[0].lastName || ""}`.trim() ||
-		creator[0].username;
+		`${creator[0]?.firstName || ""} ${creator[0]?.lastName || ""}`.trim() ||
+		params.username;
 
 	try {
 		return {

@@ -31,7 +31,6 @@ interface CurrentUsersContextValue {
 	setCurrentTheme: any;
 	authenticationSheetOpen: boolean;
 	setAuthenticationSheetOpen: any;
-	userStatus: string;
 }
 
 // Create the context with a default value of null
@@ -73,7 +72,6 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	const [clientUser, setClientUser] = useState<clientUser | null>(null);
 	const [creatorUser, setCreatorUser] = useState<creatorUser | null>(null);
 	const [currentTheme, setCurrentTheme] = useState("");
-	const [userStatus, setUserStatus] = useState("");
 	const [authenticationSheetOpen, setAuthenticationSheetOpen] = useState(false);
 	const [userType, setUserType] = useState<string | null>(null);
 	const { toast } = useToast();
@@ -295,7 +293,6 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		setCurrentTheme,
 		authenticationSheetOpen,
 		setAuthenticationSheetOpen,
-		userStatus,
 	};
 
 	return (

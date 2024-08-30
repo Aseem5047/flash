@@ -41,14 +41,13 @@ export async function getUsers() {
 }
 
 export async function getUsersPaginated(offset = 0, limit = 2) {
+	await connectToDatabase();
 	try {
-		await connectToDatabase(); 
-
 		// MongoDB query to filter users with non-zero rates for audio, video, and chat
 		const query = {
-			audioRate: { $ne: "0" },  // Ensure audioRate is not "0"
-			videoRate: { $ne: "0" },  // Ensure videoRate is not "0"
-			chatRate: { $ne: "0" }    // Ensure chatRate is not "0"
+			audioRate: { $ne: "0" }, // Ensure audioRate is not "0"
+			videoRate: { $ne: "0" }, // Ensure videoRate is not "0"
+			chatRate: { $ne: "0" }, // Ensure chatRate is not "0"
 		};
 
 		// Fetch users with pagination using skip, limit, and query filters
@@ -61,7 +60,6 @@ export async function getUsersPaginated(offset = 0, limit = 2) {
 		throw new Error("Failed to fetch users");
 	}
 }
-
 
 export async function getCreatorById(userId: string) {
 	try {

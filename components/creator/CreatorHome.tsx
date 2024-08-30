@@ -48,7 +48,7 @@ const CreatorHome = () => {
 	useEffect(() => {
 		setTimeout(() => {
 			setLoading(false);
-		}, 300);
+		}, 1000);
 	}, []);
 
 	useEffect(() => {
