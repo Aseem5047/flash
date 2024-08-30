@@ -3,7 +3,6 @@ import { isValidUrl } from "@/lib/utils";
 import { creatorUser } from "@/types";
 import { doc, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import Image from "next/image";
 
 const CreatorsGrid = ({ creator }: { creator: creatorUser }) => {
 	const [isImageLoaded, setIsImageLoaded] = useState(false);
@@ -15,7 +14,7 @@ const CreatorsGrid = ({ creator }: { creator: creatorUser }) => {
 			: "/images/defaultProfileImage.png";
 
 	useEffect(() => {
-		const img = new window.Image();
+		const img = new Image();
 		img.src = imageSrc;
 
 		img.onload = () => {
@@ -25,7 +24,7 @@ const CreatorsGrid = ({ creator }: { creator: creatorUser }) => {
 		img.onerror = () => {
 			setIsImageLoaded(true);
 		};
-	}, [imageSrc]);
+	}, [creator.photo]);
 
 	useEffect(() => {
 		const docRef = doc(db, "userStatus", creator.phone);
@@ -64,14 +63,10 @@ const CreatorsGrid = ({ creator }: { creator: creatorUser }) => {
 			{!isImageLoaded ? (
 				<div className="bg-gray-300 animate-pulse rounded-xl w-full mx-auto h-72 lg:h-96 object-cover" />
 			) : (
-				<div className="relative flex flex-col items-center justify-center rounded-xl w-full h-full">
-					<Image
-						src={imageSrc}
-						alt="Creator Profile"
-						height={1000}
-						width={1000}
-						className="w-full h-72 lg:h-96 object-cover rounded-xl"
-					/>
+				<div
+					className="relative flex flex-col items-center justify-center rounded-xl w-full h-72 lg:h-96 object-cover"
+					style={backgroundImageStyle}
+				>
 					<div className="text-white flex flex-col items-start w-full creatorsGirdHighlight">
 						{/* Username */}
 						<p className="font-semibold text-base sm:text-2xl max-w-[90%] text-ellipsis whitespace-nowrap overflow-hidden">
