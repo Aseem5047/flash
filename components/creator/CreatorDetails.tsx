@@ -9,8 +9,9 @@ import ShareButton from "../shared/ShareButton";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { isValidUrl } from "@/lib/utils";
 import AuthenticationSheet from "../shared/AuthenticationSheet";
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import Image from "next/image";
 
 interface CreatorDetailsProps {
 	creator: creatorUser;
@@ -19,7 +20,6 @@ interface CreatorDetailsProps {
 const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 	const pathname = usePathname();
 	const isCreatorOrExpertPath = pathname.includes(`/${creator.username}`);
-	const [isImageLoaded, setIsImageLoaded] = useState(false);
 	const [addingFavorite, setAddingFavorite] = useState(false);
 	const [markedFavorite, setMarkedFavorite] = useState(false);
 	const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false);
@@ -96,29 +96,6 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 			? creator?.photo
 			: "/images/defaultProfileImage.png";
 
-	useEffect(() => {
-		const img = new Image();
-		img.src = imageSrc;
-
-		img.onload = () => {
-			setIsImageLoaded(true);
-		};
-
-		img.onerror = () => {
-			setIsImageLoaded(true);
-		};
-	}, [creator.photo]);
-
-	const backgroundImageStyle = {
-		backgroundImage: `url(${imageSrc})`,
-		backgroundSize: "cover",
-		backgroundPosition: "center",
-		backgroundRepeat: "no-repeat",
-		opacity: isImageLoaded ? 1 : 0,
-		transform: isImageLoaded ? "scale(1)" : "scale(0.95)",
-		transition: "opacity 0.5s ease-in-out, transform 0.5s ease-in-out",
-	};
-
 	if (isAuthSheetOpen && !clientUser)
 		return (
 			<AuthenticationSheet
@@ -138,40 +115,39 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 							: "#50A65C",
 					}}
 				>
-					{!isImageLoaded ? (
-						<div
-							className={`bg-gray-300 opacity-60 animate-pulse rounded-[24px]  w-full h-72 xl:h-80 object-cover`}
+					<div className={`relative rounded-xl size-full`}>
+						<Image
+							src={imageSrc}
+							alt="Creator Profile"
+							height={500}
+							width={500}
+							className="object-cover rounded-xl w-full h-72 xl:h-80"
+							priority={true}
+							placeholder="blur"
+							blurDataURL="/images/defaultProfileImage.png"
 						/>
-					) : (
-						<div
-							className={`relative rounded-xl w-full h-72 xl:h-80 bg-center`}
-							style={backgroundImageStyle}
-						>
-							<div className="flex flex-col-reverse items-center justify-center gap-2 absolute top-4 right-4">
-								<>
-									<ShareButton
-										username={
-											creator.username ? creator.username : creator.phone
-										}
-										profession={creator.profession ?? "Astrologer"}
-										gender={creator.gender ?? ""}
-										firstName={creator.firstName}
-										lastName={creator.lastName}
-									/>
+						<div className="flex flex-col-reverse items-center justify-center gap-2 absolute top-4 right-4">
+							<>
+								<ShareButton
+									username={creator.username ? creator.username : creator.phone}
+									profession={creator.profession ?? "Astrologer"}
+									gender={creator.gender ?? ""}
+									firstName={creator.firstName}
+									lastName={creator.lastName}
+								/>
 
-									<Favorites
-										setMarkedFavorite={setMarkedFavorite}
-										markedFavorite={markedFavorite}
-										handleToggleFavorite={handleToggleFavorite}
-										addingFavorite={addingFavorite}
-										creator={creator}
-										user={clientUser}
-										isCreatorOrExpertPath={isCreatorOrExpertPath}
-									/>
-								</>
-							</div>
+								<Favorites
+									setMarkedFavorite={setMarkedFavorite}
+									markedFavorite={markedFavorite}
+									handleToggleFavorite={handleToggleFavorite}
+									addingFavorite={addingFavorite}
+									creator={creator}
+									user={clientUser}
+									isCreatorOrExpertPath={isCreatorOrExpertPath}
+								/>
+							</>
 						</div>
-					)}
+					</div>
 
 					<div className="text-white flex flex-col items-start w-full">
 						<p className="font-semibold text-3xl max-w-[90%] text-ellipsis whitespace-nowrap overflow-hidden">
