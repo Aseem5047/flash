@@ -9,6 +9,8 @@ import ShareButton from "../shared/ShareButton";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { isValidUrl } from "@/lib/utils";
 import AuthenticationSheet from "../shared/AuthenticationSheet";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 interface CreatorDetailsProps {
 	creator: creatorUser;
@@ -21,6 +23,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 	const [addingFavorite, setAddingFavorite] = useState(false);
 	const [markedFavorite, setMarkedFavorite] = useState(false);
 	const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false);
+	const [status, setStatus] = useState<string>("Offline"); // Default status to "Offline"
 
 	const { clientUser, setAuthenticationSheetOpen, setCurrentTheme } =
 		useCurrentUsersContext();
@@ -36,6 +39,28 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 	useEffect(() => {
 		setAuthenticationSheetOpen(isAuthSheetOpen);
 	}, [isAuthSheetOpen]);
+
+	useEffect(() => {
+		const docRef = doc(db, "userStatus", creator.phone);
+		const unsubscribe = onSnapshot(
+			docRef,
+			(docSnap) => {
+				if (docSnap.exists()) {
+					const data = docSnap.data();
+					setStatus(data.status || "Offline");
+				} else {
+					setStatus("Offline"); // If document doesn't exist, mark the creator as offline
+				}
+			},
+			(error) => {
+				console.error("Error fetching status:", error);
+				setStatus("Offline");
+			}
+		);
+
+		// Clean up the listener on component unmount
+		return () => unsubscribe();
+	}, [creator.phone]);
 
 	const handleToggleFavorite = async () => {
 		if (!clientUser) {
@@ -102,8 +127,6 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 			/>
 		);
 
-	console.log(creator._id);
-
 	return (
 		<>
 			<div className="flex flex-col items-center px-5 sm:px-7 justify-center">
@@ -164,9 +187,15 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 							<span className="text-md h-full">
 								{creator.profession ? creator.profession : "Expert"}
 							</span>
-							<span className="bg-green-500 text-[10px] rounded-[4px] border border-white py-1 px-2 font-semibold">
-								Online
-							</span>
+							<div
+								className={`${
+									status === "Online" ? "bg-green-500" : "bg-red-500"
+								} text-[10px] rounded-[4px] border border-white py-1 px-2 font-semibold`}
+							>
+								<span className="flex">
+									{status === "Online" ? "Online" : "Offline"}
+								</span>
+							</div>
 						</div>
 					</div>
 

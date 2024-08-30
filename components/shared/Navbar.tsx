@@ -103,8 +103,6 @@ const Navbar = () => {
 			/>
 		);
 
-	console.log(pathname.includes("/payment"));
-
 	return (
 		<nav
 			className="justify-between items-center fixed z-40 top-0 left-0 w-full px-2 sm:px-4 py-4 bg-white shadow-sm"
