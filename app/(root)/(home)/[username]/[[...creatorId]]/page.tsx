@@ -1,6 +1,7 @@
 import CreatorCard from "@/components/creator/CreatorCard";
 import { getUserByUsername } from "@/lib/actions/creator.actions";
 import { Metadata } from "next";
+import * as Sentry from "@sentry/nextjs";
 
 // Function to generate metadata dynamically
 export async function generateMetadata({
@@ -52,6 +53,7 @@ export async function generateMetadata({
 			},
 		};
 	} catch (error) {
+		Sentry.captureException(error);
 		// Log any error that occurs during the API call
 		console.error("Error fetching creator data:", error);
 
