@@ -291,7 +291,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 			window.removeEventListener("beforeunload", handleBeforeUnload);
 			document.removeEventListener("visibilitychange", handleVisibilityChange);
 		};
-	}, []);
+	}, [currentUser?._id]);
 
 	const values: CurrentUsersContextValue = {
 		clientUser,
