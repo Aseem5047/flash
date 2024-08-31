@@ -199,7 +199,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	useEffect(() => {
 		const authToken = localStorage.getItem("authToken");
 
-		if (!currentUser || !currentUser.phone || userType !== "creator") {
+		if (!currentUser || !currentUser.phone) {
 			return;
 		}
 
