@@ -1,3 +1,12 @@
+/*
+
+Approach ...
+
+1. Check Cache -> Display Cached Data if Valid -> Fetch New Data -> Compare & Update State -> Re-render with Updated Data.
+2. On Scroll -> Fetch More Data -> Filter & Update State -> Re-render with New Data.
+
+*/
+
 "use client";
 
 import React, { useEffect, useState, Suspense, lazy, useCallback } from "react";
@@ -14,17 +23,8 @@ import Image from "next/image";
 
 const CreatorsGrid = lazy(() => import("@/components/creator/CreatorsGrid"));
 
-/*
-
-Approach ...
-
-1. Check Cache -> Display Cached Data if Valid -> Fetch New Data -> Compare & Update State -> Re-render with Updated Data.
-2. On Scroll -> Fetch More Data -> Filter & Update State -> Re-render with New Data.
-
-*/
-
 const HomePage = () => {
-	const CACHE_EXPIRY_TIME = 5 * 60 * 1000; // 5 minutes
+	const CACHE_EXPIRY_TIME = 5 * 60 * 1000; // 5 minute
 	const [creators, setCreators] = useState<creatorUser[]>(() => {
 		const cachedCreators = localStorage.getItem("creators");
 		return cachedCreators ? JSON.parse(cachedCreators) : [];
@@ -39,24 +39,22 @@ const HomePage = () => {
 	const { ref, inView } = useInView();
 
 	const fetchCreators = useCallback(
-		async (offset: number, limit: number, isInitialFetch: boolean = false) => {
+		async (offset: number, limit: number) => {
 			try {
 				setIsFetching(true);
 				const response = await getUsersPaginated(offset, limit);
 
-				if (isInitialFetch) {
-					// Handle initial fetch or cache refresh
-					if (response.length > 0 && response[0]._id !== creators[0]?._id) {
-						setCreators(response);
-						localStorage.setItem("creators", JSON.stringify(response));
-						localStorage.setItem("creatorsLastFetched", Date.now().toString());
-						setCreatorCount(response.length);
-						setHasMore(response.length === limit);
-					}
+				if (offset === 0) {
+					// Initial fetch or cache expired: Replace the creators list
+					setCreators(response);
+					localStorage.setItem("creators", JSON.stringify(response));
+					localStorage.setItem("creatorsLastFetched", Date.now().toString());
+					setCreatorCount(response.length);
+					setHasMore(response.length === limit);
 				} else {
-					// Handle pagination
+					// Pagination: Append new unique creators
 					const filteredNewCreators = response.filter(
-						(newCreator: creatorUser) =>
+						(newCreator: any) =>
 							!creators.some((creator) => creator._id === newCreator._id)
 					);
 
@@ -85,21 +83,32 @@ const HomePage = () => {
 		[creators]
 	);
 
+	const checkForNewCreator = useCallback(async () => {
+		try {
+			const response = await getUsersPaginated(0, 1); // Fetch only the latest user
+			if (response.length > 0 && response[0]._id !== creators[0]?._id) {
+				const newCreators = [response[0], ...creators]; // Prepend the new creator
+				setCreators(newCreators);
+				localStorage.setItem("creators", JSON.stringify(newCreators));
+				localStorage.setItem("creatorsLastFetched", Date.now().toString());
+				setCreatorCount(newCreators.length);
+				setHasMore(true); // Assume more creators are available
+			}
+		} catch (error) {
+			console.error("Error checking for new creators:", error);
+		}
+	}, [creators]);
+
 	useEffect(() => {
 		const lastFetched = localStorage.getItem("creatorsLastFetched");
 		const now = Date.now();
-
-		// If cached creators exist, show them immediately
-		if (
-			creators.length > 0 &&
-			(!lastFetched || now - parseInt(lastFetched) <= CACHE_EXPIRY_TIME)
-		) {
-			setLoading(false); // Cached creators are already displayed
+		// Check if the cache is expired or if there are no cached creators
+		if (!lastFetched || now - parseInt(lastFetched) > CACHE_EXPIRY_TIME) {
+			fetchCreators(0, 6);
+		} else {
+			checkForNewCreator();
 		}
-
-		// Fetch the latest creators in the background
-		fetchCreators(0, 6, true);
-	}, [pathname, fetchCreators]);
+	}, [pathname, fetchCreators, checkForNewCreator]);
 
 	useEffect(() => {
 		if (inView && !isFetching && hasMore) {
