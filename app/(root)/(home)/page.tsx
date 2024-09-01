@@ -1,12 +1,3 @@
-/*
-
-Approach ...
-
-1. Check Cache -> Display Cached Data if Valid -> Fetch New Data -> Compare & Update State -> Re-render with Updated Data.
-2. On Scroll -> Fetch More Data -> Filter & Update State -> Re-render with New Data.
-
-*/
-
 "use client";
 
 import React, { useEffect, useState, Suspense, lazy, useCallback } from "react";
@@ -24,7 +15,7 @@ import Image from "next/image";
 const CreatorsGrid = lazy(() => import("@/components/creator/CreatorsGrid"));
 
 const HomePage = () => {
-	const CACHE_EXPIRY_TIME = 5 * 60 * 1000; // 5 minute
+	const CACHE_EXPIRY_TIME = 5 * 60 * 1000; // 5 minutes
 	const [creators, setCreators] = useState<creatorUser[]>(() => {
 		const cachedCreators = localStorage.getItem("creators");
 		return cachedCreators ? JSON.parse(cachedCreators) : [];
@@ -103,10 +94,12 @@ const HomePage = () => {
 	useEffect(() => {
 		const lastFetched = localStorage.getItem("creatorsLastFetched");
 		const now = Date.now();
-		// Check if the cache is expired or if there are no cached creators
+
+		// Only fetch new data if the cache has expired
 		if (!lastFetched || now - parseInt(lastFetched) > CACHE_EXPIRY_TIME) {
 			fetchCreators(0, 6);
 		} else {
+			// Check if there's a new creator if cache is still valid
 			checkForNewCreator();
 		}
 	}, [pathname, fetchCreators, checkForNewCreator]);
@@ -130,7 +123,7 @@ const HomePage = () => {
 		<main className="flex size-full flex-col gap-2">
 			{userType !== "creator" ? (
 				<Suspense fallback={<PostLoader count={6} />}>
-					{loading ? (
+					{loading && creators && creators.length === 0 ? (
 						<PostLoader count={6} />
 					) : error ? (
 						<div className="size-full flex items-center justify-center text-2xl font-semibold text-center text-red-500">
@@ -143,11 +136,12 @@ const HomePage = () => {
 						</div>
 					) : (
 						<section
-							className={`grid grid-cols-2 gap-2.5 px-2.5 lg:gap-5 lg:px-0 items-center`}
+							className={`grid xs:grid-cols-2 gap-2.5 px-2.5 lg:gap-5 lg:px-0 items-center`}
 						>
 							{creators &&
 								creators.map((creator, index) => (
 									<section
+										key={creator._id} // Add a key for list rendering optimization
 										className="min-w-full transition-all duration-500 hover:scale-95 cursor-pointer"
 										onClick={() =>
 											handleCreatorCardClick(
