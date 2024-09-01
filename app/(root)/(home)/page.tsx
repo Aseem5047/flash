@@ -17,7 +17,7 @@ import { getUsersPaginated } from "@/lib/actions/creator.actions";
 import { creatorUser } from "@/types";
 import CreatorHome from "@/components/creator/CreatorHome";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import PostLoader from "@/components/shared/PostLoader";
 import Image from "next/image";
 
@@ -36,6 +36,7 @@ const HomePage = () => {
 	const [hasMore, setHasMore] = useState(true);
 	const { userType, setCurrentTheme } = useCurrentUsersContext();
 	const pathname = usePathname();
+	const router = useRouter();
 	const { ref, inView } = useInView();
 
 	const fetchCreators = useCallback(
@@ -117,8 +118,12 @@ const HomePage = () => {
 	}, [inView, isFetching, hasMore, creatorCount, fetchCreators]);
 
 	const handleCreatorCardClick = (username: string, theme: string) => {
+		// Save any necessary data in localStorage
 		localStorage.setItem("creatorURL", `/${username}`);
 		setCurrentTheme(theme);
+
+		// Trigger the route change immediately
+		router.push(`/${username}`);
 	};
 
 	return (
@@ -142,22 +147,17 @@ const HomePage = () => {
 						>
 							{creators &&
 								creators.map((creator, index) => (
-									<Link
-										href={`/${creator.username}`}
-										key={creator._id || index}
+									<section
+										className="min-w-full transition-all duration-500 hover:scale-95 cursor-pointer"
+										onClick={() =>
+											handleCreatorCardClick(
+												creator.username,
+												creator.themeSelected
+											)
+										}
 									>
-										<section
-											className="min-w-full transition-all duration-500 hover:scale-95"
-											onClick={() =>
-												handleCreatorCardClick(
-													creator.username,
-													creator.themeSelected
-												)
-											}
-										>
-											<CreatorsGrid creator={creator} />
-										</section>
-									</Link>
+										<CreatorsGrid creator={creator} />
+									</section>
 								))}
 						</section>
 					)}
