@@ -117,7 +117,7 @@ const Favorites = () => {
 					<div
 						className={`animate-in grid ${
 							favorites.length > 1 ? "lg:grid-cols-2" : "grid-cols-1"
-						}  px-2.5 gap-5 lg:px-0 items-center pb-8 lg:pb-0 overflow-hidden`}
+						}  px-2.5 gap-5 lg:px-0 items-center pb-8 lg:pb-0 overflow-x-hidden no-scrollbar`}
 					>
 						{favorites.map((favorite, index) => {
 							const creator = favorite.creatorId;
