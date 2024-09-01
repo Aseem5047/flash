@@ -123,7 +123,7 @@ const HomePage = () => {
 		<main className="flex size-full flex-col gap-2">
 			{userType !== "creator" ? (
 				<Suspense fallback={<PostLoader count={6} />}>
-					{loading && creators && creators.length === 0 ? (
+					{loading ? (
 						<PostLoader count={6} />
 					) : error ? (
 						<div className="size-full flex items-center justify-center text-2xl font-semibold text-center text-red-500">
