@@ -100,7 +100,7 @@ const FavoritesGrid = ({
 		`${creator?.firstName || ""} ${creator?.lastName || ""}`.trim() ||
 		creator.username;
 	return (
-		<div className="grid grid-cols-[2fr_1fr] h-full w-full items-start justify-between pt-2 pb-4 xl:max-w-[568px] border-b xl:border xl:rounded-xl xl:p-4 xl:shadow-md border-gray-300 ">
+		<div className="grid grid-cols-[2fr_1fr] h-full w-full items-start justify-between pt-2 pb-4 xl:max-w-[568px] border-b xl:border xl:rounded-xl xl:p-4 border-gray-300 ">
 			<div className="flex flex-col items-start justify-between w-full h-full gap-2">
 				{/* Expert's Details */}
 				<Link

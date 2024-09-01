@@ -191,7 +191,7 @@ const UserReviews = ({
 					)}
 				</div>
 			) : (
-				<div />
+				<div className="-mt-2.5" />
 			)}
 		</>
 	);

@@ -105,19 +105,19 @@ const Favorites = () => {
 					No creators found.
 				</div>
 			) : (
-				<section className="flex size-full flex-col gap-2 pb-5 md:pb-14">
+				<section className="flex size-full flex-col gap-2">
 					<div
 						ref={stickyRef}
-						className={`sticky top-16 bg-white z-30 w-full pl-1 ${
+						className={`sticky top-16 bg-white z-30 w-full pl-4 lg:pl-0.5 ${
 							isSticky ? "pt-7" : "pt-2"
 						} pb-4 flex items-center justify-between transition-all duration-300`}
 					>
-						<h1 className="text-3xl font-bold">Favorites</h1>
+						<h1 className="text-3xl font-bold">Favorite Creators</h1>
 					</div>
 					<div
 						className={`animate-in grid ${
 							favorites.length > 1 ? "lg:grid-cols-2" : "grid-cols-1"
-						}  px-2.5 gap-5 lg:px-0 items-center pb-6`}
+						}  px-2.5 gap-5 lg:px-0 items-center pb-8 lg:pb-0 overflow-hidden`}
 					>
 						{favorites.map((favorite, index) => {
 							const creator = favorite.creatorId;
