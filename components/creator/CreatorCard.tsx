@@ -61,11 +61,9 @@ const CreatorCard: React.FC = () => {
 				<h2 className="text-green-1 font-semibold text-lg md:text-2xl w-[85%] md:w-full text-center">
 					<Typewriter
 						words={[
-							"The QWERTY keyboard was designed to slow down typing!",
-							"The first 1GB hard drive weighed over 500 pounds.",
-							"Every month, over 6,000 new computer viruses are created.",
-							"The first iPhone was released without an App Store.",
-							"Bill Gates' house was designed using a Macintosh computer.",
+							`${
+								currentUser && `Hey ${currentUser.username}`
+							} Loading Content ...`,
 						]}
 						loop={true}
 						cursor

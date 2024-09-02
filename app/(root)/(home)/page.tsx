@@ -127,15 +127,13 @@ const HomePage = () => {
 		return (
 			<div className="size-full flex flex-col gap-2 items-center justify-center">
 				<ContentLoading />
-				{/* {currentUser && `Hey ${currentUser.username}`} Fetching Details */}
+
 				<h2 className="text-green-1 font-semibold text-lg md:text-2xl w-[85%] md:w-full text-center">
 					<Typewriter
 						words={[
-							"The first computer mouse was made of wood!",
-							"Email existed before the World Wide Web.",
-							"The first domain ever registered was Symbolics.com.",
-							"Nintendo started as a playing card company.",
-							"Google’s first storage was made from LEGO bricks!",
+							`${
+								currentUser && `Hey ${currentUser.username}`
+							} Loading Content ...`,
 						]}
 						loop={true}
 						cursor
@@ -149,8 +147,6 @@ const HomePage = () => {
 			</div>
 		);
 	}
-
-	console.log(loading, loadingCard);
 
 	return (
 		<main className="flex size-full flex-col gap-2">
