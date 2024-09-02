@@ -11,6 +11,9 @@ import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { usePathname, useRouter } from "next/navigation";
 import PostLoader from "@/components/shared/PostLoader";
 import Image from "next/image";
+import Loader from "@/components/shared/Loader";
+import SinglePostLoader from "@/components/shared/SinglePostLoader";
+import ContentLoading from "@/components/shared/ContentLoading";
 
 const CreatorsGrid = lazy(() => import("@/components/creator/CreatorsGrid"));
 
@@ -21,6 +24,7 @@ const HomePage = () => {
 		return cachedCreators ? JSON.parse(cachedCreators) : [];
 	});
 	const [loading, setLoading] = useState(creators.length === 0);
+	const [loadingCard, setLoadingCard] = useState(false); // Add loading state for card click
 	const [creatorCount, setCreatorCount] = useState(creators.length);
 	const [isFetching, setIsFetching] = useState(false);
 	const [error, setError] = useState(false);
@@ -111,20 +115,39 @@ const HomePage = () => {
 	}, [inView, isFetching, hasMore, creatorCount, fetchCreators]);
 
 	const handleCreatorCardClick = (username: string, theme: string) => {
+		setLoadingCard(true); // Set loading state before navigation
 		// Save any necessary data in localStorage
+		setLoading(true);
 		localStorage.setItem("creatorURL", `/${username}`);
 		setCurrentTheme(theme);
 		// Trigger the route change immediately
 		router.push(`/${username}`);
 	};
 
+	if (loadingCard) {
+		return (
+			<div className="size-full flex flex-col items-center justify-center">
+				<ContentLoading />
+				<p className="text-green-1 font-semibold text-lg flex items-center gap-2">
+					Redirecting to Creator&apos;s Page
+					<Image
+						src="/icons/loading-circle.svg"
+						alt="Loading..."
+						width={24}
+						height={24}
+						className="invert"
+						priority
+					/>
+				</p>
+			</div>
+		);
+	}
+
 	return (
 		<main className="flex size-full flex-col gap-2">
 			{userType !== "creator" ? (
 				<Suspense fallback={<PostLoader count={6} />}>
-					{loading ? (
-						<PostLoader count={6} />
-					) : error ? (
+					{error ? (
 						<div className="size-full flex items-center justify-center text-2xl font-semibold text-center text-red-500">
 							Failed to fetch creators <br />
 							Please try again later.
@@ -154,6 +177,7 @@ const HomePage = () => {
 								))}
 						</section>
 					)}
+
 					{hasMore && isFetching && (
 						<Image
 							src="/icons/loading-circle.svg"
