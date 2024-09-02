@@ -12,6 +12,7 @@ import { usePathname, useRouter } from "next/navigation";
 import PostLoader from "@/components/shared/PostLoader";
 import Image from "next/image";
 import ContentLoading from "@/components/shared/ContentLoading";
+import { Cursor, Typewriter } from "react-simple-typewriter";
 
 const CreatorsGrid = lazy(() => import("@/components/creator/CreatorsGrid"));
 
@@ -27,7 +28,7 @@ const HomePage = () => {
 	const [isFetching, setIsFetching] = useState(false);
 	const [error, setError] = useState(false);
 	const [hasMore, setHasMore] = useState(true);
-	const { userType, setCurrentTheme } = useCurrentUsersContext();
+	const { currentUser, userType, setCurrentTheme } = useCurrentUsersContext();
 	const pathname = usePathname();
 	const router = useRouter();
 	const { ref, inView } = useInView();
@@ -124,22 +125,32 @@ const HomePage = () => {
 
 	if (loadingCard || loading) {
 		return (
-			<div className="size-full flex flex-col items-center justify-center">
+			<div className="size-full flex flex-col gap-2 items-center justify-center">
 				<ContentLoading />
-				<p className="text-green-1 font-semibold text-lg flex items-center gap-2">
-					{loading ? "Checking Cached Data" : "Fetching Creator&apos;s Details"}
-					<Image
-						src="/icons/loading-circle.svg"
-						alt="Loading..."
-						width={24}
-						height={24}
-						className="invert"
-						priority
+				{/* {currentUser && `Hey ${currentUser.username}`} Fetching Details */}
+				<h2 className="text-green-1 font-semibold text-lg md:text-2xl w-[85%] md:w-full text-center">
+					<Typewriter
+						words={[
+							"The first computer mouse was made of wood!",
+							"Email existed before the World Wide Web.",
+							"The first domain ever registered was Symbolics.com.",
+							"Nintendo started as a playing card company.",
+							"Google’s first storage was made from LEGO bricks!",
+						]}
+						loop={true}
+						cursor
+						cursorStyle="_"
+						typeSpeed={50}
+						deleteSpeed={50}
+						delaySpeed={2000}
 					/>
-				</p>
+					<Cursor cursorColor="#50A65C" />
+				</h2>
 			</div>
 		);
 	}
+
+	console.log(loading, loadingCard);
 
 	return (
 		<main className="flex size-full flex-col gap-2">

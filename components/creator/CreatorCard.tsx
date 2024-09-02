@@ -13,6 +13,7 @@ import * as Sentry from "@sentry/nextjs";
 import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import ContentLoading from "../shared/ContentLoading";
 import Image from "next/image";
+import { Cursor, Typewriter } from "react-simple-typewriter";
 
 const CreatorCard: React.FC = () => {
 	const [creator, setCreator] = useState<creatorUser | null>(null);
@@ -54,19 +55,27 @@ const CreatorCard: React.FC = () => {
 
 	if (loading || (currentUser && walletBalance < 0)) {
 		return (
-			<div className="size-full flex flex-col items-center justify-center">
+			<div className="size-full flex flex-col gap-2 items-center justify-center">
 				<ContentLoading />
-				<p className="text-green-1 font-semibold text-lg flex items-center gap-2">
-					Fetching Creator&apos;s Details{" "}
-					<Image
-						src="/icons/loading-circle.svg"
-						alt="Loading..."
-						width={24}
-						height={24}
-						className="invert"
-						priority
+				{/* {currentUser && `Hey ${currentUser.username}`} Fetching Details */}
+				<h2 className="text-green-1 font-semibold text-lg md:text-2xl w-[85%] md:w-full text-center">
+					<Typewriter
+						words={[
+							"The QWERTY keyboard was designed to slow down typing!",
+							"The first 1GB hard drive weighed over 500 pounds.",
+							"Every month, over 6,000 new computer viruses are created.",
+							"The first iPhone was released without an App Store.",
+							"Bill Gates' house was designed using a Macintosh computer.",
+						]}
+						loop={true}
+						cursor
+						cursorStyle="_"
+						typeSpeed={50}
+						deleteSpeed={50}
+						delaySpeed={2000}
 					/>
-				</p>
+					<Cursor cursorColor="#50A65C" />
+				</h2>
 			</div>
 		);
 	}

@@ -71,7 +71,7 @@ export async function generateMetadata({
 
 const CreatorProfile = () => {
 	return (
-		<div className="flex items-start justify-start h-full overflow-scroll no-scrollbar md:pb-14">
+		<div className="flex items-start justify-start h-full overflow-scroll no-scrollbar">
 			<CreatorCard />
 		</div>
 	);
