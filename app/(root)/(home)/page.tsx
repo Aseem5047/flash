@@ -129,7 +129,7 @@ const HomePage = () => {
 				<h2 className="flex items-center justify-center gap-2 text-green-1 font-semibold text-lg md:text-2xl w-[85%] md:w-full text-center">
 					{currentUser
 						? `Hey ${currentUser.username} Loading Content ...`
-						: "Fetching List of Creators"}
+						: "Hang Tight Fetching Details"}
 					<Image
 						src="/icons/loading-circle.svg"
 						alt="Loading..."
