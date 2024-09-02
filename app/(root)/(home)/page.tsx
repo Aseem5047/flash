@@ -114,7 +114,6 @@ const HomePage = () => {
 		// Save any necessary data in localStorage
 		localStorage.setItem("creatorURL", `/${username}`);
 		setCurrentTheme(theme);
-
 		// Trigger the route change immediately
 		router.push(`/${username}`);
 	};
