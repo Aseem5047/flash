@@ -3,7 +3,6 @@
 import React, { useEffect, useState, Suspense, lazy, useCallback } from "react";
 import { useInView } from "react-intersection-observer";
 import * as Sentry from "@sentry/nextjs";
-import Link from "next/link";
 import { getUsersPaginated } from "@/lib/actions/creator.actions";
 import { creatorUser } from "@/types";
 import CreatorHome from "@/components/creator/CreatorHome";
@@ -12,7 +11,6 @@ import { usePathname, useRouter } from "next/navigation";
 import PostLoader from "@/components/shared/PostLoader";
 import Image from "next/image";
 import ContentLoading from "@/components/shared/ContentLoading";
-import { Cursor, Typewriter } from "react-simple-typewriter";
 
 const CreatorsGrid = lazy(() => import("@/components/creator/CreatorsGrid"));
 
@@ -128,21 +126,18 @@ const HomePage = () => {
 			<div className="size-full flex flex-col gap-2 items-center justify-center">
 				<ContentLoading />
 
-				<h2 className="text-green-1 font-semibold text-lg md:text-2xl w-[85%] md:w-full text-center">
-					<Typewriter
-						words={[
-							`${
-								currentUser && `Hey ${currentUser.username}`
-							} Loading Content ...`,
-						]}
-						loop={true}
-						cursor
-						cursorStyle="_"
-						typeSpeed={50}
-						deleteSpeed={50}
-						delaySpeed={2000}
+				<h2 className="flex items-center justify-center gap-2 text-green-1 font-semibold text-lg md:text-2xl w-[85%] md:w-full text-center">
+					{currentUser
+						? `Hey ${currentUser.username} Loading Content ...`
+						: "Fetching List of Creators"}
+					<Image
+						src="/icons/loading-circle.svg"
+						alt="Loading..."
+						width={24}
+						height={24}
+						className="invert"
+						priority
 					/>
-					<Cursor cursorColor="#50A65C" />
 				</h2>
 			</div>
 		);

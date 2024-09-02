@@ -44,7 +44,6 @@ export async function toggleFavorite({
 
 		return { success: "Favorites updated successfully" };
 	} catch (error: any) {
-		handleError(error);
 		console.log("Error updating favorites ... ", error);
 		return { success: false, error: error.message };
 	}

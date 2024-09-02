@@ -13,7 +13,6 @@ import * as Sentry from "@sentry/nextjs";
 import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import ContentLoading from "../shared/ContentLoading";
 import Image from "next/image";
-import { Cursor, Typewriter } from "react-simple-typewriter";
 
 const CreatorCard: React.FC = () => {
 	const [creator, setCreator] = useState<creatorUser | null>(null);
@@ -57,22 +56,19 @@ const CreatorCard: React.FC = () => {
 		return (
 			<div className="size-full flex flex-col gap-2 items-center justify-center">
 				<ContentLoading />
-				{/* {currentUser && `Hey ${currentUser.username}`} Fetching Details */}
-				<h2 className="text-green-1 font-semibold text-lg md:text-2xl w-[85%] md:w-full text-center">
-					<Typewriter
-						words={[
-							`${
-								currentUser && `Hey ${currentUser.username}`
-							} Loading Content ...`,
-						]}
-						loop={true}
-						cursor
-						cursorStyle="_"
-						typeSpeed={50}
-						deleteSpeed={50}
-						delaySpeed={2000}
+
+				<h2 className="flex items-center justify-center gap-2 text-green-1 font-semibold text-lg md:text-2xl w-[85%] md:w-full text-center">
+					{currentUser
+						? `Hey ${currentUser.username} Loading Content ...`
+						: "Fetching List of Creators"}
+					<Image
+						src="/icons/loading-circle.svg"
+						alt="Loading..."
+						width={24}
+						height={24}
+						className="invert"
+						priority
 					/>
-					<Cursor cursorColor="#50A65C" />
 				</h2>
 			</div>
 		);
