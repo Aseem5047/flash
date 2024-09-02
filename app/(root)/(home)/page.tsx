@@ -122,12 +122,12 @@ const HomePage = () => {
 		router.push(`/${username}`);
 	};
 
-	if (loadingCard) {
+	if (loadingCard || loading) {
 		return (
 			<div className="size-full flex flex-col items-center justify-center">
 				<ContentLoading />
 				<p className="text-green-1 font-semibold text-lg flex items-center gap-2">
-					Fetching Creator&apos;s Details{" "}
+					{loading ? "Checking Cached Data" : "Fetching Creator&apos;s Details"}
 					<Image
 						src="/icons/loading-circle.svg"
 						alt="Loading..."
