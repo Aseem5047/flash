@@ -66,7 +66,6 @@ export async function getFavorites(clientId: string) {
 		// Return the favorites as JSON
 		return JSON.parse(JSON.stringify(favorites));
 	} catch (error: any) {
-		handleError(error);
 		console.log("Error Fetching Favorites ... ", error);
 		return { success: false, error: error.message };
 	}
