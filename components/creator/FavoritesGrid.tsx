@@ -194,7 +194,7 @@ const FavoritesGrid = ({
 				/>
 				{status === "Offline" ? (
 					<button
-						className={`animate-enterFromRight lg:animate-enterFromBottom ${
+						className={`${
 							isAlreadyNotified
 								? "bg-gray-400 cursor-not-allowed"
 								: "bg-green-1 hover:bg-green-700"
@@ -207,7 +207,7 @@ const FavoritesGrid = ({
 				) : (
 					<Link
 						href={`/${creator.username}`}
-						className="animate-enterFromRight lg:animate-enterFromBottom bg-green-1  hover:bg-green-700 text-white font-semibold w-fit mr-1 rounded-md px-4 py-2 text-xs"
+						className="bg-green-1  hover:bg-green-700 text-white font-semibold w-fit mr-1 rounded-md px-4 py-2 text-xs"
 					>
 						Talk Now
 					</Link>

@@ -1,7 +1,11 @@
-import React from "react";
+import KYC from '@/components/creator/KYC'
+import KycForm from '@/components/creator/KycForm'
+import React from 'react'
 
-const KYC = () => {
-	return <div>KYC</div>;
-};
+const page = () => {
+  return (
+    <KycForm />
+  )
+}
 
-export default KYC;
+export default page

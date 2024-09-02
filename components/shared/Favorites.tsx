@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import { Button } from "../ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import Image from "next/image";
 import { creatorUser } from "@/types";
