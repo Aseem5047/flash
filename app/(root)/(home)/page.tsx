@@ -11,8 +11,6 @@ import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { usePathname, useRouter } from "next/navigation";
 import PostLoader from "@/components/shared/PostLoader";
 import Image from "next/image";
-import Loader from "@/components/shared/Loader";
-import SinglePostLoader from "@/components/shared/SinglePostLoader";
 import ContentLoading from "@/components/shared/ContentLoading";
 
 const CreatorsGrid = lazy(() => import("@/components/creator/CreatorsGrid"));
@@ -129,7 +127,7 @@ const HomePage = () => {
 			<div className="size-full flex flex-col items-center justify-center">
 				<ContentLoading />
 				<p className="text-green-1 font-semibold text-lg flex items-center gap-2">
-					Redirecting to Creator&apos;s Page
+					Fetching Creator&apos;s Details{" "}
 					<Image
 						src="/icons/loading-circle.svg"
 						alt="Loading..."
