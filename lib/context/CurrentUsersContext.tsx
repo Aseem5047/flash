@@ -78,9 +78,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	const [currentTheme, setCurrentTheme] = useState("");
 	const [authenticationSheetOpen, setAuthenticationSheetOpen] = useState(false);
 	const [fetchingUser, setFetchingUser] = useState(false);
-	const [userType, setUserType] = useState<string | null>(
-		localStorage.getItem("userType")
-	);
+	const [userType, setUserType] = useState<string | null>(null);
 	const { toast } = useToast();
 	const router = useRouter();
 
@@ -89,6 +87,16 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		() => creatorUser || clientUser,
 		[creatorUser, clientUser]
 	);
+
+	useEffect(() => {
+		const storedUserType = localStorage.getItem("userType");
+		// setUserType(currentUser?.profession ? "creator" : "client");
+		if (storedUserType) {
+			setUserType(storedUserType);
+		} else {
+			setUserType(currentUser?.profession ? "creator" : "client");
+		}
+	}, [currentUser?._id]);
 
 	// Function to handle user signout
 	const handleSignout = () => {
@@ -172,10 +180,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 
 	// Call fetchCurrentUser when the component mounts
 	useEffect(() => {
-		const storedUserType = localStorage.getItem("userType");
 		const authToken = localStorage.getItem("authToken");
-
-		!userType && setUserType(storedUserType);
 
 		if (authToken && !isTokenValid(authToken)) {
 			handleSignout();
@@ -219,7 +224,6 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 					if (doc.exists()) {
 						const data = doc.data();
 						if (data?.token && data.token !== authToken) {
-							console.log(data.token, authToken);
 							handleSignout();
 							toast({
 								variant: "destructive",
