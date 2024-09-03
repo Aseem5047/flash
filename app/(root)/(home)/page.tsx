@@ -11,6 +11,7 @@ import { usePathname, useRouter } from "next/navigation";
 import PostLoader from "@/components/shared/PostLoader";
 import Image from "next/image";
 import ContentLoading from "@/components/shared/ContentLoading";
+import Footer from "@/components/shared/Footer";
 
 const CreatorsGrid = lazy(() => import("@/components/creator/CreatorsGrid"));
 
@@ -158,7 +159,7 @@ const HomePage = () => {
 						</div>
 					) : (
 						<section
-							className={`grid xs:grid-cols-2 gap-2.5 px-2.5 lg:gap-5 lg:px-0 items-center`}
+							className={`grid xs:grid-cols-2 gap-2.5 px-2.5 lg:gap-5 lg:px-0 items-center md:!px-10`}
 						>
 							{creators &&
 								creators.map((creator, index) => (
@@ -197,6 +198,7 @@ const HomePage = () => {
 			) : (
 				<CreatorHome />
 			)}
+			<Footer />
 		</main>
 	);
 };

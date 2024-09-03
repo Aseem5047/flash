@@ -282,7 +282,7 @@ const About: React.FC = () => {
 						</div> */}
 					</section>
 
-					<div className="w-full flex flex-row items-center justify-center opacity-[75%] mb-14 z-10">
+					<div className="w-full flex flex-row items-center justify-center opacity-[75%] mb-14">
 						<Image
 							src="/secure.svg"
 							width={20}
@@ -296,7 +296,7 @@ const About: React.FC = () => {
 					</div>
 
 					{/* Payment Button */}
-					<div className="flex blurEffect w-full py-7 fixed -bottom-1">
+					<div className="flex blurEffect w-full py-5 fixed bottom-0 md:-bottom-4 z-10">
 						<button
 							className="w-4/5 md:w-1/3 mx-auto py-3 text-black bg-white rounded-lg border-2 border-black hover:bg-green-1 hover:text-white font-semibold"
 							style={{ boxShadow: "3px 3px black" }}
