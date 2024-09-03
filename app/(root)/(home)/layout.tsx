@@ -4,14 +4,18 @@ import Footer from "@/components/shared/Footer";
 import Navbar from "@/components/shared/Navbar";
 import Sidebar from "@/components/shared/Sidebar";
 import { usePathname } from "next/navigation";
-import React, { ReactNode } from "react";
+import React, { ReactNode, useEffect, useState } from "react";
 
 const HomeLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
 	const pathname = usePathname();
 	const creatorPagePath = localStorage.getItem("creatorURL");
 	const hiddenFooterPaths = ["/previous", `${creatorPagePath}`, "/favorites"];
-	const shouldHideFooter = hiddenFooterPaths.includes(pathname);
-	console.log(creatorPagePath, hiddenFooterPaths, pathname);
+
+	const [shouldHideFooter, setShouldHideFooter] = useState(false);
+
+	useEffect(() => {
+		setShouldHideFooter(hiddenFooterPaths.includes(pathname));
+	}, [pathname]);
 
 	return (
 		<main className="relative">
@@ -23,7 +27,15 @@ const HomeLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
 						{children}
 					</div>
 
-					{!shouldHideFooter && <Footer />}
+					<footer
+						className={`footer-transition ${
+							shouldHideFooter
+								? "animate-enterFromBottom hidden"
+								: "animate-enterFromBottom "
+						}`}
+					>
+						<Footer />
+					</footer>
 				</section>
 			</div>
 		</main>
