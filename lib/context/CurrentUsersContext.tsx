@@ -78,7 +78,9 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	const [currentTheme, setCurrentTheme] = useState("");
 	const [authenticationSheetOpen, setAuthenticationSheetOpen] = useState(false);
 	const [fetchingUser, setFetchingUser] = useState(false);
-	const [userType, setUserType] = useState<string | null>(null);
+	const [userType, setUserType] = useState<string | null>(
+		localStorage.getItem("userType")
+	);
 	const { toast } = useToast();
 	const router = useRouter();
 
@@ -104,7 +106,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 				});
 		}
 
-		localStorage.removeItem("userID");
+		localStorage.removeItem("currentUserID");
 		localStorage.removeItem("authToken");
 		localStorage.removeItem("creatorURL");
 		localStorage.removeItem("notifyList");
@@ -173,7 +175,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		const storedUserType = localStorage.getItem("userType");
 		const authToken = localStorage.getItem("authToken");
 
-		setUserType(storedUserType);
+		!userType && setUserType(storedUserType);
 
 		if (authToken && !isTokenValid(authToken)) {
 			handleSignout();

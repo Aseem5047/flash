@@ -21,7 +21,7 @@ const HomePage = () => {
 		return cachedCreators ? JSON.parse(cachedCreators) : [];
 	});
 	const [loading, setLoading] = useState(creators.length === 0);
-	const [loadingCard, setLoadingCard] = useState(false); // Add loading state for card click
+	const [loadingCard, setLoadingCard] = useState(false);
 	const [creatorCount, setCreatorCount] = useState(creators.length);
 	const [isFetching, setIsFetching] = useState(false);
 	const [error, setError] = useState(false);
@@ -126,7 +126,7 @@ const HomePage = () => {
 			<div className="size-full flex flex-col gap-2 items-center justify-center">
 				<ContentLoading />
 
-				<h2 className="flex items-center justify-center gap-2 text-green-1 font-semibold text-lg md:text-2xl w-[85%] md:w-full text-center">
+				<h2 className="flex items-center justify-center gap-2 text-green-1 font-semibold text-base md:text-2xl w-[85%] md:w-full text-center">
 					{currentUser
 						? `Hey ${currentUser.username} Loading Content ...`
 						: "Hang Tight Fetching Details"}
@@ -145,7 +145,7 @@ const HomePage = () => {
 
 	return (
 		<main className="flex size-full flex-col gap-2">
-			{userType !== "creator" ? (
+			{userType === "client" ? (
 				<Suspense fallback={<PostLoader count={6} />}>
 					{error ? (
 						<div className="size-full flex items-center justify-center text-2xl font-semibold text-center text-red-500">
