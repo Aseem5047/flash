@@ -22,7 +22,7 @@ export const connectToDatabase = async () => {
 			dbName: "flash",
 			bufferCommands: false,
 			connectTimeoutMS: 10000,
-			socketTimeoutMS: 45000,
+			socketTimeoutMS: 60000,
 			minPoolSize: 5,
 		});
 
