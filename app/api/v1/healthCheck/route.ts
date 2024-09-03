@@ -10,6 +10,7 @@ export async function GET() {
 		const isDbConnected = mongoose.connection.readyState === 1;
 
 		if (isDbConnected) {
+			console.log("Connected to DataBase");
 			return NextResponse.json({ status: "ok", db: "connected" });
 		} else {
 			// Attempt to reconnect to the database
@@ -31,7 +32,6 @@ export async function GET() {
 		}
 	} catch (error: any) {
 		Sentry.captureException(error);
-
 		return NextResponse.json(
 			{ status: "error", error: error.message },
 			{ status: 500 }

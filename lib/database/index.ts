@@ -38,7 +38,7 @@ export const connectToDatabase = async () => {
 		throw new Error("Database connection not ready");
 	}
 
-	console.log("Connected to DataBase");
+	console.log("Connected to DataBase ✅");
 
 	return cached.conn;
 };
