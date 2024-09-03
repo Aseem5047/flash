@@ -124,7 +124,7 @@ const HomePage = () => {
 
 	if ((loadingCard || loading) && userType === "client") {
 		return (
-			<div className="size-full h-screen flex flex-col gap-2 items-center justify-center -mt-14">
+			<div className="size-full flex flex-col gap-2 items-center justify-center -mt-14">
 				<ContentLoading />
 
 				<h2 className="flex items-center justify-center gap-2 text-green-1 font-semibold text-base md:text-2xl w-[85%] md:w-full text-center">
