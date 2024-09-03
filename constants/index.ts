@@ -104,3 +104,28 @@ export const feedbacks = [
 		location: "Beijing, China",
 	},
 ];
+
+// EXTERNAL LINKS
+
+export const externalLinks = [
+	{
+		label: "Privacy Policy",
+
+		route: "/privacy-policy",
+	},
+	{
+		label: "Platform Guidelines",
+
+		route: "/platform-guidelines",
+	},
+	{
+		label: "Terms of Services",
+
+		route: "/terms-of-services",
+	},
+	{
+		label: "Cancellation and Refunds",
+
+		route: "/cancellation-refunds",
+	},
+];

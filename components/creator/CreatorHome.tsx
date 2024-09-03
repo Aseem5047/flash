@@ -233,7 +233,7 @@ const CreatorHome = () => {
 
 	if (!creatorUser || loading || walletBalance < 0)
 		return (
-			<section className="w-full h-full -mt-10 flex flex-col items-center justify-center">
+			<section className="size-full h-screen flex flex-col gap-2 items-center justify-center -mt-14">
 				<ContentLoading />
 
 				{!creatorUser && !loading && (
