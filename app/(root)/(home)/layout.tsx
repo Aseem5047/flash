@@ -9,7 +9,7 @@ import React, { ReactNode, useEffect, useState } from "react";
 const HomeLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
 	const pathname = usePathname();
 	const creatorPagePath = localStorage.getItem("creatorURL");
-	const hiddenFooterPaths = ["/previous", `${creatorPagePath}`, "/"];
+	const hiddenFooterPaths = ["/"];
 
 	const [shouldHideFooter, setShouldHideFooter] = useState(false);
 
