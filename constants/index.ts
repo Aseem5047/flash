@@ -128,4 +128,9 @@ export const externalLinks = [
 
 		route: "https://www.flashcall.me/cancellation-refunds",
 	},
+	{
+		label: "About Us",
+
+		route: "https://www.flashcall.me/about-us",
+	},
 ];
