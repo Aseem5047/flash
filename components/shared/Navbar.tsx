@@ -10,6 +10,7 @@ import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import { usePathname, useRouter } from "next/navigation";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import AuthenticationSheet from "../shared/AuthenticationSheet";
+import { trackEvent } from "@/lib/mixpanel";
 
 const NavLoader = () => {
 	return (
@@ -49,6 +50,9 @@ const Navbar = () => {
 		if (userType === "creator") {
 			router.push("/authenticate?usertype=creator");
 		} else {
+			trackEvent("Login_TopNav_Clicked", {
+				utm_source: "google",
+			});
 			setIsAuthSheetOpen(true);
 		}
 	};
@@ -71,17 +75,21 @@ const Navbar = () => {
 	}, [isAuthSheetOpen]);
 
 	const handleAppRedirect = () => {
+		trackEvent("Getlink_TopNav_Clicked", {
+			utm_source: "google",
+			creator_id: currentUser?._id,
+		});
 		const isAndroid = /Android/i.test(navigator.userAgent);
 		const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-		let url = "https://docs.google.com/forms/u/1/d/e/1FAIpQLScOsrujEFIDlULdpGKmeGs3EoFGmx8JMpZWWMbrt6TCy3NzrA/viewform?usp=send_form";
+		let url = "";
 
-		// if (isAndroid) {
-		// 	url = "https://play.google.com/store/apps?hl=en_US";
-		// } else if (isIOS) {
-		// 	url = "https://flashcall.me";
-		// } else {
-		// 	url = "https://flashcall.me";
-		// }
+		if (isAndroid) {
+			url = "https://play.google.com/store/apps?hl=en_US";
+		} else if (isIOS) {
+			url = "https://flashcall.me";
+		} else {
+			url = "https://flashcall.me";
+		}
 
 		window.open(url, "_blank");
 	};

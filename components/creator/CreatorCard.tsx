@@ -24,9 +24,6 @@ const CreatorCard: React.FC = () => {
 	const { walletBalance } = useWalletBalanceContext();
 
 	useEffect(() => {
-		// Scroll to the top on every initial render
-		window.scrollTo(0, 0);
-
 		creator?.themeSelected && setCurrentTheme(creator?.themeSelected);
 		if (userType === "creator") {
 			toast({
@@ -57,7 +54,7 @@ const CreatorCard: React.FC = () => {
 
 	if (loading || (currentUser && walletBalance < 0)) {
 		return (
-			<div className="size-full flex flex-col gap-2 items-center justify-center -mt-14">
+			<div className="size-full flex flex-col gap-2 items-center justify-center">
 				<ContentLoading />
 
 				<h2 className="flex items-center justify-center gap-2 text-green-1 font-semibold text-base md:text-2xl w-[85%] md:w-full text-center">
@@ -96,14 +93,14 @@ const CreatorCard: React.FC = () => {
 	return (
 		<section
 			key={creator._id}
-			className="w-full xl:mx-auto grid grid-cols-1 gap-7 items-start text-center justify-center h-[50%] lg:h-[75%] 3xl:[85%]"
+			className="w-full xl:mx-auto grid grid-cols-1 gap-7 items-start text-center justify-center h-[50%] lg:h-[70%] 3xl:[80%]"
 			style={backgroundImageStyle}
 		>
 			{/* User Details */}
 			<CreatorDetails creator={creator} />
 
 			{/* Calling Options & User Reviews */}
-			<div className="flex flex-col gap-10 items-center">
+			<div className="flex flex-col gap-10 items-center lg:mb-4">
 				{/* Calling Options */}
 				<CallingOptions creator={creator} />
 

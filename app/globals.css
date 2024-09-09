@@ -24,12 +24,6 @@
 	animation: spin 2s linear infinite;
 }
 
-.blurEffect {
-	/* box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37); */
-	backdrop-filter: blur(4px) !important;
-	-webkit-backdrop-filter: blur(4px) !important;
-}
-
 @keyframes spin {
 	0% {
 		transform: rotate(0deg);

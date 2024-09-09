@@ -56,9 +56,7 @@ const Footer = () => {
 							key={item.label}
 							className="text-white underline underline-offset-2 text-sm hover:scale-95 transition-all duration-300 ease-in-out"
 						>
-							<Link href={item.route} target="_blank">
-								{item.label}
-							</Link>
+							<Link href={item.route}>{item.label}</Link>
 						</li>
 					))}
 				</ul>

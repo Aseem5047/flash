@@ -11,7 +11,6 @@ import { usePathname, useRouter } from "next/navigation";
 import PostLoader from "@/components/shared/PostLoader";
 import Image from "next/image";
 import ContentLoading from "@/components/shared/ContentLoading";
-import Footer from "@/components/shared/Footer";
 
 const CreatorsGrid = lazy(() => import("@/components/creator/CreatorsGrid"));
 
@@ -122,9 +121,9 @@ const HomePage = () => {
 		router.push(`/${username}`);
 	};
 
-	if ((loadingCard || loading) && userType === "client") {
+	if (loadingCard || loading) {
 		return (
-			<div className="size-full flex flex-col gap-2 items-center justify-center -mt-14">
+			<div className="size-full flex flex-col gap-2 items-center justify-center">
 				<ContentLoading />
 
 				<h2 className="flex items-center justify-center gap-2 text-green-1 font-semibold text-base md:text-2xl w-[85%] md:w-full text-center">
@@ -159,7 +158,7 @@ const HomePage = () => {
 						</div>
 					) : (
 						<section
-							className={`grid xs:grid-cols-2 gap-2.5 px-2.5 lg:gap-5 lg:px-0 items-center md:!px-10`}
+							className={`grid xs:grid-cols-2 gap-2.5 px-2.5 lg:gap-5 lg:px-0 items-center`}
 						>
 							{creators &&
 								creators.map((creator, index) => (
@@ -185,7 +184,7 @@ const HomePage = () => {
 							alt="Loading..."
 							width={50}
 							height={50}
-							className="mx-auto invert my-4 z-20"
+							className="mx-auto invert my-7 z-20"
 						/>
 					)}
 					{hasMore && <div ref={ref} className=" mt-10 w-full" />}
@@ -198,7 +197,6 @@ const HomePage = () => {
 			) : (
 				<CreatorHome />
 			)}
-			<Footer />
 		</main>
 	);
 };

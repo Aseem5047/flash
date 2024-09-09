@@ -4,20 +4,16 @@ import { NextRequest, NextResponse } from "next/server";
 
 // Initialize Firebase Admin SDK if not already initialized
 if (!admin.apps.length) {
-	const serviceAccountBase64 =
-		process.env.FIREBASE_SERVICE_ACCOUNT_BASE64 || "";
+	const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64 || "";
 	let serviceAccount;
 
 	try {
 		// Decode the base64-encoded string to get the JSON string
-		const serviceAccountJson = Buffer.from(
-			serviceAccountBase64,
-			"base64"
-		).toString("utf8");
+		const serviceAccountJson = Buffer.from(serviceAccountBase64, 'base64').toString('utf8');
 		// Parse the JSON string to an object
 		serviceAccount = JSON.parse(serviceAccountJson);
 	} catch (error) {
-		console.error("Error decoding or parsing the service account:", error);
+		console.error('Error decoding or parsing the service account:', error);
 	}
 
 	try {
@@ -26,12 +22,13 @@ if (!admin.apps.length) {
 				credential: admin.credential.cert(serviceAccount),
 			});
 		} else {
-			throw new Error("Service account is not valid.");
+			throw new Error('Service account is not valid.');
 		}
 	} catch (error) {
-		console.error("Error initializing Firebase Admin SDK:", error);
+		console.error('Error initializing Firebase Admin SDK:', error);
 	}
 }
+
 
 export async function POST(request: NextRequest) {
 	const { token, title, message, link } = await request.json();
