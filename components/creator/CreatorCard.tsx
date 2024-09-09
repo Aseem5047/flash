@@ -50,7 +50,14 @@ const CreatorCard: React.FC = () => {
 		if (username) {
 			fetchCreator();
 		}
-	}, [username]);
+	}, [
+		username,
+		creator?.themeSelected,
+		router,
+		setCurrentTheme,
+		toast,
+		userType,
+	]);
 
 	if (loading || (currentUser && walletBalance < 0)) {
 		return (

@@ -103,7 +103,7 @@ const HomePage = () => {
 			// Check if there's a new creator if cache is still valid
 			checkForNewCreator();
 		}
-	}, [pathname, fetchCreators, checkForNewCreator]);
+	}, [pathname, fetchCreators, checkForNewCreator, CACHE_EXPIRY_TIME]);
 
 	useEffect(() => {
 		if (inView && !isFetching && hasMore) {
