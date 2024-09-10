@@ -26,7 +26,7 @@ jobs:
         run: echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
 
       # Create an .env file dynamically from GitHub secrets
-      - name: Create .env file from secrets
+      - name: Create .env file
         run: |
           echo "NEXT_PUBLIC_STREAM_API_KEY=${{ secrets.NEXT_PUBLIC_STREAM_API_KEY }}" >> .env
           echo "STREAM_SECRET_KEY=${{ secrets.STREAM_SECRET_KEY }}" >> .env
