@@ -11,7 +11,6 @@ on:
 
 # Define environment variables and permissions
 env:
-  DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
   DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
   IMAGE_NAME: aseem5047/flashcall
   NEXT_PUBLIC_STREAM_API_KEY: ${{ secrets.NEXT_PUBLIC_STREAM_API_KEY }}
@@ -50,28 +49,34 @@ jobs:
       - name: Build dev image
         run: docker build -f Dockerfile.dev -t aseem5047/flashcall:dev .
 
+      - name: Log environment variables
+        run: |
+          echo "NEXT_PUBLIC_STREAM_API_KEY=${{ secrets.NEXT_PUBLIC_STREAM_API_KEY }}"
+          echo "STREAM_SECRET_KEY=${{ secrets.STREAM_SECRET_KEY }}"
+          echo "MONGODB_URI=${{ secrets.MONGODB_URI }}"
+
       # Build the production image
       - name: Build prod image
         run: |
           docker build \
-          --build-arg NEXT_PUBLIC_STREAM_API_KEY=${{ env.NEXT_PUBLIC_STREAM_API_KEY }} \
-          --build-arg STREAM_SECRET_KEY=${{ env.STREAM_SECRET_KEY }} \
-          --build-arg NEXT_PUBLIC_STREAM_SECRET_KEY=${{ env.NEXT_PUBLIC_STREAM_SECRET_KEY }} \
-          --build-arg NEXT_PUBLIC_STREAM_APP_ID=${{ env.NEXT_PUBLIC_STREAM_APP_ID }} \
-          --build-arg TWOFACTOR_API_KEY=${{ env.TWOFACTOR_API_KEY }} \
-          --build-arg JWT_KEY=${{ env.JWT_KEY }} \
-          --build-arg MONGODB_URI=${{ env.MONGODB_URI }} \
-          --build-arg NEXT_PUBLIC_MIXPANEL_TOKEN=${{ env.NEXT_PUBLIC_MIXPANEL_TOKEN }} \
-          --build-arg NEXT_PUBLIC_RAZORPAY_KEY_ID=${{ env.NEXT_PUBLIC_RAZORPAY_KEY_ID }} \
-          --build-arg NEXT_PUBLIC_RAZORPAY_SECRET=${{ env.NEXT_PUBLIC_RAZORPAY_SECRET }} \
-          --build-arg NEXT_PUBLIC_CASHFREE_CLIENT_ID=${{ env.NEXT_PUBLIC_CASHFREE_CLIENT_ID }} \
-          --build-arg NEXT_PUBLIC_CASHFREE_CLIENT_SECRET=${{ env.NEXT_PUBLIC_CASHFREE_CLIENT_SECRET }} \
-          --build-arg NEXT_PUBLIC_HYPERVERGE_APP_ID=${{ env.NEXT_PUBLIC_HYPERVERGE_APP_ID }} \
-          --build-arg NEXT_PUBLIC_HYPERVERGE_APP_KEY=${{ env.NEXT_PUBLIC_HYPERVERGE_APP_KEY }} \
-          --build-arg NEXT_PUBLIC_MEASUREMENT_ID=${{ env.NEXT_PUBLIC_MEASUREMENT_ID }} \
-          --build-arg NODE_ENV=${{ env.NODE_ENV }} \
-          --build-arg NEXT_PUBLIC_FIREBASE_KEY=${{ env.NEXT_PUBLIC_FIREBASE_KEY }} \
-          --build-arg FIREBASE_SERVICE_ACCOUNT_BASE64=${{ env.FIREBASE_SERVICE_ACCOUNT_BASE64 }} \
+          --build-arg NEXT_PUBLIC_STREAM_API_KEY='${{ env.NEXT_PUBLIC_STREAM_API_KEY }}' \
+          --build-arg STREAM_SECRET_KEY='${{ env.STREAM_SECRET_KEY }}' \
+          --build-arg NEXT_PUBLIC_STREAM_SECRET_KEY='${{ env.NEXT_PUBLIC_STREAM_SECRET_KEY }}' \
+          --build-arg NEXT_PUBLIC_STREAM_APP_ID='${{ env.NEXT_PUBLIC_STREAM_APP_ID }}' \
+          --build-arg TWOFACTOR_API_KEY='${{ env.TWOFACTOR_API_KEY }}' \
+          --build-arg JWT_KEY='${{ env.JWT_KEY }}' \
+          --build-arg MONGODB_URI='${{ env.MONGODB_URI }}' \
+          --build-arg NEXT_PUBLIC_MIXPANEL_TOKEN='${{ env.NEXT_PUBLIC_MIXPANEL_TOKEN }}' \
+          --build-arg NEXT_PUBLIC_RAZORPAY_KEY_ID='${{ env.NEXT_PUBLIC_RAZORPAY_KEY_ID }}' \
+          --build-arg NEXT_PUBLIC_RAZORPAY_SECRET='${{ env.NEXT_PUBLIC_RAZORPAY_SECRET }}' \
+          --build-arg NEXT_PUBLIC_CASHFREE_CLIENT_ID='${{ env.NEXT_PUBLIC_CASHFREE_CLIENT_ID }}' \
+          --build-arg NEXT_PUBLIC_CASHFREE_CLIENT_SECRET='${{ env.NEXT_PUBLIC_CASHFREE_CLIENT_SECRET }}' \
+          --build-arg NEXT_PUBLIC_HYPERVERGE_APP_ID='${{ env.NEXT_PUBLIC_HYPERVERGE_APP_ID }}' \
+          --build-arg NEXT_PUBLIC_HYPERVERGE_APP_KEY='${{ env.NEXT_PUBLIC_HYPERVERGE_APP_KEY }}' \
+          --build-arg NEXT_PUBLIC_MEASUREMENT_ID='${{ env.NEXT_PUBLIC_MEASUREMENT_ID }}' \
+          --build-arg NODE_ENV='${{ env.NODE_ENV }}' \
+          --build-arg NEXT_PUBLIC_FIREBASE_KEY='${{ env.NEXT_PUBLIC_FIREBASE_KEY }}' \
+          --build-arg FIREBASE_SERVICE_ACCOUNT_BASE64='${{ env.FIREBASE_SERVICE_ACCOUNT_BASE64 }}' \
           -f Dockerfile.prod -t aseem5047/flashcall:prod .
 
       # Push development image to Docker Hub
