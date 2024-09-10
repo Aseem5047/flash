@@ -25,30 +25,27 @@ jobs:
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
 
-      # Create an .env file dynamically from GitHub secrets
-      - name: Create .env file
-        run: |
-          echo "NEXT_PUBLIC_STREAM_API_KEY=${{ secrets.NEXT_PUBLIC_STREAM_API_KEY }}" >> .env
-          echo "STREAM_SECRET_KEY=${{ secrets.STREAM_SECRET_KEY }}" >> .env
-          echo "NEXT_PUBLIC_STREAM_SECRET_KEY=${{ secrets.NEXT_PUBLIC_STREAM_SECRET_KEY }}" >> .env
-          echo "NEXT_PUBLIC_STREAM_APP_ID=${{ secrets.NEXT_PUBLIC_STREAM_APP_ID }}" >> .env
-          echo "TWOFACTOR_API_KEY=${{ secrets.TWOFACTOR_API_KEY }}" >> .env
-          echo "JWT_KEY=${{ secrets.JWT_KEY }}" >> .env
-          echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env
-          echo "NEXT_PUBLIC_MIXPANEL_TOKEN=${{ secrets.NEXT_PUBLIC_MIXPANEL_TOKEN }}" >> .env
-          echo "NEXT_PUBLIC_RAZORPAY_KEY_ID=${{ secrets.NEXT_PUBLIC_RAZORPAY_KEY_ID }}" >> .env
-          echo "NEXT_PUBLIC_RAZORPAY_SECRET=${{ secrets.NEXT_PUBLIC_RAZORPAY_SECRET }}" >> .env
-          echo "NEXT_PUBLIC_CASHFREE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_CASHFREE_CLIENT_ID }}" >> .env
-          echo "NEXT_PUBLIC_CASHFREE_CLIENT_SECRET=${{ secrets.NEXT_PUBLIC_CASHFREE_CLIENT_SECRET }}" >> .env
-          echo "NEXT_PUBLIC_HYPERVERGE_APP_ID=${{ secrets.NEXT_PUBLIC_HYPERVERGE_APP_ID }}" >> .env
-          echo "NEXT_PUBLIC_HYPERVERGE_APP_KEY=${{ secrets.NEXT_PUBLIC_HYPERVERGE_APP_KEY }}" >> .env
-          echo "NEXT_PUBLIC_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_MEASUREMENT_ID }}" >> .env
-          echo "NODE_ENV=${{ secrets.NODE_ENV }}" >> .env
-          echo "NEXT_PUBLIC_FIREBASE_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_KEY }}" >> .env
-          echo "FIREBASE_SERVICE_ACCOUNT_BASE64=${{ secrets.FIREBASE_SERVICE_ACCOUNT_BASE64 }}" >> .env
-
       # Build the production image with .env
       - name: Build prod image
+        env:
+          NEXT_PUBLIC_STREAM_API_KEY: ${{ secrets.NEXT_PUBLIC_STREAM_API_KEY }}
+          STREAM_SECRET_KEY: ${{ secrets.STREAM_SECRET_KEY }}
+          NEXT_PUBLIC_STREAM_SECRET_KEY: ${{ secrets.NEXT_PUBLIC_STREAM_SECRET_KEY }}
+          NEXT_PUBLIC_STREAM_APP_ID: ${{ secrets.NEXT_PUBLIC_STREAM_APP_ID }}
+          TWOFACTOR_API_KEY: ${{ secrets.TWOFACTOR_API_KEY }}
+          JWT_KEY: ${{ secrets.JWT_KEY }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          NEXT_PUBLIC_MIXPANEL_TOKEN: ${{ secrets.NEXT_PUBLIC_MIXPANEL_TOKEN }}
+          NEXT_PUBLIC_RAZORPAY_KEY_ID: ${{ secrets.NEXT_PUBLIC_RAZORPAY_KEY_ID }}
+          NEXT_PUBLIC_RAZORPAY_SECRET: ${{ secrets.NEXT_PUBLIC_RAZORPAY_SECRET }}
+          NEXT_PUBLIC_CASHFREE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_CASHFREE_CLIENT_ID }}
+          NEXT_PUBLIC_CASHFREE_CLIENT_SECRET: ${{ secrets.NEXT_PUBLIC_CASHFREE_CLIENT_SECRET }}
+          NEXT_PUBLIC_HYPERVERGE_APP_ID: ${{ secrets.NEXT_PUBLIC_HYPERVERGE_APP_ID }}
+          NEXT_PUBLIC_HYPERVERGE_APP_KEY: ${{ secrets.NEXT_PUBLIC_HYPERVERGE_APP_KEY }}
+          NEXT_PUBLIC_MEASUREMENT_ID: ${{ secrets.NEXT_PUBLIC_MEASUREMENT_ID }}
+          NODE_ENV: ${{ secrets.NODE_ENV }}
+          NEXT_PUBLIC_FIREBASE_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_KEY }}
+          FIREBASE_SERVICE_ACCOUNT_BASE64: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_BASE64 }}
         run: docker build --env-file .env -f Dockerfile.prod -t aseem5047/flashcall:prod .
 
       # Push the production image to Docker Hub
