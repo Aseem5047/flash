@@ -104,12 +104,12 @@ const MeetingRoom = () => {
 		};
 
 		if (!hasJoined && call) {
-			call.camera.enable();
+			isVideoCall && call.camera.enable();
 			call.microphone.enable();
 
 			joinCall();
 		}
-	}, [callingState, call, hasJoined, callHasEnded, currentUser?._id]);
+	}, [callingState, call, hasJoined, callHasEnded]);
 
 	useEffect(() => {
 		const handleResize = () => {
@@ -144,7 +144,7 @@ const MeetingRoom = () => {
 		}
 
 		return () => clearTimeout(timeoutId);
-	}, [participantCount, anyModalOpen, call, handleCallRejected, toast]);
+	}, [participantCount, anyModalOpen, call]);
 
 	const toggleCamera = async () => {
 		if (call && call.camera) {

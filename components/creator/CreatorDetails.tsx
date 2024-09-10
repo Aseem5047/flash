@@ -36,11 +36,11 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 			localStorage.setItem("creatorURL", `/${creator?.username}`);
 			setCurrentTheme(creator?.themeSelected);
 		}
-	}, [creator?._id, isCreatorOrExpertPath, creator, setCurrentTheme]);
+	}, [creator?._id, isCreatorOrExpertPath]);
 
 	useEffect(() => {
 		setAuthenticationSheetOpen(isAuthSheetOpen);
-	}, [isAuthSheetOpen, setAuthenticationSheetOpen]);
+	}, [isAuthSheetOpen]);
 
 	useEffect(() => {
 		const docRef = doc(db, "userStatus", creator.phone);
@@ -62,7 +62,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 
 		// Clean up the listener on component unmount
 		return () => unsubscribe();
-	}, [status, creator?.phone]);
+	}, [status]);
 
 	const handleToggleFavorite = async () => {
 		if (!clientUser) {

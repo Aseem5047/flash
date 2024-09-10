@@ -78,7 +78,7 @@ export const UserStatusProvider: React.FC<{ children: React.ReactNode }> = ({
 		return () => {
 			unsubscribeList.forEach((unsubscribe) => unsubscribe());
 		};
-	}, [clientUser, toast]); // Removed userStatus from dependencies
+	}, [clientUser]); // Removed userStatus from dependencies
 
 	return (
 		<UserStatusContext.Provider value={{ userStatus }}>

@@ -7,7 +7,6 @@ import {
 	useEffect,
 	useState,
 	useMemo,
-	useCallback,
 } from "react";
 import { getCreatorById } from "../actions/creator.actions";
 import { getUserById } from "../actions/client.actions";
@@ -97,10 +96,10 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		} else {
 			setUserType(currentUser?.profession ? "creator" : "client");
 		}
-	}, [currentUser?._id, currentUser?.profession]);
+	}, [currentUser?._id]);
 
 	// Function to handle user signout
-	const handleSignout = useCallback(() => {
+	const handleSignout = () => {
 		if (currentUser) {
 			const userAuthRef = doc(db, "authToken", currentUser.phone);
 
@@ -121,10 +120,10 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		localStorage.removeItem("notifyList");
 		setClientUser(null);
 		setCreatorUser(null);
-	}, [currentUser]);
+	};
 
 	// Function to fetch the current user
-	const fetchCurrentUser = useCallback(async () => {
+	const fetchCurrentUser = async () => {
 		try {
 			setFetchingUser(true);
 			const authToken = localStorage.getItem("authToken");
@@ -177,7 +176,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		} finally {
 			setFetchingUser(false);
 		}
-	}, [userType, handleSignout]);
+	};
 
 	// Call fetchCurrentUser when the component mounts
 	useEffect(() => {
@@ -188,7 +187,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		} else {
 			if (userType) fetchCurrentUser();
 		}
-	}, [userType, fetchCurrentUser, handleSignout]);
+	}, [userType]);
 
 	// Function to refresh the current user data
 	const refreshCurrentUser = async () => {
@@ -207,7 +206,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 				});
 			}, 1000);
 		}
-	}, [router, userType, currentUser, toast]);
+	}, [router, userType]);
 
 	useEffect(() => {
 		const authToken = localStorage.getItem("authToken");
@@ -297,7 +296,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 			setStatusOffline(); // Set offline on unmount
 			window.removeEventListener("beforeunload", handleBeforeUnload);
 		};
-	}, [currentUser?.phone, handleSignout, toast]);
+	}, [currentUser?._id]);
 
 	const values: CurrentUsersContextValue = {
 		clientUser,

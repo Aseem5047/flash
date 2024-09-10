@@ -24,7 +24,7 @@ const CreatorsGrid = ({ creator }: { creator: creatorUser }) => {
 		img.onerror = () => {
 			setIsImageLoaded(true);
 		};
-	}, [creator.photo, imageSrc]);
+	}, [creator.photo]);
 
 	useEffect(() => {
 		const docRef = doc(db, "userStatus", creator.phone);

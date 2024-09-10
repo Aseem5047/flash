@@ -1,0 +1,49 @@
+name: Build and Push Docker Images
+
+# Triggers the workflow on push or pull request to the main branch
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+# Define environment variables and permissions
+env:
+  DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+  DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+  IMAGE_NAME: aseem5047/flashcall
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repo
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Log in to Docker Hub
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+
+      # Build the development image
+      - name: Build dev image
+        run: docker build -f Dockerfile.dev -t aseem5047/flashcall:dev .
+
+      # Build the production image
+      - name: Build prod image
+        run: docker build -f Dockerfile -t aseem5047/flashcall:prod .
+
+      # Push development image to Docker Hub
+      - name: Push dev image
+        run: docker push aseem5047/flashcall:dev
+
+      # Push production image to Docker Hub
+      - name: Push prod image
+        run: docker push aseem5047/flashcall:prod
+
+      # Prune dangling images to free up space
+      - name: Prune dangling images
+        run: docker image prune -f

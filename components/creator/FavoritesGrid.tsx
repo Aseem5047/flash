@@ -54,7 +54,7 @@ const FavoritesGrid = ({
 
 		// Clean up the listener on component unmount
 		return () => unsubscribe();
-	}, [status, creator?.phone]);
+	}, [status]);
 
 	useEffect(() => {
 		// Retrieve the notify list from localStorage

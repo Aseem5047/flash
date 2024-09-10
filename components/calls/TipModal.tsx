@@ -80,6 +80,26 @@ const TipModal = ({
 		videoRatePerMinute,
 	]);
 
+	useEffect(() => {
+		const handleResize = () => {
+			// Get the viewport height and calculate the 1% vh unit
+			const vh = window.innerHeight * 0.01;
+			// Set the --vh custom property to the root of the document
+			document.documentElement.style.setProperty("--vh", `${vh}px`);
+		};
+
+		// Initial calculation
+		handleResize();
+
+		// Add event listener for resize event to handle keyboard open/close
+		window.addEventListener("resize", handleResize);
+
+		// Cleanup the event listener
+		return () => {
+			window.removeEventListener("resize", handleResize);
+		};
+	}, []);
+
 	const handlePredefinedAmountClick = (amount: string) => {
 		setRechargeAmount(amount);
 	};
@@ -175,7 +195,7 @@ const TipModal = ({
 					side="bottom"
 					className={`flex flex-col items-center justify-center ${
 						!loading ? "px-10 py-7" : "px-4"
-					} border-none rounded-t-xl bg-white min-h-[350px] max-h-fit w-full sm:max-w-[444px] mx-auto`}
+					} border-none rounded-t-xl bg-white w-full mx-auto sheetContent overflow-scroll no-scrollbar`}
 				>
 					{loading ? (
 						<ContentLoading />

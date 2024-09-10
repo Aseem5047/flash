@@ -61,13 +61,7 @@ const Favorites = ({
 		if (user?._id && (isCreatorOrExpertPath || isFavoritesPath)) {
 			fetchFavorites();
 		}
-	}, [
-		user,
-		creator._id,
-		isCreatorOrExpertPath,
-		isFavoritesPath,
-		setMarkedFavorite,
-	]);
+	}, [user, creator._id]);
 
 	return (
 		<Tooltip>

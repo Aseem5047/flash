@@ -172,20 +172,28 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			description: "The call has been accepted. Redirecting to meeting...",
 		});
 		setSheetOpen(false);
+
 		await call?.leave();
+
+		const createdAtDate = clientUser?.createdAt
+			? new Date(clientUser.createdAt)
+			: new Date();
+		const formattedDate = createdAtDate.toISOString().split("T")[0];
+
 		if (callType === "audio") {
 			trackEvent("BookCall_Audio_Connected", {
 				Client_ID: clientUser?._id,
-				User_First_Seen: clientUser?.createdAt?.toISOString().split("T")[0],
+				User_First_Seen: formattedDate,
 				Creator_ID: creator._id,
 			});
 		} else {
 			trackEvent("BookCall_Video_Connected", {
 				Client_ID: clientUser?._id,
-				User_First_Seen: clientUser?.createdAt?.toISOString().split("T")[0],
+				User_First_Seen: formattedDate,
 				Creator_ID: creator._id,
 			});
 		}
+
 		router.replace(`/meeting/${call.id}`);
 	};
 
@@ -275,16 +283,21 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				},
 			});
 
+			const createdAtDate = clientUser?.createdAt
+				? new Date(clientUser.createdAt)
+				: new Date();
+			const formattedDate = createdAtDate.toISOString().split("T")[0];
+
 			if (callType === "audio") {
 				trackEvent("BookCall_Audio_Clicked", {
 					Client_ID: clientUser._id,
-					User_First_Seen: clientUser.createdAt?.toISOString().split("T")[0],
+					User_First_Seen: formattedDate,
 					Creator_ID: creator._id,
 				});
 			} else {
 				trackEvent("BookCall_Video_initiated", {
 					Client_ID: clientUser._id,
-					User_First_Seen: clientUser.createdAt?.toISOString().split("T")[0],
+					User_First_Seen: formattedDate,
 					Creator_ID: creator._id,
 				});
 			}

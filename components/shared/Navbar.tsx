@@ -68,11 +68,11 @@ const Navbar = () => {
 		} else {
 			setUserTheme("#000000");
 		}
-	}, [pathname, currentTheme, currentCreatorUsername]);
+	}, [pathname, currentTheme]);
 
 	useEffect(() => {
 		setAuthenticationSheetOpen(isAuthSheetOpen);
-	}, [isAuthSheetOpen, setAuthenticationSheetOpen]);
+	}, [isAuthSheetOpen]);
 
 	const handleAppRedirect = () => {
 		trackEvent("Getlink_TopNav_Clicked", {
