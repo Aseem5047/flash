@@ -46,7 +46,7 @@ jobs:
           NODE_ENV: ${{ secrets.NODE_ENV }}
           NEXT_PUBLIC_FIREBASE_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_KEY }}
           FIREBASE_SERVICE_ACCOUNT_BASE64: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_BASE64 }}
-        run: docker build --env-file .env -f Dockerfile.prod -t aseem5047/flashcall:prod .
+        run: docker build -f Dockerfile.prod -t aseem5047/flashcall:prod .
 
       # Push the production image to Docker Hub
       - name: Push prod image
