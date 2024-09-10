@@ -34,7 +34,7 @@ jobs:
 
       # Build the production image
       - name: Build prod image
-        run: docker build -f Dockerfile -t aseem5047/flashcall:prod .
+        run: docker build -f Dockerfile.prod -t aseem5047/flashcall:prod .
 
       # Push development image to Docker Hub
       - name: Push dev image
