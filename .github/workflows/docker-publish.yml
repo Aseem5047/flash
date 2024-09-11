@@ -35,7 +35,6 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       # Checkout the repo
       - name: Checkout code
