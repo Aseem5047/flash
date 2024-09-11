@@ -333,7 +333,7 @@ const CreatorHome = () => {
 								</p>
 							</div>
 						</div>
-						<Link href={"/payment"}>
+						<Link href={"/payment"} className="flex items-center">
 							<Button className="bg-green-600 w-auto h-auto text-white rounded-lg hover:bg-green-700">
 								View Wallet
 							</Button>

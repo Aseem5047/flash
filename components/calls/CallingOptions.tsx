@@ -14,6 +14,7 @@ import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import AuthenticationSheet from "../shared/AuthenticationSheet";
 import useChatRequest from "@/hooks/useChatRequest";
 import { trackEvent } from "@/lib/mixpanel";
+import { isValidHexColor } from "@/lib/utils";
 
 interface CallingOptions {
 	creator: creatorUser;
@@ -32,6 +33,10 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	const [chatState, setChatState] = useState();
 	const [chatReqSent, setChatReqSent] = useState(false);
 	const [isProcessing, setIsProcessing] = useState(false);
+
+	const themeColor = isValidHexColor(creator.themeSelected)
+		? creator.themeSelected
+		: "#50A65C";
 
 	const [updatedCreator, setUpdatedCreator] = useState<creatorUser>({
 		...creator,
@@ -430,7 +435,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	// 	}
 	// };
 
-	const theme = `5px 5px 0px 0px ${creator.themeSelected}`;
+	const theme = `5px 5px 0px 0px ${themeColor}`;
 
 	if (isAuthSheetOpen && !clientUser)
 		return (
@@ -464,7 +469,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 						>
 							<div
 								className={`flex gap-4 items-center font-semibold`}
-								style={{ color: updatedCreator.themeSelected }}
+								style={{ color: themeColor }}
 							>
 								{video}
 								Book Video Call
@@ -489,7 +494,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 						>
 							<div
 								className={`flex gap-4 items-center font-semibold`}
-								style={{ color: updatedCreator.themeSelected }}
+								style={{ color: themeColor }}
 							>
 								{audio}
 								Book Audio Call
@@ -512,7 +517,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 						>
 							<button
 								className={`flex gap-4 items-center font-semibold`}
-								style={{ color: updatedCreator.themeSelected }}
+								style={{ color: themeColor }}
 							>
 								{chat}
 								Chat Now

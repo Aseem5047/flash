@@ -18,6 +18,35 @@ import { success } from "@/constants/icons";
 import ContentLoading from "../shared/ContentLoading";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 
+// Custom hook to track screen size
+const useScreenSize = () => {
+	const [isMobile, setIsMobile] = useState(false);
+
+	const handleResize = () => {
+		setIsMobile(window.innerWidth < 768);
+	};
+
+	useEffect(() => {
+		handleResize(); // Set initial value
+		window.addEventListener("resize", handleResize);
+		return () => window.removeEventListener("resize", handleResize);
+	}, []);
+
+	return isMobile;
+};
+
+// Utility function to detect Android or iOS
+const isMobileDevice = () => {
+	const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+	if (/android/i.test(userAgent)) {
+		return true; // Android device
+	}
+	if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+		return true; // iOS device
+	}
+	return false; // Not Android or iOS
+};
+
 const TipModal = ({
 	walletBalance,
 	setWalletBalance,
@@ -38,11 +67,12 @@ const TipModal = ({
 	const [loading, setLoading] = useState(false);
 	const [tipPaid, setTipPaid] = useState(false);
 	const [errorMessage, setErrorMessage] = useState("");
-
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
 	const { toast } = useToast();
 	const { currentUser } = useCurrentUsersContext();
 	const { totalTimeUtilized, hasLowBalance } = useCallTimerContext();
+
+	const isMobile = useScreenSize() && isMobileDevice();
 
 	useEffect(() => {
 		const storedCreator = localStorage.getItem("currentCreator");
@@ -195,7 +225,16 @@ const TipModal = ({
 					side="bottom"
 					className={`flex flex-col items-center justify-center ${
 						!loading ? "px-10 py-7" : "px-4"
-					} border-none rounded-t-xl bg-white w-full mx-auto sheetContent overflow-scroll no-scrollbar`}
+					}  border-none rounded-t-xl bg-white w-full mx-auto overflow-scroll no-scrollbar sm:max-w-[444px] ${
+						!isMobile
+							? predefinedOptions.length > 8
+								? "max-h-[500px] min-h-[444px]"
+								: predefinedOptions.length > 4 && predefinedOptions.length <= 8
+								? "max-h-[444px] min-h-[420px]"
+								: "max-h-[400px] min-h-[380px]"
+							: "max-h-[400px] min-h-[350px]"
+					}`}
+					style={{ height: "calc(var(--vh, 1vh) * 100)" }}
 				>
 					{loading ? (
 						<ContentLoading />
@@ -216,7 +255,7 @@ const TipModal = ({
 									</p>
 								</SheetDescription>
 							</SheetHeader>
-							<div className="grid gap-4 py-4 w-full">
+							<section className="grid gap-4 py-4 w-full">
 								<span>Enter Desired amount in INR</span>
 								<Input
 									id="rechargeAmount"
@@ -224,19 +263,26 @@ const TipModal = ({
 									placeholder="Enter recharge amount"
 									value={rechargeAmount}
 									onChange={handleAmountChange}
+									min={0}
 								/>
 								{errorMessage && (
 									<p className="text-red-500 text-sm">{errorMessage}</p>
 								)}
-							</div>
-							<div className="flex flex-col items-start justify-center">
+							</section>
+							<section className="flex flex-col items-start justify-start w-full">
 								<span className="text-sm">Predefined Options</span>
-								<div className="grid grid-cols-4 lg:grid-cols-5 gap-4 mt-4">
+								<div
+									className={`${
+										!isMobile
+											? "grid grid-cols-4 lg:grid-cols-5 gap-4 mt-4"
+											: "flex justify-start items-center mt-4 space-x-4 w-full overflow-x-scroll overflow-y-hidden no-scrollbar"
+									}`}
+								>
 									{predefinedOptions.map((amount) => (
 										<Button
 											key={amount}
 											onClick={() => handlePredefinedAmountClick(amount)}
-											className={`w-full bg-gray-200 hover:bg-gray-300 hoverScaleEffect ${
+											className={`w-20 bg-gray-200 hover:bg-gray-300 hoverScaleEffect ${
 												rechargeAmount === amount &&
 												"bg-green-1 text-white hover:bg-green-1"
 											}`}
@@ -245,12 +291,19 @@ const TipModal = ({
 										</Button>
 									))}
 								</div>
-							</div>
+							</section>
 							<SheetFooter className="mt-4">
 								<Button
-									className="bg-green-1 text-white"
+									className={`bg-green-1 text-white ${
+										(!rechargeAmount ||
+											parseInt(rechargeAmount) > adjustedWalletBalance) &&
+										"cursor-not-allowed"
+									}`}
 									onClick={handleTransaction}
-									disabled={parseInt(rechargeAmount) > adjustedWalletBalance}
+									disabled={
+										parseInt(rechargeAmount) > adjustedWalletBalance ||
+										!rechargeAmount
+									}
 								>
 									Proceed
 								</Button>

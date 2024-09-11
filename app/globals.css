@@ -73,8 +73,8 @@
 /* tip modal custom styles */
 .sheetContent {
 	height: calc(var(--vh, 1vh) * 100);
-	min-height: 350px;
-	max-height: 435px;
+	min-height: 444px;
+	max-height: 460px;
 }
 
 @media only screen and (max-width: 768px) {
@@ -108,8 +108,7 @@
 .str-video__speaker-layout .str-video__speaker-layout__spotlight {
 	display: flex;
 	justify-content: center;
-	min-height: 0;
-	height: 89%;
+	height: 89% !important;
 	/* margin-bottom: 16rem; */
 	position: absolute !important;
 	top: 0rem;
@@ -124,7 +123,7 @@
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	bottom: 11% !important;
+	bottom: 13% !important;
 	right: 7% !important;
 }
 
@@ -142,6 +141,7 @@
 	padding: 0px;
 	border: 2px solid rgba(255, 255, 255, 0.233);
 	border-radius: 15px;
+	padding: 0px !important;
 }
 
 .str-video__speaker-layout

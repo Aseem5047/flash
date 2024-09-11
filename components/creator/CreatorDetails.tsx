@@ -7,7 +7,7 @@ import { useToast } from "../ui/use-toast";
 import Favorites from "../shared/Favorites";
 import ShareButton from "../shared/ShareButton";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
-import { isValidUrl } from "@/lib/utils";
+import { isValidUrl, isValidHexColor } from "@/lib/utils";
 import AuthenticationSheet from "../shared/AuthenticationSheet";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -26,6 +26,10 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 	const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false);
 	const [status, setStatus] = useState<string>("Online"); // Default status to "Offline"
 
+	const themeColor = isValidHexColor(creator.themeSelected)
+		? creator.themeSelected
+		: "#50A65C";
+
 	const { clientUser, setAuthenticationSheetOpen, setCurrentTheme } =
 		useCurrentUsersContext();
 	const { toast } = useToast();
@@ -34,7 +38,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 		if (isCreatorOrExpertPath) {
 			localStorage.setItem("currentCreator", JSON.stringify(creator));
 			localStorage.setItem("creatorURL", `/${creator?.username}`);
-			setCurrentTheme(creator?.themeSelected);
+			setCurrentTheme(themeColor);
 		}
 	}, [creator?._id, isCreatorOrExpertPath]);
 
@@ -137,9 +141,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 				<div
 					className={`relative flex flex-col items-center w-full max-w-[85%] md:max-w-[60%] xl:max-w-[35%] mx-auto gap-4 p-4 rounded-[24px] z-10 `}
 					style={{
-						backgroundColor: creator.themeSelected
-							? creator.themeSelected
-							: "#50A65C",
+						backgroundColor: themeColor,
 					}}
 				>
 					{!isImageLoaded ? (
@@ -206,7 +208,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 					<span
 						className="absolute top-1/3 -right-7"
 						style={{
-							color: creator.themeSelected ? creator.themeSelected : "#50A65C",
+							color: themeColor,
 						}}
 					>
 						{sparkles}
@@ -223,7 +225,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 
 					<span
 						className="absolute max-xl:top-7 xl:-bottom-2 -left-4"
-						style={{ color: creator.themeSelected }}
+						style={{ color: themeColor }}
 					>
 						{sparkles}
 					</span>
