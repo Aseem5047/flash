@@ -30,4 +30,5 @@ jobs:
         run: ssh -o StrictHostKeyChecking=no ubuntu@ec2-16-170-245-228.eu-north-1.compute.amazonaws.com 'bash /home/ubuntu/deploy.sh'
 
       # Connect to the EC2 instance and execute the deploy.sh script located at /home/ubuntu
+
       # The -o StrictHostKeyChecking=no option prevents SSH from prompting to confirm the host's fingerprint
