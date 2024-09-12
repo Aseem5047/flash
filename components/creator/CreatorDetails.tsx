@@ -91,15 +91,6 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 							Object.values(notifyList).includes(creator.phone)
 						) {
 							setIsAlreadyNotified(false); // Reset the notification state
-
-							// delete notifyList[creator.username];
-							// localStorage.setItem("notifyList", JSON.stringify(notifyList));
-
-							// toast({
-							// 	variant: "default",
-							// 	title: "Creator is now online",
-							// 	description: `${fullName} is now online.`,
-							// });
 						}
 					}
 				} else {
@@ -176,13 +167,13 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 
 				toast({
 					variant: "default",
-					title: "Notification Set",
-					description: `You'll be notified when ${fullName} comes online.`,
+					title: `We&apos;ll let you know as soon as ${fullName} is back online!`,
+					description: `${fullName} isn&apos;t online yet, but feel free to explore other creators or services while you wait.`,
 				});
 			} else {
 				toast({
 					variant: "default",
-					title: "Already Notified",
+					title: "Can&apos;t repeat the action",
 					description: `You are already set to be notified when ${fullName} comes online.`,
 				});
 			}
