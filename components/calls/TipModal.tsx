@@ -221,17 +221,16 @@ const TipModal = ({
 					</Button>
 				</SheetTrigger>
 				<SheetContent
+					onOpenAutoFocus={(e) => e.preventDefault()}
 					side="bottom"
 					className={`flex flex-col items-center justify-center ${
-						!loading ? "px-10 py-7" : "px-4"
+						!loading ? "px-7 py-4" : "px-4"
 					}  border-none rounded-t-xl bg-white w-full mx-auto overflow-scroll no-scrollbar sm:max-w-[444px] ${
 						!isMobile
 							? predefinedOptions.length > 8
-								? "max-h-[500px] min-h-[444px]"
-								: predefinedOptions.length > 4 && predefinedOptions.length <= 8
-								? "max-h-[444px] min-h-[420px]"
+								? "max-h-[450px] min-h-[420px]"
 								: "max-h-[400px] min-h-[380px]"
-							: "max-h-[385px] min-h-[370px]"
+							: "max-h-[350px] min-h-[350px]"
 					}`}
 					style={{ height: "calc(var(--vh, 1vh) * 100)" }}
 				>
@@ -255,33 +254,51 @@ const TipModal = ({
 								</SheetDescription>
 							</SheetHeader>
 							<section
-								className={`grid gap-4 ${
-									errorMessage ? "py-2" : "py-4"
+								className={`grid ${
+									errorMessage ? "py-2 gap-2 " : "py-4 gap-4"
 								} w-full`}
 							>
 								<span>Enter Desired amount in INR</span>
-								<Input
-									id="rechargeAmount"
-									type="number"
-									placeholder="Enter recharge amount"
-									value={rechargeAmount}
-									onChange={handleAmountChange}
-									min={0}
-								/>
+								<section className="relative flex flex-col justify-center items-center">
+									<Input
+										id="rechargeAmount"
+										type="number"
+										placeholder="Enter recharge amount"
+										value={rechargeAmount}
+										onChange={handleAmountChange}
+										className="input-field-modal"
+									/>
+
+									<Button
+										className={`absolute right-2 bg-green-1 text-white hoverScaleDownEffect ${
+											(!rechargeAmount ||
+												parseInt(rechargeAmount) > adjustedWalletBalance) &&
+											"cursor-not-allowed"
+										}`}
+										onClick={handleTransaction}
+										disabled={
+											!rechargeAmount ||
+											parseInt(rechargeAmount) > adjustedWalletBalance
+										}
+									>
+										Proceed
+									</Button>
+								</section>
+
 								{errorMessage && (
-									<p className="text-red-500 text-sm">{errorMessage}</p>
+									<p className="text-red-500 text-sm text-center">
+										{errorMessage}
+									</p>
 								)}
 							</section>
 							<section
-								className={`flex flex-col items-start justify-start w-full ${
-									!isMobile && "overflow-y-scroll no-scrollbar"
-								}`}
+								className={`flex flex-col items-start justify-start w-full`}
 							>
 								<span className="text-sm">Predefined Options</span>
 								<div
 									className={`${
 										!isMobile
-											? "grid grid-cols-4 lg:grid-cols-5 gap-4 mt-4 w-full"
+											? "grid grid-cols-4 gap-4 mt-4 w-full"
 											: "flex justify-start items-center mt-4 space-x-4 w-full overflow-x-scroll overflow-y-hidden no-scrollbar"
 									}`}
 								>
@@ -299,22 +316,6 @@ const TipModal = ({
 									))}
 								</div>
 							</section>
-							<SheetFooter className={`${errorMessage ? "mt-0" : "mt-4"}`}>
-								<Button
-									className={`bg-green-1 text-white ${
-										(!rechargeAmount ||
-											parseInt(rechargeAmount) > adjustedWalletBalance) &&
-										"cursor-not-allowed"
-									}`}
-									onClick={handleTransaction}
-									disabled={
-										parseInt(rechargeAmount) > adjustedWalletBalance ||
-										!rechargeAmount
-									}
-								>
-									Proceed
-								</Button>
-							</SheetFooter>
 						</>
 					) : (
 						<div className="flex flex-col items-center justify-center min-w-full h-full gap-4">

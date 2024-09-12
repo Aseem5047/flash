@@ -14,7 +14,7 @@ import { clientUser, creatorUser } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
 import axios from "axios";
 import jwt from "jsonwebtoken";
-import { deleteDoc, doc, onSnapshot, setDoc } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useRouter } from "next/navigation";
 import * as Sentry from "@sentry/nextjs";
@@ -90,7 +90,6 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 
 	useEffect(() => {
 		const storedUserType = localStorage.getItem("userType");
-		// setUserType(currentUser?.profession ? "creator" : "client");
 		if (storedUserType) {
 			setUserType(storedUserType);
 		} else {
@@ -100,10 +99,12 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 
 	// Function to handle user signout
 	const handleSignout = () => {
-		if (currentUser) {
-			const userAuthRef = doc(db, "authToken", currentUser.phone);
+		const phone = currentUser?.phone; // Store phone number before resetting the state
 
-			// Functions to handle single session
+		if (phone) {
+			const userAuthRef = doc(db, "authToken", phone);
+
+			// Remove the session from Firestore
 			deleteDoc(userAuthRef)
 				.then(() => {
 					console.log("Document successfully deleted!");
@@ -112,8 +113,23 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 					Sentry.captureException(error);
 					console.error("Error removing document: ", error);
 				});
+
+			// Optionally set user status to Offline in Firestore
+			setDoc(
+				doc(db, "userStatus", phone),
+				{ status: "Offline" },
+				{ merge: true }
+			)
+				.then(() => {
+					console.log("User status set to Offline on signout");
+				})
+				.catch((error: any) => {
+					Sentry.captureException(error);
+					console.error("Error setting user status to Offline: ", error);
+				});
 		}
 
+		// Clear user data and local storage
 		localStorage.removeItem("currentUserID");
 		localStorage.removeItem("authToken");
 		localStorage.removeItem("creatorURL");
@@ -208,14 +224,14 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		}
 	}, [router, userType]);
 
+	// Use heartbeat and beforeunload to update user status
 	useEffect(() => {
-		const authToken = localStorage.getItem("authToken");
-
 		if (!currentUser || !currentUser.phone) {
 			return;
 		}
 
 		const userAuthRef = doc(db, "authToken", currentUser.phone);
+		const statusDocRef = doc(db, "userStatus", currentUser.phone);
 
 		const unsubscribe = onSnapshot(
 			userAuthRef,
@@ -223,6 +239,8 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 				try {
 					if (doc.exists()) {
 						const data = doc.data();
+						const authToken = localStorage.getItem("authToken");
+
 						if (data?.token && data.token !== authToken) {
 							handleSignout();
 							toast({
@@ -231,15 +249,10 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 								description: "Logging Out...",
 							});
 						}
-					} else {
-						console.log("No such document!");
 					}
 				} catch (error) {
 					Sentry.captureException(error);
-					console.error(
-						"An error occurred while processing the document: ",
-						error
-					);
+					console.error("Error processing the document: ", error);
 				}
 			},
 			(error) => {
@@ -247,75 +260,84 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 			}
 		);
 
-		const statusDocRef = doc(db, "userStatus", currentUser.phone);
-
-		// Function to update status to Offline
-		const setStatusOffline = async () => {
+		const setStatus = async (status: string) => {
 			try {
-				await setDoc(statusDocRef, { status: "Offline" }, { merge: true });
-				console.log("User status set to Offline");
+				await setDoc(statusDocRef, { status }, { merge: true });
+				console.log(`User status set to ${status}`);
 			} catch (error) {
 				Sentry.captureException(error);
-				console.error("Error updating user status: ", error);
+				console.error(`Error updating user status to ${status}: `, error);
 			}
 		};
 
-		// Update user status to "Online" when the component mounts
 		const setStatusOnline = async () => {
-			try {
-				await setDoc(statusDocRef, { status: "Online" }, { merge: true });
-				console.log("User status set to Online");
-			} catch (error) {
-				Sentry.captureException(error);
-				console.error("Error updating user status: ", error);
+			const statusSnapshot = await getDoc(statusDocRef);
+			if (statusSnapshot.exists()) {
+				const currentStatus = statusSnapshot.data()?.status;
+				if (currentStatus !== "Busy") {
+					await setStatus("Online");
+				}
+			} else {
+				await setStatus("Online");
 			}
 		};
 
+		const setStatusOffline = () => setStatus("Offline");
+
+		// Periodic heartbeats every 30 seconds to keep status "Online"
+		const heartbeatInterval = setInterval(() => {
+			setStatusOnline();
+		}, 30000); // 30 seconds
+
+		// Call once to set status online on component mount
 		setStatusOnline();
 
-		const handleBeforeUnload = async (event: BeforeUnloadEvent) => {
-			// Set offline status before unloading
-			await setStatusOffline();
+		const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+			const phone = currentUser?.phone; // Store the phone number before signout
 
-			// Use sendBeacon to ensure data is sent before unload
-			navigator.sendBeacon(
-				"/api/set-status",
-				JSON.stringify({ phone: currentUser.phone, status: "Offline" })
-			);
+			if (phone) {
+				// Send the phone and status with the beacon
+				navigator.sendBeacon(
+					"/api/set-status",
+					JSON.stringify({ phone, status: "Offline" })
+				);
+			}
 
-			// Ensure we don’t suppress the default behavior
-			event.preventDefault();
+			// Ensure default behavior isn't suppressed
+			// event.preventDefault();
 		};
 
-		// Add event listeners
+		// Add event listener for unload events
 		window.addEventListener("beforeunload", handleBeforeUnload);
 
-		// Cleanup listener on component unmount
+		// Cleanup function to clear heartbeat and update status to "Offline"
 		return () => {
-			unsubscribe();
-			setStatusOffline(); // Set offline on unmount
+			clearInterval(heartbeatInterval);
 			window.removeEventListener("beforeunload", handleBeforeUnload);
+			setStatusOffline();
+			unsubscribe();
 		};
-	}, [currentUser?._id]);
+	}, [currentUser?.phone]);
 
-	const values: CurrentUsersContextValue = {
-		clientUser,
-		creatorUser,
-		currentUser,
-		setClientUser,
-		setCreatorUser,
-		userType,
-		refreshCurrentUser,
-		handleSignout,
-		currentTheme,
-		setCurrentTheme,
-		authenticationSheetOpen,
-		setAuthenticationSheetOpen,
-		fetchingUser,
-	};
-
+	// Provide the context value to children
 	return (
-		<CurrentUsersContext.Provider value={values}>
+		<CurrentUsersContext.Provider
+			value={{
+				clientUser,
+				creatorUser,
+				currentUser,
+				setClientUser,
+				setCreatorUser,
+				userType,
+				refreshCurrentUser,
+				handleSignout,
+				currentTheme,
+				setCurrentTheme,
+				authenticationSheetOpen,
+				setAuthenticationSheetOpen,
+				fetchingUser,
+			}}
+		>
 			{children}
 		</CurrentUsersContext.Provider>
 	);

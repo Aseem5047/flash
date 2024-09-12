@@ -223,6 +223,17 @@
 	-webkit-backdrop-filter: blur(4px) !important;
 }
 
+/* Hide spinner controls for number input */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+input[type="number"] {
+	-moz-appearance: textfield; /* Firefox */
+}
+
 @layer base {
 	body {
 		@apply !font-default;
@@ -247,6 +258,10 @@
 
 	.input-field {
 		@apply bg-gray-50 h-[54px] focus-visible:ring-offset-0 placeholder:text-gray-500 rounded-xl px-4 py-3 border-none focus-visible:ring-transparent !important;
+	}
+
+	.input-field-modal {
+		@apply bg-gray-100 hover:bg-gray-200 h-[54px] focus-visible:ring-offset-0 placeholder:text-gray-500 rounded-xl px-4 py-3 border-none focus-visible:ring-transparent !important;
 	}
 
 	.textarea {

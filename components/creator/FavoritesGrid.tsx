@@ -41,7 +41,32 @@ const FavoritesGrid = ({
 			(docSnap) => {
 				if (docSnap.exists()) {
 					const data = docSnap.data();
-					setStatus(data.status || "Offline");
+					const newStatus = data.status || "Offline";
+					setStatus(newStatus);
+
+					// Check if the creator's status is now "Online" and reset notification
+					if (newStatus === "Online") {
+						const notifyList = JSON.parse(
+							localStorage.getItem("notifyList") || "{}"
+						);
+
+						// If the creator is in the notify list, remove them
+						if (
+							notifyList[creator.username] === creator.phone ||
+							Object.values(notifyList).includes(creator.phone)
+						) {
+							setIsAlreadyNotified(false); // Reset the notification state
+
+							// delete notifyList[creator.username];
+							// localStorage.setItem("notifyList", JSON.stringify(notifyList));
+
+							// toast({
+							// 	variant: "default",
+							// 	title: "Creator is now online",
+							// 	description: `${fullName} is now online.`,
+							// });
+						}
+					}
 				} else {
 					setStatus("Offline");
 				}
@@ -54,7 +79,7 @@ const FavoritesGrid = ({
 
 		// Clean up the listener on component unmount
 		return () => unsubscribe();
-	}, [status]);
+	}, [creator.phone, creator.username]);
 
 	useEffect(() => {
 		// Retrieve the notify list from localStorage
@@ -198,11 +223,11 @@ const FavoritesGrid = ({
 							isAlreadyNotified
 								? "bg-gray-400 cursor-not-allowed"
 								: "bg-green-1 hover:bg-green-700"
-						}  text-white font-semibold w-fit mr-1 rounded-md px-4 py-2 text-xs`}
+						}  text-white font-semibold w-fit mr-1 rounded-md px-4 py-2 text-xs whitespace-nowrap`}
 						onClick={handleNotifyUser}
 						disabled={isAlreadyNotified}
 					>
-						{isAlreadyNotified ? "Notified" : "Notify Me"}
+						{isAlreadyNotified ? "You'll be notified" : "Notify Me"}
 					</button>
 				) : (
 					<Link

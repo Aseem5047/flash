@@ -202,13 +202,16 @@ const CallFeedback = ({
 							className="w-full p-2 border rounded resize-none h-full max-h-[100px] overflow-y-scroll no-scrollbar outline-none hover:bg-gray-50"
 						></textarea>
 
-						<Button
+						<button
 							onClick={handleSubmitFeedback}
-							className="bg-green-1 font-semibold text-white px-4 py-2 rounded-lg hover:opacity-80"
+							className={`bg-green-1 font-semibold text-white px-4 py-2 rounded-lg hover:opacity-80 ${
+								isSubmitDisabled &&
+								"!cursor-not-allowed opacity-50 hover:opacity-50"
+							}`}
 							disabled={isSubmitDisabled}
 						>
 							Submit Feedback
-						</Button>
+						</button>
 					</div>
 				) : (
 					<div className="flex flex-col items-center justify-center min-w-full h-full gap-4">

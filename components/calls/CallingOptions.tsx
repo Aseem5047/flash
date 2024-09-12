@@ -460,12 +460,18 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 					parseInt(updatedCreator.videoRate, 10) > 0 && (
 						<div
 							className={`callOptionContainer ${
-								isProcessing ? "opacity-50 cursor-not-allowed" : ""
+								isProcessing || onlineStatus !== "Online"
+									? "opacity-50 !cursor-not-allowed"
+									: ""
 							}`}
 							style={{
 								boxShadow: theme,
 							}}
-							onClick={() => handleClickOption("video")}
+							onClick={() => {
+								if (onlineStatus === "Online") {
+									handleClickOption("video");
+								}
+							}}
 						>
 							<div
 								className={`flex gap-4 items-center font-semibold`}
@@ -485,12 +491,18 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 					parseInt(updatedCreator.audioRate, 10) > 0 && (
 						<div
 							className={`callOptionContainer ${
-								isProcessing ? "opacity-50 cursor-not-allowed" : ""
+								isProcessing || onlineStatus !== "Online"
+									? "opacity-50 !cursor-not-allowed"
+									: ""
 							}`}
 							style={{
 								boxShadow: theme,
 							}}
-							onClick={() => handleClickOption("audio")}
+							onClick={() => {
+								if (onlineStatus === "Online") {
+									handleClickOption("audio");
+								}
+							}}
 						>
 							<div
 								className={`flex gap-4 items-center font-semibold`}
@@ -509,15 +521,24 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				{updatedCreator.chatAllowed &&
 					parseInt(updatedCreator.chatRate, 10) > 0 && (
 						<div
-							className="callOptionContainer"
+							className={`callOptionContainer ${
+								onlineStatus !== "Online"
+									? "opacity-50 !cursor-not-allowed"
+									: ""
+							}`}
 							style={{
 								boxShadow: theme,
 							}}
-							onClick={handleChatClick}
+							onClick={() => {
+								if (onlineStatus === "Online") {
+									handleChatClick();
+								}
+							}}
 						>
 							<button
 								className={`flex gap-4 items-center font-semibold`}
 								style={{ color: themeColor }}
+								disabled={onlineStatus !== "Online"}
 							>
 								{chat}
 								Chat Now
