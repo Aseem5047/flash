@@ -247,7 +247,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 								</>
 							</div>
 
-							{status !== "Online" && (
+							{status !== "Online" && clientUser && (
 								<button
 									className={`absolute bottom-0 right-0 ${
 										!isAlreadyNotified

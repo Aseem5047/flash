@@ -88,15 +88,7 @@ export const UserStatusProvider: React.FC<{ children: React.ReactNode }> = ({
 		return () => {
 			unsubscribeList.forEach((unsubscribe) => unsubscribe());
 		};
-	}, [notifyList]); // Track changes in notifyList
-
-	// Update notifyList state whenever localStorage changes (if you modify it elsewhere)
-	useEffect(() => {
-		const storedNotifyList = JSON.parse(
-			localStorage.getItem("notifyList") || "{}"
-		);
-		setNotifyList(storedNotifyList);
-	}, [notifyList]); // Sync with localStorage changes
+	}, [notifyList]); // Only re-run when notifyList changes
 
 	return (
 		<UserStatusContext.Provider value={{ userStatus }}>

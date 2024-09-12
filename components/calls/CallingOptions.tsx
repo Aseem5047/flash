@@ -92,7 +92,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			}
 		});
 
-		isAuthSheetOpen && setIsAuthSheetOpen(false);
+		// isAuthSheetOpen && setIsAuthSheetOpen(false);
 		return () => unsubscribe();
 	}, [creator._id, isAuthSheetOpen]);
 
@@ -470,6 +470,8 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 							onClick={() => {
 								if (onlineStatus === "Online") {
 									handleClickOption("video");
+								} else {
+									setIsAuthSheetOpen(true);
 								}
 							}}
 						>
@@ -501,6 +503,8 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 							onClick={() => {
 								if (onlineStatus === "Online") {
 									handleClickOption("audio");
+								} else {
+									setIsAuthSheetOpen(true);
 								}
 							}}
 						>
@@ -532,6 +536,8 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 							onClick={() => {
 								if (onlineStatus === "Online") {
 									handleChatClick();
+								} else {
+									setIsAuthSheetOpen(true);
 								}
 							}}
 						>
