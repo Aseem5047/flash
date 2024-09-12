@@ -46,7 +46,7 @@ jobs:
 
       # Build the development image
       - name: Build dev image
-        run: docker build -f Dockerfile.dev -t aseem5047/flashcall:dev .
+        run: docker build --no-cache -f Dockerfile.dev -t aseem5047/flashcall:dev .
 
       - name: Log environment variables
         run: |
@@ -57,7 +57,7 @@ jobs:
       # Build the production image
       - name: Build prod image
         run: |
-          docker build \
+          docker build --no-cache \
           --build-arg NEXT_PUBLIC_STREAM_API_KEY='${{ env.NEXT_PUBLIC_STREAM_API_KEY }}' \
           --build-arg STREAM_SECRET_KEY='${{ env.STREAM_SECRET_KEY }}' \
           --build-arg NEXT_PUBLIC_STREAM_SECRET_KEY='${{ env.NEXT_PUBLIC_STREAM_SECRET_KEY }}' \
