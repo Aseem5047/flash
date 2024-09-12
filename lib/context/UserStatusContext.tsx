@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useToast } from "@/components/ui/use-toast";
-import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 
 interface UserStatusContextType {
 	userStatus: Record<string, string>; // Store statuses for multiple users
@@ -97,7 +96,7 @@ export const UserStatusProvider: React.FC<{ children: React.ReactNode }> = ({
 			localStorage.getItem("notifyList") || "{}"
 		);
 		setNotifyList(storedNotifyList);
-	}, [localStorage.getItem("notifyList")]); // Sync with localStorage changes
+	}, [notifyList]); // Sync with localStorage changes
 
 	return (
 		<UserStatusContext.Provider value={{ userStatus }}>

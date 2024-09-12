@@ -71,6 +71,9 @@ const isTokenValid = (token: string): boolean => {
 	}
 };
 
+// Utility function to check if we're in the browser
+const isBrowser = () => typeof window !== "undefined";
+
 // Provider component to hold the state and provide it to its children
 export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	const [clientUser, setClientUser] = useState<clientUser | null>(null);
@@ -89,11 +92,13 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	);
 
 	useEffect(() => {
-		const storedUserType = localStorage.getItem("userType");
-		if (storedUserType) {
-			setUserType(storedUserType);
-		} else {
-			setUserType(currentUser?.profession ? "creator" : "client");
+		if (isBrowser()) {
+			const storedUserType = localStorage.getItem("userType");
+			if (storedUserType) {
+				setUserType(storedUserType);
+			} else {
+				setUserType(currentUser?.profession ? "creator" : "client");
+			}
 		}
 	}, [currentUser?._id]);
 
@@ -130,7 +135,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		}
 
 		// Clear user data and local storage
-		if (typeof window !== "undefined") {
+		if (isBrowser()) {
 			localStorage.removeItem("currentUserID");
 			localStorage.removeItem("authToken");
 			localStorage.removeItem("creatorURL");
@@ -144,54 +149,50 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	const fetchCurrentUser = async () => {
 		try {
 			setFetchingUser(true);
-			let authToken;
-			let userId;
-			if (typeof window !== "undefined") {
-				authToken = localStorage.getItem("authToken");
-				userId = localStorage.getItem("currentUserID");
-			}
+			if (isBrowser()) {
+				const authToken = localStorage.getItem("authToken");
+				const userId = localStorage.getItem("currentUserID");
 
-			if (authToken && isTokenValid(authToken)) {
-				const decodedToken: any = jwt.decode(authToken);
-				const phoneNumber = decodedToken.phone;
+				if (authToken && isTokenValid(authToken)) {
+					const decodedToken: any = jwt.decode(authToken);
+					const phoneNumber = decodedToken.phone;
 
-				// Fetch user details using phone number
-				const response = await axios.post("/api/v1/user/getUserByPhone", {
-					phone: phoneNumber,
-				});
-				const user = response.data;
+					// Fetch user details using phone number
+					const response = await axios.post("/api/v1/user/getUserByPhone", {
+						phone: phoneNumber,
+					});
+					const user = response.data;
 
-				if (user) {
-					if (userType === "creator") {
-						setCreatorUser(user);
-						setClientUser(null);
-					} else {
-						setClientUser(user);
-						setCreatorUser(null);
-					}
-					if (typeof window !== "undefined") {
+					if (user) {
+						if (userType === "creator") {
+							setCreatorUser(user);
+							setClientUser(null);
+						} else {
+							setClientUser(user);
+							setCreatorUser(null);
+						}
 						localStorage.setItem(
 							"userType",
 							(user.userType as string) ?? "client"
 						);
+					} else {
+						console.error("User not found with phone number:", phoneNumber);
+					}
+				} else if (authToken && userId) {
+					const isCreator = userType === "creator";
+
+					if (isCreator) {
+						const response = await getCreatorById(userId);
+						setCreatorUser(response);
+						setClientUser(null);
+					} else {
+						const response = await getUserById(userId);
+						setClientUser(response);
+						setCreatorUser(null);
 					}
 				} else {
-					console.error("User not found with phone number:", phoneNumber);
+					handleSignout();
 				}
-			} else if (authToken && userId) {
-				const isCreator = userType === "creator";
-
-				if (isCreator) {
-					const response = await getCreatorById(userId);
-					setCreatorUser(response);
-					setClientUser(null);
-				} else {
-					const response = await getUserById(userId);
-					setClientUser(response);
-					setCreatorUser(null);
-				}
-			} else {
-				handleSignout();
 			}
 		} catch (error) {
 			Sentry.captureException(error);
@@ -204,12 +205,14 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 
 	// Call fetchCurrentUser when the component mounts
 	useEffect(() => {
-		const authToken = localStorage.getItem("authToken");
+		if (isBrowser()) {
+			const authToken = localStorage.getItem("authToken");
 
-		if (authToken && !isTokenValid(authToken)) {
-			handleSignout();
-		} else {
-			if (userType) fetchCurrentUser();
+			if (authToken && !isTokenValid(authToken)) {
+				handleSignout();
+			} else {
+				if (userType) fetchCurrentUser();
+			}
 		}
 	}, [userType]);
 
@@ -247,15 +250,17 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 				try {
 					if (doc.exists()) {
 						const data = doc.data();
-						const authToken = localStorage.getItem("authToken");
+						if (isBrowser()) {
+							const authToken = localStorage.getItem("authToken");
 
-						if (data?.token && data.token !== authToken) {
-							handleSignout();
-							toast({
-								variant: "destructive",
-								title: "Another Session Detected",
-								description: "Logging Out...",
-							});
+							if (data?.token && data.token !== authToken) {
+								handleSignout();
+								toast({
+									variant: "destructive",
+									title: "Another Session Detected",
+									description: "Logging Out...",
+								});
+							}
 						}
 					}
 				} catch (error) {
@@ -310,18 +315,19 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 					JSON.stringify({ phone, status: "Offline" })
 				);
 			}
-
-			// Ensure default behavior isn't suppressed
-			// event.preventDefault();
 		};
 
 		// Add event listener for unload events
-		window.addEventListener("beforeunload", handleBeforeUnload);
+		if (isBrowser()) {
+			window.addEventListener("beforeunload", handleBeforeUnload);
+		}
 
 		// Cleanup function to clear heartbeat and update status to "Offline"
 		return () => {
 			clearInterval(heartbeatInterval);
-			window.removeEventListener("beforeunload", handleBeforeUnload);
+			if (isBrowser()) {
+				window.removeEventListener("beforeunload", handleBeforeUnload);
+			}
 			setStatusOffline();
 			unsubscribe();
 		};
