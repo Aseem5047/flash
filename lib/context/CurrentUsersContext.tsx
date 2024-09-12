@@ -130,10 +130,12 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		}
 
 		// Clear user data and local storage
-		localStorage.removeItem("currentUserID");
-		localStorage.removeItem("authToken");
-		localStorage.removeItem("creatorURL");
-		localStorage.removeItem("notifyList");
+		if (typeof window !== "undefined") {
+			localStorage.removeItem("currentUserID");
+			localStorage.removeItem("authToken");
+			localStorage.removeItem("creatorURL");
+			localStorage.removeItem("notifyList");
+		}
 		setClientUser(null);
 		setCreatorUser(null);
 	};
@@ -142,8 +144,12 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	const fetchCurrentUser = async () => {
 		try {
 			setFetchingUser(true);
-			const authToken = localStorage.getItem("authToken");
-			const userId = localStorage.getItem("currentUserID");
+			let authToken;
+			let userId;
+			if (typeof window !== "undefined") {
+				authToken = localStorage.getItem("authToken");
+				userId = localStorage.getItem("currentUserID");
+			}
 
 			if (authToken && isTokenValid(authToken)) {
 				const decodedToken: any = jwt.decode(authToken);
@@ -163,10 +169,12 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 						setClientUser(user);
 						setCreatorUser(null);
 					}
-					localStorage.setItem(
-						"userType",
-						(user.userType as string) ?? "client"
-					);
+					if (typeof window !== "undefined") {
+						localStorage.setItem(
+							"userType",
+							(user.userType as string) ?? "client"
+						);
+					}
 				} else {
 					console.error("User not found with phone number:", phoneNumber);
 				}
