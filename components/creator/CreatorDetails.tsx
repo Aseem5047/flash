@@ -258,7 +258,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 									disabled={isAlreadyNotified}
 								>
 									{isAlreadyNotified ? (
-										<span className="text-sm">You'll be notified</span>
+										<span className="text-sm">You&apos;ll be notified</span>
 									) : (
 										<svg
 											xmlns="http://www.w3.org/2000/svg"

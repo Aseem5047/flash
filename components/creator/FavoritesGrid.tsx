@@ -218,7 +218,7 @@ const FavoritesGrid = ({
 						onClick={handleNotifyUser}
 						disabled={isAlreadyNotified}
 					>
-						{isAlreadyNotified ? "You'll be notified" : "Notify Me"}
+						{isAlreadyNotified ? "You&apos;ll be notified" : "Notify Me"}
 					</button>
 				) : (
 					<Link
