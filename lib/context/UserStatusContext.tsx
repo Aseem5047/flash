@@ -15,14 +15,19 @@ const UserStatusContext = createContext<UserStatusContextType | undefined>(
 export const UserStatusProvider: React.FC<{ children: React.ReactNode }> = ({
 	children,
 }) => {
-	const { clientUser } = useCurrentUsersContext();
 	const [userStatus, setUserStatus] = useState<Record<string, string>>({});
 	const { toast } = useToast();
+	const [notifyList, setNotifyList] = useState<Record<string, string>>({});
 
-	// Track the notify list in state
-	const [notifyList, setNotifyList] = useState<Record<string, string>>(
-		JSON.parse(localStorage.getItem("notifyList") || "{}")
-	);
+	// Only access localStorage on the client side
+	useEffect(() => {
+		if (typeof window !== "undefined") {
+			const storedNotifyList = JSON.parse(
+				localStorage.getItem("notifyList") || "{}"
+			);
+			setNotifyList(storedNotifyList);
+		}
+	}, []);
 
 	useEffect(() => {
 		const unsubscribeList: (() => void)[] = [];
