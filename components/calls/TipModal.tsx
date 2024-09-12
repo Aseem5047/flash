@@ -132,6 +132,7 @@ const TipModal = ({
 
 	const handlePredefinedAmountClick = (amount: string) => {
 		setRechargeAmount(amount);
+		setErrorMessage("");
 	};
 
 	const handleTransaction = async () => {
@@ -194,9 +195,7 @@ const TipModal = ({
 		setRechargeAmount(amount);
 
 		if (parseInt(amount) > adjustedWalletBalance) {
-			setErrorMessage(
-				"Insufficient wallet balance. Please enter a lower amount."
-			);
+			setErrorMessage("Please enter a smaller amount to proceed.");
 		} else {
 			setErrorMessage("");
 		}
@@ -232,7 +231,7 @@ const TipModal = ({
 								: predefinedOptions.length > 4 && predefinedOptions.length <= 8
 								? "max-h-[444px] min-h-[420px]"
 								: "max-h-[400px] min-h-[380px]"
-							: "max-h-[400px] min-h-[350px]"
+							: "max-h-[385px] min-h-[370px]"
 					}`}
 					style={{ height: "calc(var(--vh, 1vh) * 100)" }}
 				>
@@ -255,7 +254,11 @@ const TipModal = ({
 									</p>
 								</SheetDescription>
 							</SheetHeader>
-							<section className="grid gap-4 py-4 w-full">
+							<section
+								className={`grid gap-4 ${
+									errorMessage ? "py-2" : "py-4"
+								} w-full`}
+							>
 								<span>Enter Desired amount in INR</span>
 								<Input
 									id="rechargeAmount"
@@ -269,12 +272,16 @@ const TipModal = ({
 									<p className="text-red-500 text-sm">{errorMessage}</p>
 								)}
 							</section>
-							<section className="flex flex-col items-start justify-start w-full">
+							<section
+								className={`flex flex-col items-start justify-start w-full ${
+									!isMobile && "overflow-y-scroll no-scrollbar"
+								}`}
+							>
 								<span className="text-sm">Predefined Options</span>
 								<div
 									className={`${
 										!isMobile
-											? "grid grid-cols-4 lg:grid-cols-5 gap-4 mt-4"
+											? "grid grid-cols-4 lg:grid-cols-5 gap-4 mt-4 w-full"
 											: "flex justify-start items-center mt-4 space-x-4 w-full overflow-x-scroll overflow-y-hidden no-scrollbar"
 									}`}
 								>
@@ -292,7 +299,7 @@ const TipModal = ({
 									))}
 								</div>
 							</section>
-							<SheetFooter className="mt-4">
+							<SheetFooter className={`${errorMessage ? "mt-0" : "mt-4"}`}>
 								<Button
 									className={`bg-green-1 text-white ${
 										(!rechargeAmount ||
