@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import OTPVerification from "./OTPVerification";
+import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -47,12 +48,8 @@ const AuthenticateViaOTP = ({
 	onOpenChange?: (isOpen: boolean) => void;
 }) => {
 	const router = useRouter();
-	const {
-		clientUser,
-		currentUser,
-		refreshCurrentUser,
-		setAuthenticationSheetOpen,
-	} = useCurrentUsersContext();
+	const { refreshCurrentUser, setAuthenticationSheetOpen } =
+		useCurrentUsersContext();
 	const [showOTP, setShowOTP] = useState(false);
 	const [phoneNumber, setPhoneNumber] = useState("");
 	const [token, setToken] = useState<string | null>(null);
@@ -141,42 +138,45 @@ const AuthenticateViaOTP = ({
 				token: token,
 			});
 
-			let authToken = response.data.sessionToken;
+			// Extract the session token and user from the response
+			const { sessionToken } = response.data;
 
 			trackEvent("Login_Bottomsheet_OTP_Submitted");
 
-			updateFirestoreAuthToken(authToken);
+			// Update Firestore with the auth token
+			updateFirestoreAuthToken(sessionToken);
 
-			const creatorURL = localStorage.getItem("creatorURL");
+			const decodedToken = jwt.decode(sessionToken) as { user?: any };
 
 			// Save the auth token (with 7 days expiry) in localStorage
-			localStorage.setItem("authToken", authToken);
+			localStorage.setItem("authToken", sessionToken);
 			console.log("OTP verified and token saved:");
 
 			setVerificationSuccess(true);
 
-			const existingUser = await axios.post("/api/v1/user/getUserByPhone", {
-				phone: phoneNumber,
-			});
-
+			// Use the user data from the decoded session token
+			const user = decodedToken.user || {};
 			let resolvedUserType = userType; // Default to the userType from the component prop
 
-			if (existingUser.data._id) {
-				resolvedUserType = (existingUser.data.userType as string) || "client";
+			if (user._id) {
+				// Existing user found
+				resolvedUserType = user.userType || "client";
 				console.log("current usertype: ", resolvedUserType);
-				localStorage.setItem("currentUserID", existingUser.data._id);
+				localStorage.setItem("currentUserID", user._id);
 				console.log("Existing user found. Proceeding as an existing user.");
 			} else {
+				// No user found, proceed as new user
 				console.log("No user found. Proceeding as a new user.");
 
-				let user: CreateCreatorParams | CreateUserParams;
+				let newUser: CreateCreatorParams | CreateUserParams;
 
 				const formattedPhone = phoneNumber.startsWith("+91")
 					? phoneNumber
 					: `+91${phoneNumber}`;
 
+				// Prepare the new user object based on the userType
 				if (userType === "creator") {
-					user = {
+					newUser = {
 						firstName: "",
 						lastName: "",
 						fullName: "",
@@ -191,7 +191,7 @@ const AuthenticateViaOTP = ({
 						walletBalance: 0,
 					};
 				} else {
-					user = {
+					newUser = {
 						firstName: "",
 						lastName: "",
 						username: formattedPhone as string,
@@ -203,42 +203,34 @@ const AuthenticateViaOTP = ({
 					};
 				}
 
-				if (userType === "creator") {
-					try {
+				// Register the new user
+				try {
+					if (userType === "creator") {
 						await axios.post(
 							"/api/v1/creator/createUser",
-							user as CreateCreatorParams
+							newUser as CreateCreatorParams
 						);
-					} catch (error: any) {
-						toast({
-							variant: "destructive",
-							title: "Error Registering User",
-							description: `${error.response.data.error}`,
-						});
-						resetState();
-						return;
-					}
-				} else {
-					try {
+					} else {
 						await axios.post(
 							"/api/v1/client/createUser",
-							user as CreateCreatorParams
+							newUser as CreateUserParams
 						);
-					} catch (error: any) {
-						toast({
-							variant: "destructive",
-							title: "Error Registering User",
-							description: `${error.response.data.error}`,
-						});
-						resetState();
-						return;
 					}
+				} catch (error: any) {
+					toast({
+						variant: "destructive",
+						title: "Error Registering User",
+						description: `${error.response.data.error}`,
+					});
+					resetState();
+					return;
 				}
 			}
 
 			localStorage.setItem("userType", resolvedUserType);
 			refreshCurrentUser();
 			setAuthenticationSheetOpen(false);
+			const creatorURL = localStorage.getItem("creatorURL");
 
 			router.push(`${creatorURL ? creatorURL : "/"}`);
 		} catch (error: any) {
@@ -250,7 +242,6 @@ const AuthenticateViaOTP = ({
 			setIsVerifyingOTP(false);
 		} finally {
 			setIsVerifyingOTP(false);
-			console.log(clientUser);
 		}
 	};
 
