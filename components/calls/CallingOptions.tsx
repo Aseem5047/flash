@@ -470,7 +470,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 							onClick={() => {
 								if (onlineStatus === "Online") {
 									handleClickOption("video");
-								} else {
+								} else if (!clientUser) {
 									setIsAuthSheetOpen(true);
 								}
 							}}
@@ -503,7 +503,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 							onClick={() => {
 								if (onlineStatus === "Online") {
 									handleClickOption("audio");
-								} else {
+								} else if (!clientUser) {
 									setIsAuthSheetOpen(true);
 								}
 							}}
@@ -536,7 +536,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 							onClick={() => {
 								if (onlineStatus === "Online") {
 									handleChatClick();
-								} else {
+								} else if (!clientUser) {
 									setIsAuthSheetOpen(true);
 								}
 							}}

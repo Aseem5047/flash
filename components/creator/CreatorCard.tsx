@@ -56,20 +56,6 @@ const CreatorCard: React.FC = () => {
 		return (
 			<div className="size-full flex flex-col gap-2 items-center justify-center -mt-10">
 				<ContentLoading />
-
-				<h2 className="flex items-center justify-center gap-2 text-green-1 font-semibold text-base md:text-2xl w-[85%] md:w-full text-center">
-					{currentUser
-						? `Hey ${currentUser.username} Loading Content ...`
-						: "Fetching Creator Details"}
-					<Image
-						src="/icons/loading-circle.svg"
-						alt="Loading..."
-						width={24}
-						height={24}
-						className="invert"
-						priority
-					/>
-				</h2>
 			</div>
 		);
 	}
