@@ -233,7 +233,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 				});
 			}, 1000);
 		}
-	}, [router, userType]);
+	}, [router, userType, currentUser?._id]);
 
 	// Use heartbeat and beforeunload to update user status
 	useEffect(() => {

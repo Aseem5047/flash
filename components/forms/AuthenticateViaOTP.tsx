@@ -148,7 +148,7 @@ const AuthenticateViaOTP = ({
 
 			const decodedToken = jwt.decode(sessionToken) as { user?: any };
 
-			// Save the auth token (with 7 days expiry) in localStorage
+			// Save the auth token (with 1 days expiry) in localStorage
 			localStorage.setItem("authToken", sessionToken);
 			console.log("OTP verified and token saved:");
 
@@ -156,7 +156,7 @@ const AuthenticateViaOTP = ({
 
 			// Use the user data from the decoded session token
 			const user = decodedToken.user || {};
-			let resolvedUserType = userType; // Default to the userType from the component prop
+			let resolvedUserType = userType;
 
 			if (user._id) {
 				// Existing user found
@@ -231,8 +231,7 @@ const AuthenticateViaOTP = ({
 			refreshCurrentUser();
 			setAuthenticationSheetOpen(false);
 			const creatorURL = localStorage.getItem("creatorURL");
-
-			router.push(`${creatorURL ? creatorURL : "/"}`);
+			router.replace(`${creatorURL ? creatorURL : "/"}`);
 		} catch (error: any) {
 			console.error("Error verifying OTP:", error);
 			let newErrors = { ...error };
