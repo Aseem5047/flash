@@ -131,24 +131,26 @@ export async function updateUser(userId: string, user: UpdateUserParams) {
 	}
 }
 
-export async function deleteUser(userId: string) {
+export async function deleteClientUser(userId: string) {
 	try {
 		await connectToDatabase();
 
 		// Find user to delete
-		const userToDelete = await Client.findOne({ userId });
+		const userToDelete = await Client.findById(userId);
 
 		if (!userToDelete) {
-			throw new Error("User not found");
+			return { error: "User not found" };
 		}
 
 		// Delete user
-		const deletedUser = await Client.findByIdAndDelete(userToDelete._id);
-		revalidatePath("/");
+		const deletedUser = await Client.findByIdAndDelete(userId);
 
-		return deletedUser ? JSON.parse(JSON.stringify(deletedUser)) : null;
+		return deletedUser
+			? JSON.parse(JSON.stringify(deletedUser))
+			: { error: "Failed to delete user" };
 	} catch (error) {
 		Sentry.captureException(error);
-		handleError(error);
+		console.log(error);
+		return { error: "An unexpected error occurred" };
 	}
 }
