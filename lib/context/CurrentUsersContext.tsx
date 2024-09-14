@@ -105,7 +105,6 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	// Function to handle user signout
 	const handleSignout = () => {
 		const phone = currentUser?.phone; // Store phone number before resetting the state
-
 		if (phone) {
 			const userAuthRef = doc(db, "authToken", phone);
 
