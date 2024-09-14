@@ -9,7 +9,7 @@ import { handleError } from "@/lib/utils";
 import { CreateUserParams, UpdateUserParams } from "@/types";
 import Client from "../database/models/client.model";
 import * as Sentry from "@sentry/nextjs";
-import { trackEvent } from "../mixpanel";
+// import { trackEvent } from "../mixpanel";
 import { addMoney } from "./wallet.actions";
 import { MongoServerError } from "mongodb";
 
@@ -39,9 +39,9 @@ export async function createUser(user: CreateUserParams) {
 
 		const clientUser = JSON.parse(JSON.stringify(newUser));
 
-		trackEvent("User_first_seen", {
-			Client_ID: clientUser._id,
-		});
+		// trackEvent("User_first_seen", {
+		// 	Client_ID: clientUser._id,
+		// });
 		return JSON.parse(JSON.stringify(newUser));
 	} catch (error) {
 		if (error instanceof MongoServerError && error.code === 11000) {
