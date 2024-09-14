@@ -17,8 +17,11 @@ import useMediaRecorder from "@/hooks/useMediaRecorder";
 import ChatTimer from "./ChatTimer";
 import EndCallDecision from "../calls/EndCallDecision";
 import useEndChat from "@/hooks/useEndChat";
+import ContentLoading from "../shared/ContentLoading";
+import RechargeAndTip from "./Tip";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import CreatorChatTimer from "../creator/CreatorChatTimer";
+import Recharge from "./Recharge";
 import Tip from "./Tip";
 
 const ChatInterface: React.FC = () => {
