@@ -143,7 +143,7 @@ const ReviewSlider = ({
 			{/* navigation */}
 			{creatorFeedback?.length > 1 && (
 				<div className="flex items-center justify-center w-full">
-					<div className="flex gap-2 items-center max-w-[75%] md:max-w-[85%] py-[0.75px] overflow-x-scroll no-scrollbar bg-black/10 rounded-xl">
+					<div className="flex gap-2 items-center max-w-[50%] md:max-w-[60%] py-[0.75px] overflow-x-scroll no-scrollbar bg-black/10 rounded-xl">
 						{creatorFeedback?.map((_, index) => (
 							<button
 								key={index}

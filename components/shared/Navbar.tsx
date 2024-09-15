@@ -120,7 +120,7 @@ const Navbar = () => {
 				className="w-6 h-6 rounded-full"
 			/>
 
-			<span className="w-full whitespace-nowrap text-sm font-semibold">
+			<span className="w-full whitespace-nowrap text-xs font-semibold">
 				Get Your Link
 			</span>
 		</Button>

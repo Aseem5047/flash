@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { Call } from "@stream-io/video-react-sdk";
-import * as Sentry from "@sentry/nextjs";
 
 const MyOutgoingCallUI = ({ call }: { call: Call }) => {
 	const [callState, setCallState] = useState("outgoing");
@@ -22,8 +21,6 @@ const MyOutgoingCallUI = ({ call }: { call: Call }) => {
 						console.log("Audio autoplay started!");
 					})
 					.catch((error) => {
-						Sentry.captureException(error);
-
 						console.error("Audio autoplay was prevented:", error);
 					});
 			}

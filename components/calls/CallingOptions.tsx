@@ -4,7 +4,11 @@ import { audio, chat, video } from "@/constants/icons";
 import { creatorUser } from "@/types";
 import { useRouter } from "next/navigation";
 import { useToast } from "../ui/use-toast";
-import { Call, useStreamVideoClient } from "@stream-io/video-react-sdk";
+import {
+	Call,
+	CallingState,
+	useStreamVideoClient,
+} from "@stream-io/video-react-sdk";
 import { logEvent } from "firebase/analytics";
 import { doc, updateDoc, onSnapshot } from "firebase/firestore";
 import { analytics, db } from "@/lib/firebase";
@@ -170,20 +174,15 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	}, [chatState]);
 
 	// defining the actions for call accept and call reject
-	const handleCallAccepted = async (
-		call: Call,
-		callType: string,
-		callDuration: number
-	) => {
+	const handleCallAccepted = async (callType: string) => {
 		setIsProcessing(false); // Reset processing state
+
 		toast({
 			variant: "destructive",
 			title: "Call Accepted",
 			description: "The call has been accepted. Redirecting to meeting...",
 		});
 		setSheetOpen(false);
-
-		// await call?.leave();
 
 		const createdAtDate = clientUser?.createdAt
 			? new Date(clientUser.createdAt)
@@ -340,9 +339,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				headers: { "Content-Type": "application/json" },
 			});
 
-			call.on("call.accepted", () =>
-				handleCallAccepted(call, callType, maxCallDuration)
-			);
+			call.on("call.accepted", () => handleCallAccepted(callType));
 			call.on("call.rejected", () => handleCallRejected(callType));
 		} catch (error) {
 			Sentry.captureException(error);

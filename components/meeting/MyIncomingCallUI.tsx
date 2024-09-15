@@ -70,7 +70,6 @@ const MyIncomingCallUI = ({ call }: { call: Call }) => {
 						console.log("Audio autoplay started!");
 					})
 					.catch((error) => {
-						Sentry.captureException(error);
 						console.error("Audio autoplay was prevented:", error);
 					});
 			}

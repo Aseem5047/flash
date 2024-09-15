@@ -216,11 +216,11 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 				>
 					{!isImageLoaded ? (
 						<div
-							className={`bg-gray-300 opacity-60 animate-pulse rounded-[24px]  w-full h-72 xl:h-80 object-cover`}
+							className={`bg-gray-300 opacity-60 animate-pulse rounded-[24px] w-full h-[200px] md:h-72 xl:h-80 object-cover`}
 						/>
 					) : (
 						<div
-							className={`relative rounded-xl w-full h-72 xl:h-80 bg-center`}
+							className={`relative rounded-xl w-full h-[200px] md:h-72 xl:h-80 bg-center`}
 							style={backgroundImageStyle}
 						>
 							<div className="flex flex-col items-end justify-center gap-2 absolute top-4 right-4">
