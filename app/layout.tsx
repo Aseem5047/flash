@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 	},
 	openGraph: {
 		type: "website",
-		url: "https://app.flashcall.me",
+		url: "https://flashcall.me",
 		title: "FlashCall",
 		description: "Book your first consultation",
 		images: [
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
 		locale: "en_US",
 	},
 
-	metadataBase: new URL("https://app.flashcall.me"),
+	metadataBase: new URL("https://flashcall.me"),
 };
 
 export default function RootLayout({
