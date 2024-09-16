@@ -81,7 +81,7 @@ jobs:
 
       # Push production image to Docker Hub
       - name: Push prod image
-        run: docker push aseem5047/flashcall:prod
+        run: docker push aseem5047/flashcall:${IMAGE_TAG}
 
       # Prune dangling images to free up space
       - name: Prune dangling images
