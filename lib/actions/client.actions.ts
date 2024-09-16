@@ -134,7 +134,7 @@ export async function updateUser(userId: string, user: UpdateUserParams) {
 	} catch (error) {
 		Sentry.captureException(error);
 		console.error("Error updating user:", error);
-		throw error; // Propagate error for further handling
+		throw error;
 	}
 }
 

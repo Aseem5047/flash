@@ -126,8 +126,7 @@ const MyCallUI = () => {
 				if (
 					call.state.callingState !== CallingState.LEFT &&
 					(call.state.callingState === CallingState.JOINED ||
-						call.state.callingState === CallingState.JOINING) &&
-					isMeetingOwner
+						call.state.callingState === CallingState.JOINING)
 				) {
 					// Leave the call only if the user hasn't left or ended the call
 					await call?.leave();

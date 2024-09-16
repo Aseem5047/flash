@@ -301,6 +301,11 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				},
 			});
 
+			if (call) {
+				await call.join();
+				console.log("Successfully joined the call");
+			}
+
 			const createdAtDate = clientUser?.createdAt
 				? new Date(clientUser.createdAt)
 				: new Date();

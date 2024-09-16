@@ -56,6 +56,7 @@ export default function RootLayout({
 				<GoogleAnalytics />
 				<GoogleTagManager gtmId={`${process.env.NEXT_PUBLIC_MEASUREMENT_ID}`} />
 			</Suspense>
+
 			<TooltipProvider>
 				<body className="overflow-y-scroll no-scrollbar">
 					<Toaster />

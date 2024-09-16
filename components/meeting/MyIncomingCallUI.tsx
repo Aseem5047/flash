@@ -2,8 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Call } from "@stream-io/video-react-sdk";
 import { useToast } from "../ui/use-toast";
 import * as Sentry from "@sentry/nextjs";
-import { Router } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 const MyIncomingCallUI = ({ call }: { call: Call }) => {
 	const { toast } = useToast();
@@ -12,7 +10,7 @@ const MyIncomingCallUI = ({ call }: { call: Call }) => {
 	const expert = call?.state?.members?.find(
 		(member) => member.custom.type === "expert"
 	);
-	const router = useRouter();
+
 	useEffect(() => {
 		const registerServiceWorker = async () => {
 			if ("serviceWorker" in navigator) {
@@ -72,6 +70,7 @@ const MyIncomingCallUI = ({ call }: { call: Call }) => {
 						console.log("Audio autoplay started!");
 					})
 					.catch((error) => {
+						Sentry.captureException(error);
 						console.error("Audio autoplay was prevented:", error);
 					});
 			}

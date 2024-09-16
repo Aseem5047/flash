@@ -368,3 +368,23 @@ input[type="number"] {
 .transition-slide-previous {
 	animation: slide-out 0.5s ease-in-out backwards;
 }
+
+@keyframes fadeInUp {
+	0% {
+		opacity: 0;
+		transform: translateY(50px);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.creator-card {
+	opacity: 0;
+	animation: fadeInUp 0.5s forwards; /* Animation duration and direction */
+}
+
+.creator-card.entered {
+	animation-delay: var(--delay); /* Each card will have a different delay */
+}
