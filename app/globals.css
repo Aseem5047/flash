@@ -266,6 +266,10 @@ input[type="number"] {
 		@apply flex justify-between items-center;
 	}
 
+	.error-message {
+		@apply text-red-500 text-sm;
+	}
+
 	.input-field {
 		@apply bg-gray-50 h-[54px] focus-visible:ring-offset-0 placeholder:text-gray-500 rounded-xl px-4 py-3 border-none focus-visible:ring-transparent !important;
 	}

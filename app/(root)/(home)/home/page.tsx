@@ -89,7 +89,7 @@ const HomePage = () => {
 								WebkitTransform: "translateZ(0)",
 							}}
 						>
-							{creators?.pages?.map((page: any, pageIndex: any) =>
+							{creators?.pages?.map((page, pageIndex) =>
 								page.map((creator: creatorUser, index: number) => (
 									<section
 										key={creator._id}

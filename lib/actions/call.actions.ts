@@ -1,5 +1,4 @@
 import { connectToDatabase } from "@/lib/database";
-import { handleError } from "@/lib/utils";
 import { RegisterCallParams, UpdateCallParams } from "@/types";
 import Call from "../database/models/call.model";
 import Chat from "../database/models/chat.model";
@@ -25,7 +24,7 @@ export async function createChat(chat: any) {
 		return newChat.toJSON();
 	} catch (error) {
 		Sentry.captureException(error);
-		console.log(error);
+		// console.log(error);
 	}
 }
 
@@ -55,8 +54,8 @@ export async function updateChat(
 		return updatedChat;
 	} catch (error) {
 		Sentry.captureException(error);
-		console.log(error);
 		console.error(error);
+		console.log(error);
 	}
 }
 
@@ -98,7 +97,6 @@ export async function getUserCalls(userId: string) {
 	} catch (error) {
 		Sentry.captureException(error);
 		console.log(error);
-		console.log(error);
 	}
 }
 
@@ -124,7 +122,6 @@ export async function getUserCallsPaginated(
 		return calls && calls.map((call) => call.toJSON());
 	} catch (error) {
 		Sentry.captureException(error);
-		console.log(error);
 		console.log(error);
 	}
 }

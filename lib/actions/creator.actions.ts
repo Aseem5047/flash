@@ -7,7 +7,17 @@ import * as Sentry from "@sentry/nextjs";
 import { addMoney } from "./wallet.actions";
 // import { trackEvent } from "../mixpanel";
 import { MongoServerError } from "mongodb";
-import { validateUsername } from "../utils";
+
+// Regular expression to validate username
+const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+
+// Function to validate username
+export const validateUsername = (username: string) => {
+	if (!usernameRegex.test(username)) {
+		return false;
+	}
+	return true;
+};
 
 export async function createCreatorUser(user: CreateCreatorParams) {
 	try {

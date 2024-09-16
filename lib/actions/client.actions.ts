@@ -1,17 +1,23 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-
 import { connectToDatabase } from "@/lib/database";
-
-import { handleError, validateUsername } from "@/lib/utils";
-
 import { CreateUserParams, UpdateUserParams } from "@/types";
 import Client from "../database/models/client.model";
 import * as Sentry from "@sentry/nextjs";
 // import { trackEvent } from "../mixpanel";
 import { addMoney } from "./wallet.actions";
 import { MongoServerError } from "mongodb";
+
+// Regular expression to validate username
+const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+
+// Function to validate username
+export const validateUsername = (username: string) => {
+	if (!usernameRegex.test(username)) {
+		return false;
+	}
+	return true;
+};
 
 export async function createUser(user: CreateUserParams) {
 	try {
@@ -134,7 +140,7 @@ export async function updateUser(userId: string, user: UpdateUserParams) {
 	} catch (error) {
 		Sentry.captureException(error);
 		console.error("Error updating user:", error);
-		throw error;
+		throw error; // Propagate error for further handling
 	}
 }
 
