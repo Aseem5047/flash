@@ -125,12 +125,14 @@ const MyCallUI = () => {
 				// Check the calling state before attempting to leave
 				if (
 					call.state.callingState !== CallingState.LEFT &&
-					call.state.callingState === CallingState.JOINED &&
+					(call.state.callingState === CallingState.JOINED ||
+						call.state.callingState === CallingState.JOINING) &&
 					isMeetingOwner
 				) {
 					// Leave the call only if the user hasn't left or ended the call
 					await call?.leave();
 				}
+
 				router.replace(`/meeting/${call.id}`);
 			};
 

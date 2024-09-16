@@ -152,11 +152,14 @@ const Navbar = () => {
 						className="flex items-center justify-center lg:ml-2"
 					>
 						<Image
-							src="/icons/logoDesktop.png"
-							width={100}
-							height={100}
+							src="/icons/logoMain.png"
+							width={1000}
+							height={1000}
 							alt="flashcall logo"
-							className="w-full h-full rounded-xl hoverScaleEffect"
+							className="w-[130px] md:w-[144px] h-[40px] p-2 bg-green-1 rounded-[4px] hoverScaleDownEffect"
+							style={{
+								boxShadow: `5px 5px 0px 0px ${userTheme}`,
+							}}
 						/>
 					</Link>
 				) : (

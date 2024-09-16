@@ -7,10 +7,19 @@ import * as Sentry from "@sentry/nextjs";
 import { addMoney } from "./wallet.actions";
 // import { trackEvent } from "../mixpanel";
 import { MongoServerError } from "mongodb";
+import { validateUsername } from "../utils";
 
 export async function createCreatorUser(user: CreateCreatorParams) {
 	try {
 		await connectToDatabase();
+
+		// Validate the username
+		if (!validateUsername(user.username)) {
+			return {
+				error:
+					"Username contains invalid characters. Only alphanumeric characters, underscores, and dashes are allowed.",
+			};
+		}
 
 		// Check for existing user with the same username
 		const existingUserByUsername = await Creator.findOne({
@@ -32,7 +41,7 @@ export async function createCreatorUser(user: CreateCreatorParams) {
 			userType: "Creator",
 			amount: 0, // Set the initial balance here
 		});
-		const creatorUser = JSON.parse(JSON.stringify(newUser));
+		// const creatorUser = JSON.parse(JSON.stringify(newUser));
 		// trackEvent("User_first_seen", {
 		// 	Creator_ID: creatorUser._id,
 		// });
@@ -145,6 +154,14 @@ export async function updateCreatorUser(
 ) {
 	try {
 		await connectToDatabase();
+
+		// Validate the username
+		if (updates.username && !validateUsername(updates.username)) {
+			return {
+				error:
+					"Username contains invalid characters. Only alphanumeric characters, underscores, and dashes are allowed.",
+			};
+		}
 
 		// Construct the update object
 		const updateObject: any = { ...updates };

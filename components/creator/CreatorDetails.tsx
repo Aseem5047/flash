@@ -31,7 +31,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 		? creator.themeSelected
 		: "#50A65C";
 
-	const { clientUser, setAuthenticationSheetOpen, setCurrentTheme } =
+	const { clientUser, setAuthenticationSheetOpen, setCurrentTheme, userType } =
 		useCurrentUsersContext();
 	const { toast } = useToast();
 
@@ -235,15 +235,17 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 										lastName={creator.lastName}
 									/>
 
-									<Favorites
-										setMarkedFavorite={setMarkedFavorite}
-										markedFavorite={markedFavorite}
-										handleToggleFavorite={handleToggleFavorite}
-										addingFavorite={addingFavorite}
-										creator={creator}
-										user={clientUser}
-										isCreatorOrExpertPath={isCreatorOrExpertPath}
-									/>
+									{userType === "client" && (
+										<Favorites
+											setMarkedFavorite={setMarkedFavorite}
+											markedFavorite={markedFavorite}
+											handleToggleFavorite={handleToggleFavorite}
+											addingFavorite={addingFavorite}
+											creator={creator}
+											user={clientUser}
+											isCreatorOrExpertPath={isCreatorOrExpertPath}
+										/>
+									)}
 								</>
 							</div>
 

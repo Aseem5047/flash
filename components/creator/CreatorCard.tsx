@@ -5,10 +5,9 @@ import { creatorUser } from "@/types";
 import CallingOptions from "../calls/CallingOptions";
 import CreatorDetails from "./CreatorDetails";
 import UserReviews from "./UserReviews";
-import { useToast } from "@/components/ui/use-toast";
 import { getUserByUsername } from "@/lib/actions/creator.actions";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import * as Sentry from "@sentry/nextjs";
 import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import SinglePostLoader from "../shared/SinglePostLoader";
@@ -17,22 +16,11 @@ const CreatorCard: React.FC = () => {
 	const [creator, setCreator] = useState<creatorUser | null>(null);
 	const [loading, setLoading] = useState(true);
 	const { username } = useParams();
-	const { toast } = useToast();
-	const router = useRouter();
-	const { currentUser, userType, setCurrentTheme } = useCurrentUsersContext();
+	const { currentUser, setCurrentTheme } = useCurrentUsersContext();
 	const { walletBalance } = useWalletBalanceContext();
 
 	useEffect(() => {
 		creator?.themeSelected && setCurrentTheme(creator?.themeSelected);
-		if (userType === "creator") {
-			toast({
-				variant: "destructive",
-				title: "You are a Creator",
-				description: "Redirecting to HomePage ...",
-			});
-			router.push("/home"); // Redirect to homepage if userType is creator
-			return;
-		}
 
 		const fetchCreator = async () => {
 			try {

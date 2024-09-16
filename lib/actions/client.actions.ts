@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { connectToDatabase } from "@/lib/database";
 
-import { handleError } from "@/lib/utils";
+import { handleError, validateUsername } from "@/lib/utils";
 
 import { CreateUserParams, UpdateUserParams } from "@/types";
 import Client from "../database/models/client.model";
@@ -16,6 +16,15 @@ import { MongoServerError } from "mongodb";
 export async function createUser(user: CreateUserParams) {
 	try {
 		await connectToDatabase();
+
+		// Validate the username
+		if (!validateUsername(user.username)) {
+			return {
+				error:
+					"Username contains invalid characters. Only alphanumeric characters, underscores, and dashes are allowed.",
+			};
+		}
+
 		// Check for existing user with the same username
 		const existingUserByUsername = await Client.findOne({
 			username: user.username,
@@ -37,7 +46,7 @@ export async function createUser(user: CreateUserParams) {
 			amount: 0, // Set the initial balance here
 		});
 
-		const clientUser = JSON.parse(JSON.stringify(newUser));
+		// const clientUser = JSON.parse(JSON.stringify(newUser));
 
 		// trackEvent("User_first_seen", {
 		// 	Client_ID: clientUser._id,
@@ -92,15 +101,13 @@ export async function updateUser(userId: string, user: UpdateUserParams) {
 	try {
 		await connectToDatabase();
 
-		console.log("Updating user");
-
-		// Check for existing user with the same email or username
-		// const existingUser = await Client.findOne({
-		// 	$or: [{ username: user.username }],
-		// });
-		// if (existingUser) {
-		// 	return { error: "User with the same username already exists" };
-		// }
+		// Validate the username
+		if (!validateUsername(user.username)) {
+			return {
+				error:
+					"Username contains invalid characters. Only alphanumeric characters, underscores, and dashes are allowed.",
+			};
+		}
 
 		// First attempt to find and update by userId
 		let updatedUser = await Client.findByIdAndUpdate(userId, user, {

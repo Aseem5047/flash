@@ -97,9 +97,7 @@ const MeetingRoom = () => {
 						userId: currentUser?._id,
 					});
 				} catch (error: any) {
-					if (error.message !== "Illegal State: Already joined") {
-						console.clear();
-					}
+					console.warn("Error Joining Call ", error);
 				}
 			}
 		};
