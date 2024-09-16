@@ -87,6 +87,6 @@ jobs:
           IMAGE_TAG=$(git rev-parse --short HEAD)
           docker push aseem5047/flashcall:${IMAGE_TAG}
 
-      # Prune dangling images to free up space
+      # Prune dangling images to free up the space
       - name: Prune dangling images
         run: docker image prune -f
