@@ -4,11 +4,7 @@ import { audio, chat, video } from "@/constants/icons";
 import { creatorUser } from "@/types";
 import { useRouter } from "next/navigation";
 import { useToast } from "../ui/use-toast";
-import {
-	Call,
-	CallingState,
-	useStreamVideoClient,
-} from "@stream-io/video-react-sdk";
+import { Call, useStreamVideoClient } from "@stream-io/video-react-sdk";
 import { logEvent } from "firebase/analytics";
 import { doc, updateDoc, onSnapshot } from "firebase/firestore";
 import { analytics, db } from "@/lib/firebase";
@@ -87,12 +83,12 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				let services = data.services;
 				setUpdatedCreator((prev) => ({
 					...prev,
-					videoRate: prices.videoCall,
-					audioRate: prices.audioCall,
-					chatRate: prices.chat,
-					videoAllowed: services.videoCall,
-					audioAllowed: services.audioCall,
-					chatAllowed: services.chat,
+					videoRate: prices?.videoCall ?? "",
+					audioRate: prices?.audioCall ?? "",
+					chatRate: prices?.chat ?? "",
+					videoAllowed: services?.videoCall ?? false,
+					audioAllowed: services?.audioCall ?? false,
+					chatAllowed: services?.chat ?? false,
 				}));
 			}
 		});

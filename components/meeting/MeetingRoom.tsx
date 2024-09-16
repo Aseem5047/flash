@@ -108,7 +108,7 @@ const MeetingRoom = () => {
 
 			joinCall();
 		}
-	}, [callingState, call, hasJoined, callHasEnded]);
+	}, [call, hasJoined, callHasEnded]);
 
 	useEffect(() => {
 		const handleResize = () => {
