@@ -191,7 +191,7 @@ const Navbar = () => {
 								}`}
 							/>
 							<span className="w-full text-xs whitespace-nowrap font-semibold group-hover:text-white">
-								{`Rs. ${walletBalance.toFixed(2)}`}
+								{`Rs. ${Math.round(walletBalance)}`}
 							</span>
 						</Link>
 					) : (

@@ -74,10 +74,10 @@ const CallFeedback = ({
 			});
 			return;
 		}
-		if (feedbackMessage.length < 3) {
+		if (!rating) {
 			toast({
 				variant: "destructive",
-				title: "Feedback must be at least 3 characters",
+				title: "Feedback Rating is Required",
 			});
 			return;
 		}

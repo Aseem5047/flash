@@ -84,7 +84,7 @@ const HomePage = () => {
 						</div>
 					) : (
 						<section
-							className={`grid xs:grid-cols-2  h-auto gap-2.5 px-2.5 lg:gap-5 lg:px-0 items-center overflow-hidden`}
+							className={`grid xs:grid-cols-2  h-auto gap-3.5 px-3.5 lg:gap-5 lg:px-0 items-center overflow-hidden`}
 							style={{
 								WebkitTransform: "translateZ(0)",
 							}}
@@ -132,7 +132,9 @@ const HomePage = () => {
 						</div>
 					)}
 
-					{hasNextPage && <div ref={ref} className=" mt-10 w-full" />}
+					{hasNextPage && (
+						<div ref={ref} className=" pt-10 w-full border border-black" />
+					)}
 				</Suspense>
 			) : (
 				<CreatorHome />

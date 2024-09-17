@@ -96,7 +96,7 @@ const EditProfile = ({
 			bio: userData.bio,
 			gender: userData.gender,
 			dob: userData.dob,
-			creatorId: userData.creatorId || `${userData.phone}@creator`,
+			creatorId: `@${userData.username}` || `@${userData.phone}`,
 		},
 	});
 
@@ -216,7 +216,7 @@ const EditProfile = ({
 				response = await updateCreatorUser(userData.id!, {
 					...commonValues,
 					...creatorProfileDetails,
-					creatorId: values.creatorId || userData.id,
+					creatorId: `@${values.username || userData.username}`,
 				} as UpdateCreatorParams);
 			} else {
 				response = await updateUser(
@@ -509,9 +509,10 @@ const EditProfile = ({
 									<FormControl>
 										<Input
 											type="text"
-											placeholder={`Create Your ID`}
+											placeholder="Create Your ID"
 											{...field}
 											className="input-field"
+											readOnly
 										/>
 									</FormControl>
 									<FormDescription className="text-xs text-gray-400 ml-1">

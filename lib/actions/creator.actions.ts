@@ -5,7 +5,6 @@ import { CreateCreatorParams, LinkType, UpdateCreatorParams } from "@/types";
 import Creator from "../database/models/creator.model";
 import * as Sentry from "@sentry/nextjs";
 import { addMoney } from "./wallet.actions";
-// import { trackEvent } from "../mixpanel";
 import { MongoServerError } from "mongodb";
 
 // Regular expression to validate username
@@ -51,10 +50,7 @@ export async function createCreatorUser(user: CreateCreatorParams) {
 			userType: "Creator",
 			amount: 0, // Set the initial balance here
 		});
-		// const creatorUser = JSON.parse(JSON.stringify(newUser));
-		// trackEvent("User_first_seen", {
-		// 	Creator_ID: creatorUser._id,
-		// });
+
 		return JSON.parse(JSON.stringify(newUser));
 	} catch (error) {
 		if (error instanceof MongoServerError && error.code === 11000) {
@@ -89,23 +85,21 @@ export async function getUsers() {
 export async function getUsersPaginated(offset = 0, limit = 2) {
 	try {
 		await connectToDatabase();
-		// MongoDB query to filter users with non-zero rates for audio, video, and chat
+
 		const query = {
 			$or: [
-				{ audioRate: { $ne: "0" } }, // Include if audioRate is not "0"
-				{ videoRate: { $ne: "0" } }, // Include if videoRate is not "0"
-				{ chatRate: { $ne: "0" } }, // Include if chatRate is not "0"
+				{ audioRate: { $ne: "0" } },
+				{ videoRate: { $ne: "0" } },
+				{ chatRate: { $ne: "0" } },
 			],
 		};
 
-		// Fetch users with pagination using skip, limit, and query filters
 		const users = await Creator.find(query)
-			.sort({ createdAt: -1 }) // Sort by creation date in descending order
+			.sort({ createdAt: -1 })
 			.skip(offset)
 			.limit(limit)
-			.lean(); // Use lean() to get plain JavaScript objects
+			.lean();
 
-		// Return the fetched users or an empty array if none are found
 		return users.length > 0 ? JSON.parse(JSON.stringify(users)) : [];
 	} catch (error) {
 		Sentry.captureException(error);

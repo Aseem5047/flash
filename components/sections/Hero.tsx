@@ -39,13 +39,22 @@ const Hero = () => {
 					</Link>
 				</div>
 				{/* banner */}
+
 				<Image
-					src="/web/images/hero.png"
+					src="/web/images/hero_web.png"
 					alt="logo"
 					width={1000}
 					height={1000}
-					className="rounded-xl w-full h-full max-h-[480px] object-contain"
+					className="hidden lg:block rounded-xl w-full h-full max-h-[480px] object-contain"
 				/>
+				<Image
+					src="/web/images/hero_mobile.png"
+					alt="logo"
+					width={1000}
+					height={1000}
+					className="lg:hidden rounded-xl w-full h-full max-h-[480px] object-contain"
+				/>
+
 				{/* more content */}
 				<span className="text-xl text-[#707070] leading-loose lg:hidden">
 					Join 1000+ people who are earning upto 10 Lakhs a month just by
