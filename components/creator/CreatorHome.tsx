@@ -332,7 +332,7 @@ const CreatorHome = () => {
 							{creatorUser?.firstName} {creatorUser?.lastName}
 						</p>
 						<p className="text-white text-sm">
-							{`@${creatorUser.username}` ?? creatorUser?.creatorId}
+							{`@${creatorUser.username}` || creatorUser?.creatorId}
 						</p>
 					</section>
 				</div>
