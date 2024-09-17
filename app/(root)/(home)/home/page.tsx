@@ -133,7 +133,7 @@ const HomePage = () => {
 					)}
 
 					{hasNextPage && (
-						<div ref={ref} className=" pt-10 w-full border border-black" />
+						<div ref={ref} className=" pt-10 w-full" />
 					)}
 				</Suspense>
 			) : (
