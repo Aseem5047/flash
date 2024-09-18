@@ -35,7 +35,7 @@ export async function generateMetadata({
 		: decodedUsername;
 
 	const creator = await getUserByUsername(String(formattedUsername));
-	const creatorProfile = creator.length > 0 ? creator[0] : null;
+	const creatorProfile = creator ? creator : null;
 	const imageURL = creatorProfile
 		? imageSrc(creatorProfile)
 		: "/images/defaultProfileImage.png";

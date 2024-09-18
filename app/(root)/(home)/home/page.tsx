@@ -20,6 +20,7 @@ const HomePage = () => {
 	const [loadingCard, setLoadingCard] = useState(false);
 	const { clientUser, userType, setCurrentTheme } = useCurrentUsersContext();
 	const router = useRouter();
+	const pathname = usePathname();
 	const { ref, inView } = useInView();
 	const {
 		data: creators,
@@ -36,14 +37,19 @@ const HomePage = () => {
 		}
 	}, [inView]);
 
+	useEffect(() => {
+		if (pathname === "/home" || pathname === "/") {
+			localStorage.removeItem("creatorURL");
+		}
+	}, [router, pathname]);
+
 	const handleCreatorCardClick = async (
 		phone: string,
 		username: string,
 		theme: string,
 		id: string
 	) => {
-		setLoadingCard(true); // Set loading state before navigation
-		// Save any necessary data in localStorage
+		setLoadingCard(true);
 		localStorage.setItem("creatorURL", `/${username}`);
 		setCurrentTheme(theme);
 

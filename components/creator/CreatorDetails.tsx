@@ -47,7 +47,8 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 	useEffect(() => {
 		if (isCreatorOrExpertPath) {
 			localStorage.setItem("currentCreator", JSON.stringify(creator));
-			localStorage.setItem("creatorURL", `/${creator?.username}`);
+			userType !== "creator" &&
+				localStorage.setItem("creatorURL", `/${creator?.username}`);
 			setCurrentTheme(themeColor);
 		}
 	}, [creator?._id, isCreatorOrExpertPath]);
@@ -201,7 +202,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 		return (
 			<AuthenticationSheet
 				isOpen={isAuthSheetOpen}
-				onOpenChange={setIsAuthSheetOpen} // Handle sheet close
+				onOpenChange={setIsAuthSheetOpen}
 			/>
 		);
 
@@ -209,7 +210,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 		<>
 			<div className="flex flex-col items-center px-5 sm:px-7 justify-center">
 				<div
-					className={`relative flex flex-col items-center w-full max-w-[85%] md:max-w-[60%] xl:max-w-[35%] mx-auto gap-4 p-4 rounded-[24px] z-10 `}
+					className={`relative flex flex-col items-center w-full max-w-[85%] md:max-w-[70%] xl:max-w-[35%] mx-auto gap-4 p-4 rounded-[24px] z-10`}
 					style={{
 						backgroundColor: themeColor,
 					}}

@@ -25,7 +25,7 @@ const CreatorCard: React.FC = () => {
 		const fetchCreator = async () => {
 			try {
 				const response = await getUserByUsername(String(username));
-				setCreator(response[0] || null);
+				setCreator(response || null);
 			} catch (error) {
 				Sentry.captureException(error);
 				console.error("Error fetching creator:", error);

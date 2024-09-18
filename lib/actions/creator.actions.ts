@@ -147,7 +147,7 @@ export async function getUserByUsername(username: string) {
 			? decodedUsername.substring(1)
 			: decodedUsername;
 		// Find user based on the formatted username
-		const user = await Creator.find({ username: formattedUsername });
+		const user = await Creator.findOne({ username: formattedUsername });
 
 		if (!user) throw new Error("User not found");
 

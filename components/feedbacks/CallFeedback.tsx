@@ -199,7 +199,7 @@ const CallFeedback = ({
 							onKeyDown={handleKeyPress}
 							placeholder="Write your feedback here..."
 							className="w-full p-2 border rounded resize-none h-full max-h-[100px] overflow-y-scroll no-scrollbar outline-none hover:bg-gray-50"
-						></textarea>
+						/>
 
 						<button
 							onClick={handleSubmitFeedback}
