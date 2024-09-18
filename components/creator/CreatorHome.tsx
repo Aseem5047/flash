@@ -123,7 +123,7 @@ const CreatorHome = () => {
 		}
 	}, [creatorUser?._id]);
 
-	const creatorLink = `https://flashcall.me/${creatorUser?.username}`;
+	const creatorLink = `https://flashcall.me/@${creatorUser?.username}`;
 
 	const theme = creatorUser?.themeSelected;
 
@@ -332,7 +332,9 @@ const CreatorHome = () => {
 							{creatorUser?.firstName} {creatorUser?.lastName}
 						</p>
 						<p className="text-white text-sm">
-							{`@${creatorUser.username}` || creatorUser?.creatorId}
+							{creatorUser?.creatorId?.startsWith("@")
+								? creatorUser.creatorId
+								: `@${creatorUser?.username}`}
 						</p>
 					</section>
 				</div>

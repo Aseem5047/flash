@@ -12,7 +12,7 @@ const About = () => {
 				alt="logo"
 				width={1000}
 				height={1000}
-				className="hidden lg:block rounded-xl w-full h-full max-h-[380px] object-contain"
+				className="hidden lg:flex rounded-xl w-full h-full max-h-[444px] object-contain"
 			/>
 			{/* heading and content */}{" "}
 			<div className="flex flex-col items-start justify-center gap-7">
@@ -30,7 +30,7 @@ const About = () => {
 			</div>
 			{/* About Banner Phone*/}
 			<Image
-				src="/web/images/about_phone.png"
+				src="/web/images/about_mobile.png"
 				alt="logo"
 				width={1000}
 				height={1000}

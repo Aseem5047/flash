@@ -96,7 +96,6 @@ const EditProfile = ({
 			bio: userData.bio,
 			gender: userData.gender,
 			dob: userData.dob,
-			creatorId: `@${userData.username}` || `@${userData.phone}`,
 		},
 	});
 
@@ -116,8 +115,7 @@ const EditProfile = ({
 			watchedValues.photo !== initialState.photo ||
 			watchedValues.bio !== initialState.bio ||
 			watchedValues.gender !== initialState.gender ||
-			watchedValues.dob !== initialState.dob ||
-			watchedValues.creatorId !== initialState.creatorId;
+			watchedValues.dob !== initialState.dob;
 
 		setIsChanged(hasChanged);
 	}, [watchedValues, initialState]);
@@ -497,7 +495,7 @@ const EditProfile = ({
 					/>
 
 					{/* creator id */}
-					{userData.role === "creator" && (
+					{/* {userData.role === "creator" && (
 						<FormField
 							control={form.control}
 							name="creatorId"
@@ -524,7 +522,7 @@ const EditProfile = ({
 								</FormItem>
 							)}
 						/>
-					)}
+					)} */}
 				</div>
 
 				{/* profile theme */}

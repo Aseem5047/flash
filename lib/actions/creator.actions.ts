@@ -140,15 +140,15 @@ export async function getUserByUsername(username: string) {
 	try {
 		await connectToDatabase();
 
+		// Find user based on the formatted username
 		const user = await Creator.find({ username });
 
 		if (!user) throw new Error("User not found");
 
 		return JSON.parse(JSON.stringify(user));
 	} catch (error) {
-		Sentry.captureException(error);
-		console.log(error);
-		return [];
+		console.error(error);
+		return { error: "An unexpected error occurred" };
 	}
 }
 

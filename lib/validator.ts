@@ -17,7 +17,6 @@ export const UpdateProfileFormSchema = z.object({
 	bio: z.string().optional(),
 	gender: z.string().min(3, "This field is Required"),
 	dob: z.string().min(6, "This field is Required"),
-	creatorId: z.string(),
 });
 
 export const UpdateProfileFormSchemaClient = z.object({
@@ -36,7 +35,6 @@ export const UpdateProfileFormSchemaClient = z.object({
 	bio: z.string().optional(),
 	gender: z.string().optional(),
 	dob: z.string().optional(),
-	creatorId: z.string().optional(),
 });
 
 export const enterAmountSchema = z.object({
