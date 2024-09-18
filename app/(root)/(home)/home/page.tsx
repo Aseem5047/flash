@@ -58,7 +58,7 @@ const HomePage = () => {
 		});
 
 		// Trigger the route change immediately
-		router.push(`/@${username}`);
+		router.push(`/${username}`);
 	};
 
 	if (isLoading || loadingCard) {

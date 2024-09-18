@@ -19,22 +19,12 @@ const CreatorCard: React.FC = () => {
 	const { currentUser, setCurrentTheme } = useCurrentUsersContext();
 	const { walletBalance } = useWalletBalanceContext();
 
-	console.log(username);
-
 	useEffect(() => {
 		creator?.themeSelected && setCurrentTheme(creator?.themeSelected);
 
 		const fetchCreator = async () => {
 			try {
-				// Decode the URL-encoded username
-				const decodedUsername = decodeURIComponent(username as string);
-
-				// Remove "@" from the beginning if it exists
-				const formattedUsername = decodedUsername.startsWith("@")
-					? decodedUsername.substring(1)
-					: decodedUsername;
-
-				const response = await getUserByUsername(String(formattedUsername));
+				const response = await getUserByUsername(String(username));
 				setCreator(response[0] || null);
 			} catch (error) {
 				Sentry.captureException(error);

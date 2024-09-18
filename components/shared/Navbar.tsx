@@ -174,7 +174,7 @@ const Navbar = () => {
 					{walletBalance >= 0 ? (
 						<Link
 							href="/payment"
-							className={`w-fit flex items-center justify-center gap-2 text-black px-2 py-3 border border-black rounded-[4px] hover:bg-green-1 ${
+							className={`w-fit flex items-center justify-center gap-2 text-black p-3 border border-black rounded-[4px] hover:bg-green-1 ${
 								pathname.includes("/payment") && "bg-green-1 text-white"
 							} group`}
 							style={{

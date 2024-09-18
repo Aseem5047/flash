@@ -139,9 +139,15 @@ export async function getUserByPhone(phone: string) {
 export async function getUserByUsername(username: string) {
 	try {
 		await connectToDatabase();
+		// Decode the URL-encoded username
+		const decodedUsername = decodeURIComponent(username as string);
 
+		// Remove "@" from the beginning if it exists
+		const formattedUsername = decodedUsername.startsWith("@")
+			? decodedUsername.substring(1)
+			: decodedUsername;
 		// Find user based on the formatted username
-		const user = await Creator.find({ username });
+		const user = await Creator.find({ username: formattedUsername });
 
 		if (!user) throw new Error("User not found");
 
