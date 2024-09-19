@@ -1,13 +1,12 @@
 import React from "react";
 import Link from "next/link";
-import terms_services from "@/constants/services/TermsOfServices.json";
+import { terms } from "../../../../constants/services/TermsOfServices.json";
 
 const TermsOfServices = () => {
-	const terms = terms_services.terms;
 	const aboutPlatform = terms.aboutPlatform;
 	const tableOfContents = terms.tableOfContents;
 	return (
-		<section className="w-full h-fit py-7 pb-24 bg-white flex flex-col gap-4 items-center justify-start md:px-14 lg:px-24 max-md:px-4">
+		<section className="w-full h-fit py-7 pb-24 bg-white flex flex-col gap-4 items-center justify-start md:px-12 lg:px-24 max-md:px-4">
 			{/* page title */}
 			<h1 className="text-3xl font-medium mt-4">Terms of Services</h1>
 			{/* subheading */}
