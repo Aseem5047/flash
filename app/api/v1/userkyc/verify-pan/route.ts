@@ -20,11 +20,14 @@ export async function POST(request: NextRequest) {
 			body: JSON.stringify(payload),
 		});
 
-		if (!response.ok) {
-			throw new Error("Failed to verify PAN");
-		}
-
 		const result = await response.json();
+
+		if (!response.ok) {
+			return NextResponse.json({
+				success: false,
+				error: result.message || "Validation error",
+			});
+		}
 
 		const kyc = {
 			userId: userId,

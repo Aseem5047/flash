@@ -42,18 +42,16 @@ export async function POST(request: NextRequest) {
 			}
 		);
 
-		// Check if the response is OK
-		if (!response.ok) {
-			const errorData = await response.json();
-			throw new Error(
-				`API request failed with status ${response.status}: ${
-					errorData.message || "Unknown error"
-				}`
-			);
-		}
-
 		// Parse the API response
 		const result = await response.json();
+
+		// Check if the response is OK
+		if (!response.ok) {
+			return NextResponse.json({
+				success: false,
+				error: result.message || "Validation error",
+			});
+		}
 
 		const kyc = {
 			userId: userId,
