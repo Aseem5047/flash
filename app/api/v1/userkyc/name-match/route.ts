@@ -2,76 +2,57 @@ import { createUserKyc } from "@/lib/actions/userkyc.actions";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
+	const { userId, name1, name2, verificationId } = await request.json();
+
+	const payload = {
+		name_1: name1,
+		name_2: name2,
+		verification_id: verificationId,
+	};
+
 	try {
-		// Extract data from the request body
-		const { verificationId, first_img, second_img, userId } =
-			await request.json();
-
-		// Fetch the first image as a Blob and create a File object
-		const livelinessPhotoResponse = await fetch(first_img);
-		if (!livelinessPhotoResponse.ok) {
-			throw new Error("Failed to fetch the first image (liveliness photo).");
-		}
-		const blobLiveliness = await livelinessPhotoResponse.blob();
-
-		// Convert base64 string (second image) to a File object
-		const base64String = "data:image/jpeg;base64," + second_img;
-		const base64Response = await fetch(base64String);
-		if (!base64Response.ok) {
-			throw new Error("Failed to convert base64 string to image.");
-		}
-		const blob = await base64Response.blob();
-
-		// Prepare form data for the API request
-		const formData = new FormData();
-		formData.append("first_image", blobLiveliness);
-		formData.append("second_image", blob);
-		formData.append("verification_id", verificationId);
-
-		// Make a POST request to the Cashfree Face Match API
 		const response = await fetch(
-			"https://api.cashfree.com/verification/face-match",
+			"https://api.cashfree.com/verification/name-match",
 			{
 				method: "POST",
-				body: formData,
 				headers: {
 					"x-client-id": process.env.NEXT_PUBLIC_CASHFREE_CLIENT_ID as string, // Replace with your client ID
 					"x-client-secret": process.env
 						.NEXT_PUBLIC_CASHFREE_CLIENT_SECRET as string, // Replace with your client secret
+					"Content-Type": "application/json",
 				},
+				body: JSON.stringify(payload),
 			}
 		);
 
-		// Check if the response is OK
-		if (!response.ok) {
-			const errorData = await response.json();
-			throw new Error(
-				`API request failed with status ${response.status}: ${
-					errorData.message || "Unknown error"
-				}`
-			);
-		}
-
-		// Parse the API response
 		const result = await response.json();
+
+		if (!response.ok) {
+			console.error("Cashfree error response:", result);
+			return NextResponse.json({
+				success: false,
+				error: result.message || "Validation Error",
+			});
+		}
 
 		const kyc = {
 			userId: userId,
-			liveliness: {
-				reference_id: result.ref_id,
+			name_match: {
+				reference_id: result.reference_id,
 				verification_id: result.verification_id,
+				name_1: result.name_1,
+				name_2: result.name_2,
 				status: result.status,
-				face_match_result: result.face_match_result,
-				face_match_score: result.face_match_score,
+				score: result.score,
+				reason: result.reason,
 			},
 		};
 
-		await createUserKyc(kyc, "face_match");
+		await createUserKyc(kyc, "name_match");
 
-		// Return the result using NextResponse
 		return NextResponse.json({ success: true, data: result });
-	} catch (error: any) {
-		// Handle errors and return a structured error response using NextResponse
+	} catch (error) {
+		console.error("Unexpected error:", error);
 		return NextResponse.json({
 			success: false,
 			error: (error as Error).message,

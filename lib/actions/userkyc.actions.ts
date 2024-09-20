@@ -1,7 +1,7 @@
 import { connectToDatabase } from "@/lib/database";
 import { handleError } from "@/lib/utils";
 import UserKyc from "../database/models/userkyc.model";
-import { RegisterUserKycParams, UpdateUserKycParams } from "@/types";
+import { UpdateUserKycParams } from "@/types";
 import * as Sentry from "@sentry/nextjs";
 
 export async function createUserKyc(
