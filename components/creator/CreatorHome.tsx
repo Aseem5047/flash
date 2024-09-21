@@ -19,6 +19,7 @@ import CreatorLinks from "./CreatorLinks";
 import * as Sentry from "@sentry/nextjs";
 import { trackEvent } from "@/lib/mixpanel";
 import usePlatform from "@/hooks/usePlatform";
+import ProfileDialog from "./ProfileDialog";
 
 const CreatorHome = () => {
 	const { creatorUser, refreshCurrentUser } = useCurrentUsersContext();
@@ -230,9 +231,9 @@ const CreatorHome = () => {
 			updateFirestoreCallServices(
 				{
 					myServices: services.myServices,
-					videoCall: services.videoCall || false,
-					audioCall: services.audioCall || false,
-					chat: services.chat || false,
+					videoCall: services.videoCall,
+					audioCall: services.audioCall,
+					chat: services.chat,
 				},
 				newPrices
 			);
@@ -344,13 +345,7 @@ const CreatorHome = () => {
 					</Link>
 				</div>
 				<div className="flex flex-col items-center justify-center p-4">
-					<Image
-						src={imageSrc}
-						width={1000}
-						height={1000}
-						alt="avatar"
-						className="w-32 h-32 bg-white rounded-full p-2 object-cover"
-					/>
+					<ProfileDialog creator={creatorUser} imageSrc={imageSrc} />
 					<section className="flex flex-col items-center p-2">
 						<p className="text-white text-sm">
 							{creatorUser?.firstName} {creatorUser?.lastName}

@@ -213,7 +213,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 				if (userType) fetchCurrentUser();
 			}
 		}
-	}, [userType]);
+	}, [userType, currentUser?._id]);
 
 	// Function to refresh the current user data
 	const refreshCurrentUser = async () => {

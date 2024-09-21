@@ -180,7 +180,11 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 
 		if (call.state.callingState !== CallingState.JOINED) {
 			// Leave the call only if the user hasn't left or ended the call
-			await call?.join();
+			try {
+				await call?.join();
+			} catch (error) {
+				console.warn(error);
+			}
 		}
 
 		toast({
