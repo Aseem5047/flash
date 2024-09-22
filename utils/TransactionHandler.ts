@@ -1,4 +1,6 @@
+import { db } from "@/lib/firebase";
 import * as Sentry from "@sentry/nextjs";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 
 export const transactionHandler = async ({
 	expertId,
@@ -13,6 +15,48 @@ export const transactionHandler = async ({
 	duration: string;
 	isVideoCall: boolean;
 }) => {
+	const updateFirestoreSessions = async (
+		userId: string,
+		callId: string,
+		status: string
+	) => {
+		try {
+			const SessionDocRef = doc(db, "sessions", userId);
+			const SessionDoc = await getDoc(SessionDocRef);
+			if (SessionDoc.exists()) {
+				await updateDoc(SessionDocRef, {
+					ongoingCall: { id: callId, status: status },
+				});
+			} else {
+				await setDoc(SessionDocRef, {
+					ongoingCall: { id: callId, status: status },
+				});
+			}
+		} catch (error) {
+			Sentry.captureException(error);
+			console.error("Error updating Firestore Sessions: ", error);
+		}
+	};
+
+	const updateFirestoreTransactionStatus = async (callId: string) => {
+		try {
+			const transactionDocRef = doc(db, "transactions", expertId);
+			const transactionDoc = await getDoc(transactionDocRef);
+			if (transactionDoc.exists()) {
+				await updateDoc(transactionDocRef, {
+					previousCall: { id: callId, status: "success" },
+				});
+			} else {
+				await setDoc(transactionDocRef, {
+					previousCall: { id: callId, status: "success" },
+				});
+			}
+		} catch (error) {
+			Sentry.captureException(error);
+			console.error("Error updating Firestore Transactions: ", error);
+		}
+	};
+
 	// Check if a transaction already exists for the given callId
 	const transactionResponse = await fetch(
 		`/api/v1/calls/transaction/getTransaction?callId=${callId}`
@@ -21,7 +65,8 @@ export const transactionHandler = async ({
 	// If a transaction exists and any of the callDetails have isDone: true, return early
 	if (existingTransaction) {
 		console.log("Transaction for this callId has already been completed.");
-
+		await updateFirestoreTransactionStatus(callId);
+		await updateFirestoreSessions(clientId, callId, "ended");
 		return;
 	}
 
@@ -72,6 +117,9 @@ export const transactionHandler = async ({
 				headers: { "Content-Type": "application/json" },
 			}),
 		]);
+
+		await updateFirestoreTransactionStatus(callId);
+		await updateFirestoreSessions(clientId, callId, "ended");
 	} catch (error) {
 		Sentry.captureException(error);
 		console.error("Error handling wallet changes:", error);

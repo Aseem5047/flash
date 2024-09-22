@@ -23,6 +23,29 @@ export const handleTransaction = async ({
 	router: any;
 	updateWalletBalance: () => Promise<void>;
 }) => {
+	const updateFirestoreSessions = async (
+		userId: string,
+		callId: string,
+		status: string
+	) => {
+		try {
+			const SessionDocRef = doc(db, "sessions", userId);
+			const SessionDoc = await getDoc(SessionDocRef);
+			if (SessionDoc.exists()) {
+				await updateDoc(SessionDocRef, {
+					ongoingCall: { id: callId, status: status },
+				});
+			} else {
+				await setDoc(SessionDocRef, {
+					ongoingCall: { id: callId, status: status },
+				});
+			}
+		} catch (error) {
+			Sentry.captureException(error);
+			console.error("Error updating Firestore Sessions: ", error);
+		}
+	};
+
 	const updateFirestoreTransactionStatus = async (callId: string) => {
 		try {
 			const transactionDocRef = doc(db, "transactions", expertId);
@@ -68,11 +91,12 @@ export const handleTransaction = async ({
 		if (transactionResponse) {
 			toast({
 				variant: "destructive",
-				title: "Transaction Done",
+				title: "Transaction Already Done",
 				description: "Redirecting ...",
 			});
 
 			removeActiveCallId();
+			await updateFirestoreSessions(clientId, callId, "ended");
 			await updateFirestoreTransactionStatus(callId);
 			logEvent(analytics, "call_ended", {
 				callId: callId,
@@ -123,7 +147,8 @@ export const handleTransaction = async ({
 		]);
 
 		removeActiveCallId();
-		updateFirestoreTransactionStatus(callId);
+		await updateFirestoreSessions(clientId, callId, "ended");
+		await updateFirestoreTransactionStatus(callId);
 
 		logEvent(analytics, "call_ended", {
 			callId: callId,

@@ -105,10 +105,12 @@ const CreatorHome = () => {
 	const fetchTransactions = async () => {
 		try {
 			setTransactionsLoading(true);
-			// Get today's date in YYYY-MM-DD format
-			const today = new Date().toISOString().split("T")[0];
+			// Get today's date in local YYYY-MM-DD format
+			const today = new Date();
+			const localDate = today.toLocaleDateString("en-CA"); // 'en-CA' gives YYYY-MM-DD format
+			console.log(localDate);
 			const response = await axios.get(
-				`/api/v1/transaction/getTodaysEarnings?userId=${creatorUser?._id}&date=${today}`
+				`/api/v1/transaction/getTodaysEarnings?userId=${creatorUser?._id}&date=${localDate}`
 			);
 			const fetchedTransactions = response.data.transactions;
 			const totalEarnings = calculateTotalEarnings(fetchedTransactions);
@@ -164,6 +166,7 @@ const CreatorHome = () => {
 		if (creatorUser) {
 			try {
 				const callServicesDocRef = doc(db, "services", creatorUser._id);
+
 				const callServicesDoc = await getDoc(callServicesDocRef);
 				if (callServicesDoc.exists()) {
 					await updateDoc(callServicesDocRef, {
@@ -174,6 +177,23 @@ const CreatorHome = () => {
 					await setDoc(callServicesDocRef, {
 						services,
 						prices,
+					});
+				}
+
+				// Determine if any service is active
+				const isOnline =
+					services.videoCall || services.audioCall || services.chat;
+
+				const creatorStatusDocRef = doc(db, "userStatus", creatorUser.phone);
+				// Update or set the creator's status
+				const creatorStatusDoc = await getDoc(creatorStatusDocRef);
+				if (creatorStatusDoc.exists()) {
+					await updateDoc(creatorStatusDocRef, {
+						status: isOnline ? "Online" : "Offline",
+					});
+				} else {
+					await setDoc(creatorStatusDocRef, {
+						status: isOnline ? "Online" : "Offline",
 					});
 				}
 			} catch (error) {
@@ -253,6 +273,7 @@ const CreatorHome = () => {
 	) => {
 		setServices((prevStates) => {
 			if (service === "myServices") {
+				// Toggle the master switch and update all services accordingly
 				const newMyServicesState = !prevStates.myServices;
 				const newServices = {
 					myServices: newMyServicesState,
@@ -260,14 +281,24 @@ const CreatorHome = () => {
 					audioCall: newMyServicesState,
 					chat: newMyServicesState,
 				};
-				console.log(newServices);
+
 				updateFirestoreCallServices(newServices, prices);
 				return newServices;
 			} else {
+				// Toggle an individual service
+				const newServiceState = !prevStates[service];
 				const newServices = {
 					...prevStates,
-					[service]: !prevStates[service],
+					[service]: newServiceState,
 				};
+
+				// Check if any of the individual services are true
+				const isAnyServiceOn =
+					newServices.videoCall || newServices.audioCall || newServices.chat;
+
+				// Update the master toggle (myServices) accordingly
+				newServices.myServices = isAnyServiceOn;
+
 				updateFirestoreCallServices(newServices, prices);
 				return newServices;
 			}

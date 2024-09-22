@@ -18,6 +18,8 @@ import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import SinglePostLoader from "@/components/shared/SinglePostLoader";
 import ContentLoading from "@/components/shared/ContentLoading";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
+import { logEvent } from "firebase/analytics";
+import { analytics } from "@/lib/firebase";
 
 const MeetingPage = () => {
 	const { id } = useParams();
@@ -95,6 +97,16 @@ const CallEnded = ({ toast, router, call }: any) => {
 	const transactionHandled = useRef(false);
 	const { currentUser } = useCurrentUsersContext();
 
+	const removeActiveCallId = () => {
+		const activeCallId = localStorage.getItem("activeCallId");
+		if (activeCallId) {
+			localStorage.removeItem("activeCallId");
+			console.log("activeCallId removed successfully");
+		} else {
+			console.warn("activeCallId was not found in localStorage");
+		}
+	};
+
 	const isMeetingOwner = currentUser?._id === call?.state?.createdBy?.id;
 	const expert = call?.state?.members?.find(
 		(member: any) => member.custom.type === "expert"
@@ -114,7 +126,7 @@ const CallEnded = ({ toast, router, call }: any) => {
 
 		const handleBeforeUnload = (event: BeforeUnloadEvent) => {
 			navigator.sendBeacon(
-				"/api/v1/calls/transaction/handleTransaction",
+				"https://backend.flashcall.me/api/v1/calls/transaction/handleTransaction",
 				JSON.stringify({
 					expertId,
 					clientId,
@@ -171,16 +183,41 @@ const CallEnded = ({ toast, router, call }: any) => {
 				headers: { "Content-Type": "application/json" },
 			});
 
-			await handleTransaction({
-				expertId,
-				clientId,
-				callId: call?.id,
-				duration: duration,
-				isVideoCall: call?.type === "default",
-				toast,
-				router,
-				updateWalletBalance,
-			});
+			// Trigger transaction in backend
+			const transactionResponse = await fetch(
+				"https://backend.flashcall.me/api/v1/calls/transaction/handleTransaction",
+				{
+					method: "POST",
+					body: JSON.stringify({
+						expertId,
+						clientId,
+						callId: call.id,
+						duration,
+						isVideoCall: call.type === "default",
+					}),
+					headers: {
+						"Content-Type": "application/json",
+					},
+				}
+			);
+
+			if (transactionResponse.ok) {
+				// Execute the logic after successful transaction
+				removeActiveCallId();
+				logEvent(analytics, "call_ended", {
+					callId: call.id,
+					duration,
+					type: call.type === "default" ? "video" : "audio", // Assuming you want to log type as "video" or "audio"
+				});
+
+				setLoading(false);
+				updateWalletBalance();
+				router.replace(`/feedback/${call.id}`);
+			} else {
+				console.error("Failed to process transaction");
+				const creatorURL = localStorage.getItem("creatorURL");
+				router.replace(`${creatorURL ? creatorURL : "/home"}`);
+			}
 		};
 
 		if (isBrowser()) {

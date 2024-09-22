@@ -74,8 +74,6 @@ const CallListMobile = () => {
 		);
 	}
 
-	console.log(calls);
-
 	return (
 		<>
 			{calls && calls.length > 0 ? (
