@@ -123,7 +123,7 @@ const Favorites = () => {
 			} else {
 				// Remove from favorites
 				return prevFavorites.filter(
-					(fav) => fav.creatorId?._id !== updatedCreator?._id
+					(fav) => fav.creatorId._id !== updatedCreator._id
 				);
 			}
 		});
@@ -318,7 +318,7 @@ const Favorites = () => {
 										{group.map((favorite: any, idx: number) => (
 											<section
 												className="min-w-full transition-all duration-500"
-												key={favorite.creatorId?._id || idx}
+												key={favorite.creatorId._id || idx}
 											>
 												<FavoritesGrid
 													creator={favorite.creatorId}
@@ -332,10 +332,10 @@ const Favorites = () => {
 						: (filteredFavorites() as FavoriteItem[]).map((favorite, index) => (
 								<section
 									className="min-w-full transition-all duration-500"
-									key={favorite?.creatorId?._id || index}
+									key={favorite.creatorId._id || index}
 								>
 									<FavoritesGrid
-										creator={favorite?.creatorId}
+										creator={favorite.creatorId}
 										onFavoriteToggle={handleFavoriteToggle}
 									/>
 								</section>

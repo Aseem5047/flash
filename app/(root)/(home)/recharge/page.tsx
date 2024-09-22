@@ -20,7 +20,7 @@ import { Cursor, Typewriter } from "react-simple-typewriter";
 import ContentLoading from "@/components/shared/ContentLoading";
 import { trackEvent } from "@/lib/mixpanel";
 
-const About: React.FC = () => {
+const Recharge: React.FC = () => {
 	const { updateWalletBalance } = useWalletBalanceContext();
 	const { currentUser, clientUser } = useCurrentUsersContext();
 	const { toast } = useToast();
@@ -65,6 +65,40 @@ const About: React.FC = () => {
 		});
 	}, []);
 
+	// const PaymentHandler = async () => {
+	// 	const totalPayableInPaise: number = totalPayable! * 100;
+	// 	const rechargeAmount: number = parseInt(totalPayableInPaise.toFixed(2));
+	// 	const currency: string = "INR";
+	// 	const order_id = "1a";
+	// 	const customer_id = currentUser?._id;
+	// 	const customer_phone = currentUser?.phone;
+
+	// 	try {
+	// 		const response: any = await fetch("/api/v1/order_cashfree", {
+	// 			method: "POST",
+	// 			body: JSON.stringify({ rechargeAmount, currency, order_id, customer_id, customer_phone }),
+	// 			headers: { "Content-Type": "application/json" },
+	// 		}
+	// 		);
+
+	// 		const options = {
+	// 			appId: process.env.CASHFREE_APP_ID,
+	// 			orderId: response.orderId,
+	// 			orderAmount: response.amount,
+	// 			orderCurrency: 'INR',
+	// 			customerPhone: response.phone,
+	// 			customerEmail: response.email,
+	// 		};
+
+	// 		window.Cashfree.paySeamless(options, function (response : any) {
+	// 			console.log('Payment response:', response);
+	// 		});
+	// 	} catch (error) {
+	// 		console.log(error);
+	// 	}
+
+	// }
+
 	const PaymentHandler = async (
 		e: React.MouseEvent<HTMLButtonElement, MouseEvent>
 	): Promise<void> => {
@@ -92,12 +126,11 @@ const About: React.FC = () => {
 		const totalPayableInPaise: number = totalPayable! * 100;
 		const rechargeAmount: number = parseInt(totalPayableInPaise.toFixed(2));
 		const currency: string = "INR";
-		const receiptId: string = "kuchbhi";
 
 		try {
 			const response: Response = await fetch("/api/v1/order", {
 				method: "POST",
-				body: JSON.stringify({ rechargeAmount, currency, receipt: receiptId }),
+				body: JSON.stringify({ amount: rechargeAmount, currency }),
 				headers: { "Content-Type": "application/json" },
 			});
 
@@ -243,6 +276,7 @@ const About: React.FC = () => {
 			) : (
 				<div className="overflow-y-scroll p-4 pt-0 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col items-center justify-center w-full">
 					<Script src="https://checkout.razorpay.com/v1/checkout.js" />
+					{/* <Script src="https://sdk.cashfree.com/js/v3/cashfree.js" /> */}
 
 					{/* Payment Information */}
 					<section className="w-full mb-8 sticky">
@@ -355,4 +389,4 @@ const About: React.FC = () => {
 	);
 };
 
-export default About;
+export default Recharge;
