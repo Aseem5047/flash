@@ -32,10 +32,14 @@ const FavoritesGrid = ({
 
 	const fullName =
 		`${creator?.firstName || ""} ${creator?.lastName || ""}`.trim() ||
-		creator.username;
+		creator?.username;
+
+	if (!creator) {
+		return <div>Loading...</div>; // Or some placeholder for loading state
+	}
 
 	useEffect(() => {
-		const docRef = doc(db, "userStatus", creator.phone);
+		const docRef = doc(db, "userStatus", creator?.phone);
 		const unsubscribe = onSnapshot(
 			docRef,
 			(docSnap) => {
@@ -52,8 +56,8 @@ const FavoritesGrid = ({
 
 						// If the creator is in the notify list, remove them
 						if (
-							notifyList[creator.username] === creator.phone ||
-							Object.values(notifyList).includes(creator.phone)
+							notifyList[creator?.username] === creator?.phone ||
+							Object.values(notifyList).includes(creator?.phone)
 						) {
 							setIsAlreadyNotified(false); // Reset the notification state
 						}
@@ -70,20 +74,20 @@ const FavoritesGrid = ({
 
 		// Clean up the listener on component unmount
 		return () => unsubscribe();
-	}, [creator.phone, creator.username]);
+	}, [creator?.phone, creator?.username]);
 
 	useEffect(() => {
 		// Retrieve the notify list from localStorage
 		const notifyList = JSON.parse(localStorage.getItem("notifyList") || "{}");
 
-		// Check if the creator.username or creator.phone is already in the notify list
+		// Check if the creator?.username or creator?.phone is already in the notify list
 		if (
-			notifyList[creator.username] === creator.phone ||
-			Object.values(notifyList).includes(creator.phone)
+			notifyList[creator?.username] === creator?.phone ||
+			Object.values(notifyList).includes(creator?.phone)
 		) {
 			setIsAlreadyNotified(true);
 		}
-	}, [creator.username, creator.phone]);
+	}, [creator?.username, creator?.phone]);
 
 	const handleToggleFavorite = async () => {
 		const clientId = clientUser?._id;
@@ -91,7 +95,7 @@ const FavoritesGrid = ({
 		try {
 			const response = await toggleFavorite({
 				clientId: clientId as string,
-				creatorId: creator._id,
+				creatorId: creator?._id,
 			});
 
 			if (response.success) {
@@ -118,13 +122,13 @@ const FavoritesGrid = ({
 		try {
 			const notifyList = JSON.parse(localStorage.getItem("notifyList") || "{}");
 
-			// Check if the creator.username or creator.phone is already in the notify list
+			// Check if the creator?.username or creator?.phone is already in the notify list
 			if (
-				!notifyList[creator.username] &&
-				!Object.values(notifyList).includes(creator.phone)
+				!notifyList[creator?.username] &&
+				!Object.values(notifyList).includes(creator?.phone)
 			) {
 				// Add the creator's username and phone to the notify list
-				notifyList[creator.username] = creator.phone;
+				notifyList[creator?.username] = creator?.phone;
 				localStorage.setItem("notifyList", JSON.stringify(notifyList));
 				setIsAlreadyNotified(true); // Disable the button after adding
 
@@ -151,12 +155,12 @@ const FavoritesGrid = ({
 	};
 
 	const imageSrc =
-		creator?.photo && isValidUrl(creator.photo)
-			? creator.photo
+		creator?.photo && isValidUrl(creator?.photo)
+			? creator?.photo
 			: "/images/defaultProfileImage.png";
 
 	return (
-		<div className="grid grid-cols-[2fr_1fr] h-full w-full items-start justify-between pt-2 pb-4 xl:max-w-[568px] border-b xl:border xl:rounded-xl xl:p-4 border-gray-300 ">
+		<div className="grid grid-cols-[2fr_1fr] gap-5 h-full w-full items-start justify-between pt-2 pb-4 xl:max-w-[568px] border-b xl:border xl:rounded-xl xl:p-4 border-gray-300 ">
 			<div className="flex flex-col items-start justify-between w-full h-full gap-2">
 				{/* Expert's Details */}
 				<Link
@@ -168,7 +172,7 @@ const FavoritesGrid = ({
 							Walletbalace_Available: clientUser?.walletBalance,
 						})
 					}
-					href={`/${creator.username}`}
+					href={`/${creator?.username}`}
 					className="w-full flex items-center justify-start gap-4 cursor-pointer hoverScaleDownEffect"
 				>
 					{/* creator image */}
@@ -193,13 +197,13 @@ const FavoritesGrid = ({
 							{fullName}
 						</p>
 						<span className="text-sm text-green-1 whitespace-nowrap">
-							{creator.profession}
+							{creator?.profession}
 						</span>
 					</div>
 				</Link>
 
 				<span className="text-sm text-[#A7A8A1] pl-1 whitespace-nowrap">
-					{creator.phone?.replace(
+					{creator?.phone?.replace(
 						/(\+91)(\d+)/,
 						(match, p1, p2) => `${p1} ${p2.replace(/(\d{5})$/, "xxxxx")}`
 					)}
@@ -230,7 +234,7 @@ const FavoritesGrid = ({
 					</button>
 				) : (
 					<Link
-						href={`/${creator.username}`}
+						href={`/${creator?.username}`}
 						className="bg-green-1  hover:bg-green-700 text-white font-semibold w-fit mr-1 rounded-md px-4 py-2 text-xs"
 					>
 						Talk Now
