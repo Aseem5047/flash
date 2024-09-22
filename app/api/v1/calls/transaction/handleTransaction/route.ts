@@ -2,7 +2,7 @@
 import { transactionHandler } from "@/utils/TransactionHandler";
 import { NextResponse } from "next/server";
 
-export default async function POST(request: Request) {
+export async function POST(request: Request) {
 	const { callId, expertId, clientId, duration, isVideoCall } =
 		await request.json();
 
