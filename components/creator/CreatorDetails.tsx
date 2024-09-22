@@ -250,7 +250,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 								</>
 							</div>
 
-							{status !== "Online" && clientUser && (
+							{/* {status !== "Online" && clientUser && (
 								<button
 									className={`absolute bottom-0 right-0 ${
 										!isAlreadyNotified
@@ -279,7 +279,7 @@ const CreatorDetails = ({ creator }: CreatorDetailsProps) => {
 										</svg>
 									)}
 								</button>
-							)}
+							)} */}
 						</div>
 					)}
 

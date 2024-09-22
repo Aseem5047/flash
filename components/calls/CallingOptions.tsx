@@ -523,7 +523,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 								boxShadow: theme,
 							}}
 							onClick={() => {
-								if (onlineStatus === "Online") {
+								if (clientUser) {
 									handleClickOption("video");
 								} else {
 									setIsAuthSheetOpen(true);
@@ -558,7 +558,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 								boxShadow: theme,
 							}}
 							onClick={() => {
-								if (onlineStatus === "Online") {
+								if (clientUser) {
 									handleClickOption("audio");
 								} else {
 									setIsAuthSheetOpen(true);
@@ -591,7 +591,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 								boxShadow: theme,
 							}}
 							onClick={() => {
-								if (onlineStatus === "Online") {
+								if (clientUser) {
 									handleChatClick();
 								} else {
 									setIsAuthSheetOpen(true);
