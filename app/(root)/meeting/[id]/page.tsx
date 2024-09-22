@@ -96,19 +96,39 @@ const CallEnded = ({ toast, router, call }: any) => {
 	const { currentUser } = useCurrentUsersContext();
 
 	const isMeetingOwner = currentUser?._id === call?.state?.createdBy?.id;
+	const expert = call?.state?.members?.find(
+		(member: any) => member.custom.type === "expert"
+	);
+	const expertId = expert?.user_id;
+	const clientId = call?.state?.createdBy?.id;
+	const isBrowser = () => typeof window !== "undefined";
 
 	useEffect(() => {
+		// Calculate call duration
+		const callEndedTime = new Date(callEndedAt);
+		const callStartsAtTime = new Date(callStartsAt);
+		const duration = (
+			(callEndedTime.getTime() - callStartsAtTime.getTime()) /
+			1000
+		).toFixed(2);
+
+		const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+			navigator.sendBeacon(
+				"/api/v1/calls/transaction/handleTransaction",
+				JSON.stringify({
+					expertId,
+					clientId,
+					callId: call?.id,
+					duration,
+					isVideoCall: call?.type === "default",
+				})
+			);
+		};
+
 		const handleCallEnd = async () => {
 			if (transactionHandled.current) return;
 
 			transactionHandled.current = true;
-
-			const callEndedTime = new Date(callEndedAt);
-			const callStartsAtTime = new Date(callStartsAt);
-			const duration = (
-				(callEndedTime.getTime() - callStartsAtTime.getTime()) /
-				1000
-			).toFixed(2);
 
 			if (!toastShown) {
 				toast({
@@ -116,7 +136,6 @@ const CallEnded = ({ toast, router, call }: any) => {
 					title: "Session Has Ended",
 					description: "Checking for Pending Transactions ...",
 				});
-
 				setToastShown(true);
 			}
 
@@ -136,7 +155,6 @@ const CallEnded = ({ toast, router, call }: any) => {
 					});
 			};
 
-			// Call stopMediaStreams to stop the tracks
 			stopMediaStreams();
 
 			await fetch("/api/v1/calls/updateCall", {
@@ -154,7 +172,8 @@ const CallEnded = ({ toast, router, call }: any) => {
 			});
 
 			await handleTransaction({
-				call,
+				expertId,
+				clientId,
 				callId: call?.id,
 				duration: duration,
 				isVideoCall: call?.type === "default",
@@ -164,11 +183,21 @@ const CallEnded = ({ toast, router, call }: any) => {
 			});
 		};
 
+		if (isBrowser()) {
+			window.addEventListener("beforeunload", handleBeforeUnload);
+		}
+
 		if (isMeetingOwner && !transactionHandled.current) {
 			handleCallEnd();
 		} else if (!isMeetingOwner) {
 			router.push(`/home`);
 		}
+
+		return () => {
+			if (isBrowser()) {
+				window.removeEventListener("beforeunload", handleBeforeUnload);
+			}
+		};
 	}, [
 		isMeetingOwner,
 		callEndedAt,
@@ -178,6 +207,7 @@ const CallEnded = ({ toast, router, call }: any) => {
 		router,
 		updateWalletBalance,
 		toastShown,
+		currentUser?.phone,
 	]);
 
 	if (loading) {

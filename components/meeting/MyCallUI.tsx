@@ -128,7 +128,6 @@ const MyCallUI = () => {
 					(call.state.callingState === CallingState.JOINED ||
 						call.state.callingState === CallingState.JOINING)
 				) {
-					// Leave the call only if the user hasn't left or ended the call
 					await call?.leave();
 				}
 
@@ -164,7 +163,7 @@ const MyCallUI = () => {
 
 	// Set showCallUI state if there are any incoming or outgoing calls
 	useEffect(() => {
-		if (incomingCalls.length > 0 || outgoingCalls.length > 0) {
+		if ((incomingCalls.length > 0 || outgoingCalls.length > 0) && showCallUI) {
 			setShowCallUI(true);
 		}
 	}, [incomingCalls, outgoingCalls]);
@@ -177,7 +176,7 @@ const MyCallUI = () => {
 
 	// Handle outgoing call UI
 	const [outgoingCall] = outgoingCalls;
-	if (outgoingCall && showCallUI) {
+	if (outgoingCall && showCallUI && !hide) {
 		return <MyOutgoingCallUI call={outgoingCall} />;
 	}
 

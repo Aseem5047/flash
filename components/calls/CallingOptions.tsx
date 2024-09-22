@@ -217,7 +217,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		// router.replace(`/meeting/${call.id}`);
 	};
 
-	const handleCallRejected = (callType: string) => {
+	const handleCallRejected = () => {
 		setIsProcessing(false); // Reset processing state
 		setSheetOpen(false);
 	};
@@ -351,7 +351,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			});
 
 			call.on("call.accepted", () => handleCallAccepted(call, callType));
-			call.on("call.rejected", () => handleCallRejected(callType));
+			call.on("call.rejected", handleCallRejected);
 		} catch (error) {
 			Sentry.captureException(error);
 			console.error(error);

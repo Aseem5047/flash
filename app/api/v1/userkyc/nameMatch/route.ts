@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
 	try {
 		const response = await fetch(
-			"https://api.cashfree.com/verification/name-match",
+			"https://api.cashfree.com/verification/nameMatch",
 			{
 				method: "POST",
 				headers: {
