@@ -305,7 +305,7 @@ const Favorites = () => {
 			) : (
 				<div
 					className={`animate-in grid ${
-						favorites.length > 1 ? "lg:grid-cols-2" : "grid-cols-1"
+						favorites.length > 1 ? "xl:grid-cols-2" : "grid-cols-1"
 					}  px-2.5 gap-5 lg:px-0 items-start pb-8 lg:pb-5 overflow-x-hidden no-scrollbar`}
 				>
 					{groupBy === "profession"
