@@ -40,27 +40,26 @@ const PaymentSettings = () => {
 			const abortController = new AbortController();
 			try {
 				const response = await fetch(
-					`/api/v1/creator/get-payment?userId=${currentUser?._id}`,
+					`/api/v1/creator/getPayment?userId=${currentUser?._id}`,
 					{
 						signal: abortController.signal,
 					}
 				);
-				if (response.ok) {
-					const data = await response.json();
-					const method =
-						data.paymentMode === "BANK_TRANSFER" ? "BankTransfer" : "UPI";
+				const result = await response.json();
+				if (result.success) {
+					const method = result.data.paymentMode === "BANK_TRANSFER" ? "BankTransfer" : "UPI";
 					const details = {
-						upiId: data.upiId || "",
-						ifscCode: data.bankDetails?.ifsc || "",
-						accountNumber: data.bankDetails?.accountNumber || "",
-						accountType: data.bankDetails?.accountType || "",
+						upiId: result.data.upiId || "",
+						ifscCode: result.data.bankDetails?.ifsc || "",
+						accountNumber: result.data.bankDetails?.accountNumber || "",
+						accountType: result.data.bankDetails?.accountType || "",
 					};
 					setPaymentMethod(method);
 					setBankDetails(details);
 					setInitialPaymentMethod(method);
 					setInitialBankDetails(details);
 				} else {
-					console.error("Failed to fetch payment details.");
+					console.error(result.message);
 				}
 			} catch (error: unknown) {
 				if (error instanceof Error) {
@@ -93,6 +92,10 @@ const PaymentSettings = () => {
 		(accountNumber: string) => /^\d{9,18}$/.test(accountNumber),
 		[]
 	);
+
+	const generateVerificationId = () => {
+		return `${currentUser?._id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+	};
 
 	const handleSave = async () => {
 		let hasError = false;
@@ -149,7 +152,63 @@ const PaymentSettings = () => {
 			};
 
 			try {
-				const response = await fetch("/api/v1/creator/save-payment", {
+				// const verification_id = generateVerificationId();
+				// const reversePennyDrop = await fetch('/api/v1/reverse-penny-drop', {
+				// 	method: 'POST',
+				// 	headers: {
+				// 		'Content-Type': 'application/json'
+				// 	},
+				// 	body: JSON.stringify({
+				// 		verification_id,
+				// 		name: currentUser?.firstName + ' ' + currentUser?.lastName
+				// 	})
+				// })
+
+				// const result  = await reversePennyDrop.json();
+
+				const verification_id = generateVerificationId();
+				if (paymentData.paymentMode === 'UPI') {
+					const response = await fetch('/api/v1/creator/verifyUpi', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							verification_id,
+							vpa: paymentData.upiId,
+						})
+					})
+
+					const result = await response.json();
+					if (result.data.status !== 'VALID') {
+						console.error('UPI ID not valid');
+						alert("Failed to save payment details.");
+						return;
+					}
+
+				}
+				else if (paymentData.paymentMode === 'BankTransfer') {
+					const response = await fetch('/api/v1/verifyBank', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							bank_account: paymentData.bankDetails.accountNumber,
+							ifsc: paymentData.bankDetails.ifsc
+						})
+					})
+
+					const result = await response.json();
+					if(result.data.account_status !== 'VALID'){
+						console.error('Something wrong with Bank Details');
+						alert("Failed to save payment details.");
+						return;
+					}
+				}
+
+				// if(result.success){
+				const response = await fetch("/api/v1/creator/savePayment", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify(paymentData),
@@ -163,6 +222,10 @@ const PaymentSettings = () => {
 				} else {
 					alert("Failed to save payment details.");
 				}
+				// }
+				// else {
+				// 	alert('Penny Drop Failed');
+				// }
 			} catch (error) {
 				Sentry.captureException(error);
 				console.error("Error saving payment details:", error);
@@ -327,11 +390,10 @@ const PaymentSettings = () => {
 				<button
 					disabled={!hasChanges()}
 					onClick={handleSave}
-					className={`w-full py-2 px-4 rounded-lg text-white ${
-						hasChanges()
+					className={`w-full py-2 px-4 rounded-lg text-white ${hasChanges()
 							? "bg-black hover:bg-gray-900"
 							: "bg-gray-400 cursor-not-allowed"
-					}`}
+						}`}
 				>
 					Save
 				</button>

@@ -22,11 +22,15 @@ export async function POST(request: NextRequest) {
 			}
 		);
 
+		const result = await response.json();
+
 		if (!response.ok) {
-			throw new Error("Failed to verify PAN");
+			return NextResponse.json({
+				success: false,
+				error: result.message || "Validation error",
+			});
 		}
 
-		const result = await response.json();
 		return NextResponse.json({ success: true, data: result });
 	} catch (error) {
 		return NextResponse.json({

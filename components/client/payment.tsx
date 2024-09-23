@@ -196,6 +196,8 @@ const Payment: React.FC<PaymentProps> = ({ callType }) => {
 		}
 	}, [rechargeAmount, form]);
 
+	console.log(rechargeAmount);
+
 	const creatorURL = localStorage.getItem("creatorURL");
 
 	return (

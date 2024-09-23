@@ -5,6 +5,7 @@ import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { format, isSameDay } from "date-fns";
 import ChatInterface from "./ChatInterface";
 import CustomAudioPlayer from "@/lib/CustomAudioPlayer";
+import usePlatform from "@/hooks/usePlatform";
 
 
 interface Chat {
@@ -32,6 +33,9 @@ interface Props {
 const Messages: React.FC<Props> = ({ chat, img, isImgUploading }) => {
 	const { currentUser } = useCurrentUsersContext();
 	const [fullImageUrl, setFullImageUrl] = useState<string | null>(null);
+	const { getDevicePlatform } = usePlatform();
+	const textSizeClass = getDevicePlatform() === 'iOS' ? 'text-base' : 'text-sm';
+
 	// const endRef = useRef<HTMLDivElement | null>(null);
 	const handleImageClick = (imageUrl: string) => {
 		setFullImageUrl(imageUrl);
@@ -80,7 +84,7 @@ const Messages: React.FC<Props> = ({ chat, img, isImgUploading }) => {
 							{showDateSeparator && (
 								<div className="flex justify-center ">
 									<div className="text-center bg-gray-400 opacity-50 w-[30%] rounded-lg p-1 my-2  ">
-										<div className="text-white font-bold text-xs opacity-100">
+										<div className={`text-white font-bold ${textSizeClass} opacity-100`}>
 											{format(new Date(message.createdAt), "d MMM, yyyy")}
 										</div>
 									</div>
@@ -113,10 +117,11 @@ const Messages: React.FC<Props> = ({ chat, img, isImgUploading }) => {
 								{fullImageUrl && (
 									<ImageModal imageUrl={fullImageUrl} onClose={handleCloseModal} />
 								)}
-
 								{message.audio && (
-									<div className="w-full items-center justify-center">
-										<CustomAudioPlayer audioSrc={message.audio} />
+									<div className="w-full items-center justify-center mb-1">
+										<CustomAudioPlayer
+											audioSrc={message.audio}
+										/>
 									</div>
 								)}
 
@@ -141,7 +146,7 @@ const Messages: React.FC<Props> = ({ chat, img, isImgUploading }) => {
 											: "w-full flex justify-end items-center absolute bottom-1 right-1"
 									}
 								>
-									<span className="text-xs text-gray-500 mr-2">
+									<span className="text-[10px] text-gray-500 mr-2">
 										{formatTime(message.createdAt)}
 									</span>
 

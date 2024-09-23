@@ -1,11 +1,5 @@
 import { Schema, model, models } from "mongoose";
 
-// const UserKycSchema = new Schema({
-// 	userId : {type: String, required: true, unique: true},
-// 	verification_id: {type: String, required: true},
-// 	kyc_status: {type: String, required: true}
-// });
-
 const PanSchema = new Schema({
 	pan_number: { type: String, required: true, unique: true },
 	reference_id: { type: Number, required: true, unique: true },
@@ -23,7 +17,7 @@ const AadhaarSchema = new Schema({
 
 const LivelinessSchema = new Schema({
 	reference_id: { type: String, required: true, unique: true },
-	verification_id: { type: String, required: true, unique: true },
+	verification_id: { type: String, required: true },
 	img_url: { type: String },
 	status: { type: String, required: true },
 	liveliness: { type: Boolean, required: true },
@@ -31,7 +25,7 @@ const LivelinessSchema = new Schema({
 
 const NameMatch = new Schema({
 	reference_id: { type: Number, required: true, unique: true },
-	verification_id: { type: String, required: true, unique: true },
+	verification_id: { type: String, required: true },
 	name_1: { type: String },
 	name_2: { type: String },
 	status: { type: String },
@@ -40,15 +34,15 @@ const NameMatch = new Schema({
 });
 
 const FaceMatch = new Schema({
-	reference_id: { type: Number },
-	verification_id: { type: String, required: true, unique: true },
+	reference_id: { type: Number, required: true, unique: true }, // Removed unique: true
+	verification_id: { type: String, required: true }, // Removed unique: true
 	status: { type: String },
 	face_match_result: { type: String },
 	face_match_score: { type: Number },
 });
 
 const UserKycSchema = new Schema({
-	userId: { type: String, required: true, unique: true },
+	userId: { type: String, required: true, unique: true }, // Keep userId unique if needed
 	pan: { type: PanSchema, default: null },
 	aadhaar: { type: AadhaarSchema, default: null },
 	liveliness: { type: LivelinessSchema, default: null },

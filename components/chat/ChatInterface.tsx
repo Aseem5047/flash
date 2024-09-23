@@ -58,7 +58,7 @@ const ChatInterface: React.FC = () => {
 		setIsRecording,
 	} = useMediaRecorder();
 
-	const audioContext = new AudioContext();
+	// const audioContext = new AudioContext();
 
 	useEffect(() => {
 		updateDoc(doc(db, "chats", chatId as string), {
@@ -385,9 +385,10 @@ const ChatInterface: React.FC = () => {
 						img={img}
 						audio={audio}
 						audioStream={audioStream!}
-						audioContext={audioContext}
+						// audioContext={audioContext}
 						handleCapturedImg={handleCapturedImg}
 						isImgUploading={isImgUploading}
+						isAudioUploading={isAudioUploading}
 						discardImage={discardImage}
 					/>
 				</div>
