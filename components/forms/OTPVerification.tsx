@@ -46,7 +46,7 @@ const OTPVerification = ({
 			try {
 				setResending(true);
 				const response = await axios.post(
-					"https://backend.flashcall.me/api/v1/otp/resend-otp",
+					`${process.env.NEXT_PUBLIC_BASE_URL_BACKEND}/otp/resend-otp`,
 					{
 						phone: phoneNumber,
 					}

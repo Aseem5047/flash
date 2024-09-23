@@ -84,7 +84,7 @@ const AuthenticateViaOTP = ({
 		setIsSendingOTP(true);
 		try {
 			const response = await axios.post(
-				"https://backend.flashcall.me/api/v1/otp/send-otp",
+				"${process.env.NEXT_PUBLIC_BASE_URL_BACKEND}/otp/send-otp",
 				{
 					phone: values.phone,
 				}
@@ -130,7 +130,7 @@ const AuthenticateViaOTP = ({
 		setIsVerifyingOTP(true);
 		try {
 			const response = await axios.post(
-				"http://localhost:5000/api/v1/otp/verify-otp",
+				`${process.env.NEXT_PUBLIC_BASE_URL_BACKEND}/verify-otp`,
 				{
 					phone: phoneNumber,
 					otp: values.pin,
@@ -230,12 +230,12 @@ const AuthenticateViaOTP = ({
 				try {
 					if (userType === "creator") {
 						await axios.post(
-							"https://backend.flashcall.me/api/v1/creator/createUser",
+							`${process.env.NEXT_PUBLIC_BASE_URL_BACKEND}/creator/createUser`,
 							newUser as CreateCreatorParams
 						);
 					} else {
 						await axios.post(
-							"https://backend.flashcall.me/api/v1/client/createUser",
+							`${process.env.NEXT_PUBLIC_BASE_URL_BACKEND}/client/createUser`,
 							newUser as CreateUserParams
 						);
 					}

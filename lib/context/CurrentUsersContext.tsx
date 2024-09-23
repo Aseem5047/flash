@@ -119,7 +119,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 			setFetchingUser(true);
 			// Call the backend endpoint to get the profile data
 			const response = await axios.get(
-				"http://localhost:5000/api/v1/user/getProfile",
+				`${process.env.NEXT_PUBLIC_BASE_URL_BACKEND}/user/getProfile`,
 				{
 					withCredentials: true, // Ensure cookies are sent with the request
 				}
