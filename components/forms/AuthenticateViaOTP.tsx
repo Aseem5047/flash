@@ -83,9 +83,12 @@ const AuthenticateViaOTP = ({
 	const handleSignUpSubmit = async (values: z.infer<typeof formSchema>) => {
 		setIsSendingOTP(true);
 		try {
-			const response = await axios.post("/api/v1/send-otp", {
-				phone: values.phone,
-			});
+			const response = await axios.post(
+				"https://backend.flashcall.me/api/v1/otp/send-otp",
+				{
+					phone: values.phone,
+				}
+			);
 			setPhoneNumber(values.phone);
 			setToken(response.data.token); // Store the token received from the API
 			setShowOTP(true);
@@ -126,11 +129,13 @@ const AuthenticateViaOTP = ({
 	const handleOTPSubmit = async (values: z.infer<typeof FormSchemaOTP>) => {
 		setIsVerifyingOTP(true);
 		try {
-			const response = await axios.post("/api/v1/verify-otp", {
-				phone: phoneNumber,
-				otp: values.pin,
-				token: token,
-			});
+			const response = await axios.post(
+				"http://localhost:5000/api/v1/otp/verify-otp",
+				{
+					phone: phoneNumber,
+					otp: values.pin,
+				}
+			);
 
 			// Extract the session token and user from the response
 			const { sessionToken, message } = response.data;
@@ -151,9 +156,9 @@ const AuthenticateViaOTP = ({
 
 			const decodedToken = jwt.decode(sessionToken) as { user?: any };
 
-			// Save the auth token (with 1 days expiry) in localStorage
-			localStorage.setItem("authToken", sessionToken);
-			console.log("OTP verified and token saved:");
+			// // Save the auth token (with 1 days expiry) in localStorage
+			// localStorage.setItem("authToken", sessionToken);
+			// console.log("OTP verified and token saved:");
 
 			setVerificationSuccess(true);
 
@@ -225,12 +230,12 @@ const AuthenticateViaOTP = ({
 				try {
 					if (userType === "creator") {
 						await axios.post(
-							"/api/v1/creator/createUser",
+							"https://backend.flashcall.me/api/v1/creator/createUser",
 							newUser as CreateCreatorParams
 						);
 					} else {
 						await axios.post(
-							"/api/v1/client/createUser",
+							"https://backend.flashcall.me/api/v1/client/createUser",
 							newUser as CreateUserParams
 						);
 					}

@@ -8,16 +8,15 @@ import {
 	useState,
 	useMemo,
 } from "react";
-import { getCreatorById } from "../actions/creator.actions";
-import { getUserById } from "../actions/client.actions";
+
 import { clientUser, creatorUser } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
 import axios from "axios";
-import jwt from "jsonwebtoken";
-import { deleteDoc, doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
+import { deleteDoc, doc, onSnapshot, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useRouter } from "next/navigation";
 import * as Sentry from "@sentry/nextjs";
+import { getCookie } from "../utils";
 
 // Define the shape of the context value
 interface CurrentUsersContextValue {
@@ -50,25 +49,6 @@ export const useCurrentUsersContext = () => {
 		);
 	}
 	return context;
-};
-
-// Utility function to check if a token is valid
-const isTokenValid = (token: string): boolean => {
-	try {
-		const decodedToken: any = jwt.decode(token);
-
-		if (!decodedToken || typeof decodedToken !== "object") {
-			return false;
-		}
-
-		const currentTime = Math.floor(Date.now() / 1000);
-
-		return decodedToken.exp > currentTime;
-	} catch (error) {
-		Sentry.captureException(error);
-		console.error("Error decoding token:", error);
-		return false;
-	}
 };
 
 // Utility function to check if we're in the browser
@@ -117,20 +97,6 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 					Sentry.captureException(error);
 					console.error("Error removing document: ", error);
 				});
-
-			// Optionally set user status to Offline in Firestore
-			setDoc(
-				doc(db, "userStatus", phone),
-				{ status: "Offline" },
-				{ merge: true }
-			)
-				.then(() => {
-					console.log("User status set to Offline on signout");
-				})
-				.catch((error: any) => {
-					Sentry.captureException(error);
-					console.error("Error setting user status to Offline: ", error);
-				});
 		}
 
 		// Clear user data and local storage
@@ -139,6 +105,9 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 			localStorage.removeItem("authToken");
 			localStorage.removeItem("creatorURL");
 			localStorage.removeItem("notifyList");
+			// Clear the cookie
+			document.cookie =
+				"authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 		}
 		setClientUser(null);
 		setCreatorUser(null);
@@ -148,53 +117,33 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	const fetchCurrentUser = async () => {
 		try {
 			setFetchingUser(true);
-			if (isBrowser()) {
-				const authToken = localStorage.getItem("authToken");
-				const userId = localStorage.getItem("currentUserID");
-
-				if (authToken && isTokenValid(authToken)) {
-					const decodedToken: any = jwt.decode(authToken);
-					const phoneNumber = decodedToken.phone;
-
-					// Fetch user details using phone number
-					const response = await axios.post("/api/v1/user/getUserByPhone", {
-						phone: phoneNumber,
-					});
-					const user = response.data;
-
-					if (user) {
-						if (userType === "creator") {
-							setCreatorUser(user);
-							setClientUser(null);
-						} else {
-							setClientUser(user);
-							setCreatorUser(null);
-						}
-						localStorage.setItem(
-							"userType",
-							(user.userType as string) ?? "client"
-						);
-					} else {
-						console.error("User not found with phone number:", phoneNumber);
-					}
-				} else if (authToken && userId) {
-					const isCreator = userType === "creator";
-
-					if (isCreator) {
-						const response = await getCreatorById(userId);
-						setCreatorUser(response);
-						setClientUser(null);
-					} else {
-						const response = await getUserById(userId);
-						setClientUser(response);
-						setCreatorUser(null);
-					}
-				} else {
-					handleSignout();
+			// Call the backend endpoint to get the profile data
+			const response = await axios.get(
+				"http://localhost:5000/api/v1/user/getProfile",
+				{
+					withCredentials: true, // Ensure cookies are sent with the request
 				}
+			);
+
+			const { success, data } = response.data;
+
+			if (success && data) {
+				if (data.userType === "creator") {
+					setCreatorUser(data);
+					setClientUser(null);
+					setUserType("creator");
+				} else {
+					setClientUser(data);
+					setCreatorUser(null);
+					setUserType("client");
+				}
+				if (isBrowser()) {
+					localStorage.setItem("userType", data.userType);
+				}
+			} else {
+				handleSignout();
 			}
 		} catch (error) {
-			Sentry.captureException(error);
 			console.error("Error fetching current user:", error);
 			handleSignout();
 		} finally {
@@ -204,16 +153,9 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 
 	// Call fetchCurrentUser when the component mounts
 	useEffect(() => {
-		if (isBrowser()) {
-			const authToken = localStorage.getItem("authToken");
-
-			if (authToken && !isTokenValid(authToken)) {
-				handleSignout();
-			} else {
-				if (userType) fetchCurrentUser();
-			}
-		}
-	}, [userType, currentUser?._id]);
+		// Fetch current user on mount
+		fetchCurrentUser();
+	}, []);
 
 	// Function to refresh the current user data
 	const refreshCurrentUser = async () => {
@@ -234,7 +176,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		}
 	}, [router, userType]);
 
-	// Use heartbeat and beforeunload to update user status
+	// real-time session monitoring
 	useEffect(() => {
 		if (!currentUser || !currentUser.phone) {
 			return;
@@ -249,7 +191,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 					if (doc.exists()) {
 						const data = doc.data();
 						if (isBrowser()) {
-							const authToken = localStorage.getItem("authToken");
+							const authToken = getCookie("authToken");
 
 							if (data?.token && data.token !== authToken) {
 								handleSignout();
