@@ -83,12 +83,9 @@ const AuthenticateViaOTP = ({
 	const handleSignUpSubmit = async (values: z.infer<typeof formSchema>) => {
 		setIsSendingOTP(true);
 		try {
-			const response = await axios.post(
-				`${process.env.NEXT_PUBLIC_BASE_URL_BACKEND}/otp/send-otp`,
-				{
-					phone: values.phone,
-				}
-			);
+			const response = await axios.post("/api/v1/send-otp", {
+				phone: values.phone,
+			});
 			setPhoneNumber(values.phone);
 			setToken(response.data.token); // Store the token received from the API
 			setShowOTP(true);
@@ -129,13 +126,11 @@ const AuthenticateViaOTP = ({
 	const handleOTPSubmit = async (values: z.infer<typeof FormSchemaOTP>) => {
 		setIsVerifyingOTP(true);
 		try {
-			const response = await axios.post(
-				`${process.env.NEXT_PUBLIC_BASE_URL_BACKEND}/otp/verify-otp`,
-				{
-					phone: phoneNumber,
-					otp: values.pin,
-				}
-			);
+			const response = await axios.post("/api/v1/verify-otp", {
+				phone: phoneNumber,
+				otp: values.pin,
+				token: token,
+			});
 
 			// Extract the session token and user from the response
 			const { sessionToken, message } = response.data;
@@ -156,9 +151,9 @@ const AuthenticateViaOTP = ({
 
 			const decodedToken = jwt.decode(sessionToken) as { user?: any };
 
-			// // Save the auth token (with 1 days expiry) in localStorage
-			// localStorage.setItem("authToken", sessionToken);
-			// console.log("OTP verified and token saved:");
+			// Save the auth token (with 1 days expiry) in localStorage
+			localStorage.setItem("authToken", sessionToken);
+			console.log("OTP verified and token saved:");
 
 			setVerificationSuccess(true);
 
@@ -230,12 +225,12 @@ const AuthenticateViaOTP = ({
 				try {
 					if (userType === "creator") {
 						await axios.post(
-							`${process.env.NEXT_PUBLIC_BASE_URL_BACKEND}/creator/createUser`,
+							"/api/v1/creator/createUser",
 							newUser as CreateCreatorParams
 						);
 					} else {
 						await axios.post(
-							`${process.env.NEXT_PUBLIC_BASE_URL_BACKEND}/client/createUser`,
+							"/api/v1/client/createUser",
 							newUser as CreateUserParams
 						);
 					}
