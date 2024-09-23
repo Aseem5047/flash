@@ -84,7 +84,7 @@ const AuthenticateViaOTP = ({
 		setIsSendingOTP(true);
 		try {
 			const response = await axios.post(
-				"${process.env.NEXT_PUBLIC_BASE_URL_BACKEND}/otp/send-otp",
+				`${process.env.NEXT_PUBLIC_BASE_URL_BACKEND}/otp/send-otp`,
 				{
 					phone: values.phone,
 				}
