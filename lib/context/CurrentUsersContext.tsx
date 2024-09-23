@@ -86,20 +86,20 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 
 	// Function to handle user signout
 	const handleSignout = () => {
-		// const phone = currentUser?.phone; // Store phone number before resetting the state
-		// if (phone) {
-		// 	const userAuthRef = doc(db, "authToken", phone);
+		const phone = currentUser?.phone; // Store phone number before resetting the state
+		if (phone) {
+			const userAuthRef = doc(db, "authToken", phone);
 
-		// 	// Remove the session from Firestore
-		// 	deleteDoc(userAuthRef)
-		// 		.then(() => {
-		// 			console.log("Document successfully deleted!");
-		// 		})
-		// 		.catch((error: any) => {
-		// 			Sentry.captureException(error);
-		// 			console.error("Error removing document: ", error);
-		// 		});
-		// }
+			// Remove the session from Firestore
+			deleteDoc(userAuthRef)
+				.then(() => {
+					console.log("Document successfully deleted!");
+				})
+				.catch((error: any) => {
+					Sentry.captureException(error);
+					console.error("Error removing document: ", error);
+				});
+		}
 
 		// Clear user data and local storage
 		if (isBrowser()) {
@@ -108,8 +108,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 			localStorage.removeItem("creatorURL");
 			localStorage.removeItem("notifyList");
 			// Clear the cookie
-			document.cookie =
-				"authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+			Cookies.remove("authToken");
 		}
 		setClientUser(null);
 		setCreatorUser(null);
