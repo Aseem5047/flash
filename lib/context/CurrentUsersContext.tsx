@@ -8,6 +8,7 @@ import {
 	useState,
 	useMemo,
 } from "react";
+import Cookies from "js-cookie";
 
 import { clientUser, creatorUser } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
@@ -16,7 +17,6 @@ import { deleteDoc, doc, onSnapshot, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useRouter } from "next/navigation";
 import * as Sentry from "@sentry/nextjs";
-import { getCookie } from "../utils";
 
 // Define the shape of the context value
 interface CurrentUsersContextValue {
@@ -62,6 +62,8 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	const [authenticationSheetOpen, setAuthenticationSheetOpen] = useState(false);
 	const [fetchingUser, setFetchingUser] = useState(false);
 	const [userType, setUserType] = useState<string | null>(null);
+	const [authToken, setAuthToken] = useState<string | null>(null);
+
 	const { toast } = useToast();
 	const router = useRouter();
 
@@ -84,20 +86,20 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 
 	// Function to handle user signout
 	const handleSignout = () => {
-		const phone = currentUser?.phone; // Store phone number before resetting the state
-		if (phone) {
-			const userAuthRef = doc(db, "authToken", phone);
+		// const phone = currentUser?.phone; // Store phone number before resetting the state
+		// if (phone) {
+		// 	const userAuthRef = doc(db, "authToken", phone);
 
-			// Remove the session from Firestore
-			deleteDoc(userAuthRef)
-				.then(() => {
-					console.log("Document successfully deleted!");
-				})
-				.catch((error: any) => {
-					Sentry.captureException(error);
-					console.error("Error removing document: ", error);
-				});
-		}
+		// 	// Remove the session from Firestore
+		// 	deleteDoc(userAuthRef)
+		// 		.then(() => {
+		// 			console.log("Document successfully deleted!");
+		// 		})
+		// 		.catch((error: any) => {
+		// 			Sentry.captureException(error);
+		// 			console.error("Error removing document: ", error);
+		// 		});
+		// }
 
 		// Clear user data and local storage
 		if (isBrowser()) {
@@ -125,7 +127,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 				}
 			);
 
-			const { success, data } = response.data;
+			const { success, data, token } = response.data;
 
 			if (success && data) {
 				if (data.userType === "creator") {
@@ -137,9 +139,8 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 					setCreatorUser(null);
 					setUserType("client");
 				}
-				if (isBrowser()) {
-					localStorage.setItem("userType", data.userType);
-				}
+				setAuthToken(token);
+				localStorage.setItem("userType", data.userType);
 			} else {
 				handleSignout();
 			}
@@ -191,8 +192,6 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 					if (doc.exists()) {
 						const data = doc.data();
 						if (isBrowser()) {
-							const authToken = getCookie("authToken");
-
 							if (data?.token && data.token !== authToken) {
 								handleSignout();
 								toast({

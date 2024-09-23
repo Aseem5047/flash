@@ -130,7 +130,7 @@ const AuthenticateViaOTP = ({
 		setIsVerifyingOTP(true);
 		try {
 			const response = await axios.post(
-				`${process.env.NEXT_PUBLIC_BASE_URL_BACKEND}/verify-otp`,
+				`${process.env.NEXT_PUBLIC_BASE_URL_BACKEND}/otp/verify-otp`,
 				{
 					phone: phoneNumber,
 					otp: values.pin,
