@@ -2,7 +2,8 @@ import { withSentryConfig } from '@sentry/nextjs';
 /** @type {import('next').NextConfig} */
 
 const nextConfig = {
-    reactStrictMode: false,
+    reactStrictMode: true,
+    outputFileTracing: true,
     experimental: {
         nftTracing: true
     },
