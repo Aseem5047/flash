@@ -7,8 +7,14 @@ import { useToast } from "../ui/use-toast";
 import { logEvent } from "firebase/analytics";
 import { analytics, db } from "@/lib/firebase";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
-import * as Sentry from "@sentry/nextjs";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import {
+	backendBaseUrl,
+	stopMediaStreams,
+	updateExpertStatus,
+	updateFirestoreSessions,
+} from "@/lib/utils";
+import axios from "axios";
 
 const MyCallUI = () => {
 	const router = useRouter();
@@ -17,87 +23,73 @@ const MyCallUI = () => {
 	const { currentUser } = useCurrentUsersContext();
 
 	const { toast } = useToast();
+	const [toastShown, setToastShown] = useState(false);
+
 	let hide = pathname.includes("/meeting") || pathname.includes("/feedback");
 	const [hasRedirected, setHasRedirected] = useState(false);
 	const [showCallUI, setShowCallUI] = useState(false);
 
-	const updateFirestoreSessions = async (
-		userId: string,
-		callId: string,
-		status: string
-	) => {
-		try {
-			const SessionDocRef = doc(db, "sessions", userId);
-			const SessionDoc = await getDoc(SessionDocRef);
-			if (SessionDoc.exists()) {
-				await updateDoc(SessionDocRef, {
-					ongoingCall: { id: callId, status: status },
-				});
-			} else {
-				await setDoc(SessionDocRef, {
-					ongoingCall: { id: callId, status: status },
-				});
-			}
-		} catch (error) {
-			Sentry.captureException(error);
-			console.error("Error updating Firestore Sessions: ", error);
-		}
-	};
-
-	// Function to update expert's status
-	const updateExpertStatus = async (phone: string, status: string) => {
-		try {
-			const response = await fetch("/api/set-status", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ phone, status }),
-			});
-
-			const data = await response.json();
-			if (!response.ok) {
-				throw new Error(data.message || "Failed to update status");
-			}
-
-			console.log("Expert status updated to:", status);
-		} catch (error) {
-			Sentry.captureException(error);
-			console.error("Error updating expert status:", error);
-		}
-	};
-
 	useEffect(() => {
 		const checkFirestoreSession = async (userId: string) => {
 			try {
-				const sessionDocRef = doc(db, "sessions", userId);
-				const sessionDoc = await getDoc(sessionDocRef);
+				const clientStatusDocRef = doc(
+					db,
+					"userStatus",
+					currentUser?.phone as string
+				);
 
-				if (sessionDoc.exists()) {
-					const { ongoingCall } = sessionDoc.data();
-					if (ongoingCall && ongoingCall.status !== "ended") {
-						// Call is still pending, redirect the user back to the meeting
-						toast({
-							variant: "destructive",
-							title: "Pending Call Session",
-							description: "Redirecting you back ...",
-						});
-						router.replace(`/meeting/${ongoingCall.id}`);
-						setHasRedirected(true);
+				// Listen for the client's status
+				const unsubscribeClientStatus = onSnapshot(
+					clientStatusDocRef,
+					async (clientStatusDoc: any) => {
+						const clientStatusData = clientStatusDoc.data();
+
+						// If the client status is "Busy", do nothing
+						if (clientStatusData && clientStatusData.status === "Busy") {
+							setToastShown(true);
+						}
+
+						// Otherwise, check for ongoing sessions
+						const sessionDocRef = doc(db, "sessions", userId);
+						const sessionDoc = await getDoc(sessionDocRef);
+
+						if (sessionDoc.exists()) {
+							const { ongoingCall } = sessionDoc.data();
+							if (
+								ongoingCall &&
+								ongoingCall.status !== "ended" &&
+								!hide &&
+								!toastShown
+							) {
+								// Call is still pending, redirect the user back to the meeting
+
+								toast({
+									variant: "destructive",
+									title: "Ongoing Call or Session Pending",
+									description: "Redirecting you back ...",
+								});
+
+								router.replace(`/meeting/${ongoingCall.id}`);
+								setHasRedirected(true);
+							}
+						} else {
+							// If no ongoing call in Firestore, check local storage
+							const storedCallId = localStorage.getItem("activeCallId");
+							if (storedCallId && !hide && !hasRedirected) {
+								toast({
+									variant: "destructive",
+									title: "Ongoing Call or Session Pending",
+									description: "Redirecting you back ...",
+								});
+								router.replace(`/meeting/${storedCallId}`);
+								setHasRedirected(true);
+							}
+						}
 					}
-				} else {
-					// If no ongoing call in Firestore, check local storage
-					const storedCallId = localStorage.getItem("activeCallId");
-					if (storedCallId && !hide && !hasRedirected) {
-						toast({
-							variant: "destructive",
-							title: "Ongoing Call or Session Pending",
-							description: "Redirecting you back ...",
-						});
-						router.replace(`/meeting/${storedCallId}`);
-						setHasRedirected(true);
-					}
-				}
+				);
+
+				// Clean up subscription
+				return () => unsubscribeClientStatus();
 			} catch (error) {
 				console.error("Error checking Firestore session: ", error);
 			}
@@ -112,12 +104,16 @@ const MyCallUI = () => {
 		calls.forEach((call) => {
 			const isMeetingOwner =
 				currentUser && currentUser?._id === call?.state?.createdBy?.id;
+
 			const expert = call?.state?.members?.find(
 				(member) => member.custom.type === "expert"
 			);
+
+			const callCreator = call?.state?.createdBy;
+
 			const handleCallEnded = async () => {
-				call.camera.disable();
-				call.microphone.disable();
+				stopMediaStreams();
+
 				if (!isMeetingOwner) {
 					localStorage.removeItem("activeCallId");
 				}
@@ -125,6 +121,13 @@ const MyCallUI = () => {
 				if (expertPhone) {
 					await updateExpertStatus(expertPhone, "Online");
 				}
+
+				isMeetingOwner &&
+					(await updateExpertStatus(
+						callCreator?.custom?.phone as string,
+						"Idle"
+					));
+
 				setShowCallUI(false); // Hide call UI
 			};
 
@@ -132,10 +135,24 @@ const MyCallUI = () => {
 				toast({
 					variant: "destructive",
 					title: "Call Rejected",
-					description: "The call was rejected. Redirecting to HomePage...",
+					description: "The call was rejected",
 				});
 
 				setShowCallUI(false); // Hide call UI
+
+				const expertPhone = expert?.custom?.phone;
+				if (expertPhone) {
+					await updateExpertStatus(expertPhone, "Online");
+				}
+
+				await updateExpertStatus(callCreator?.custom?.phone as string, "Idle");
+
+				await updateFirestoreSessions(
+					callCreator?.id as string,
+					call.id,
+					"ended",
+					[]
+				);
 
 				logEvent(analytics, "call_rejected", {
 					callId: call.id,
@@ -143,13 +160,9 @@ const MyCallUI = () => {
 
 				const creatorURL = localStorage.getItem("creatorURL");
 
-				await fetch("/api/v1/calls/updateCall", {
-					method: "POST",
-					body: JSON.stringify({
-						callId: call.id,
-						call: { status: "Rejected" },
-					}),
-					headers: { "Content-Type": "application/json" },
+				await axios.post(`${backendBaseUrl}/calls/updateCall`, {
+					callId: call.id,
+					call: { status: "Rejected" },
 				});
 
 				router.replace(`${creatorURL ? creatorURL : "/home"}`);
@@ -159,21 +172,15 @@ const MyCallUI = () => {
 				isMeetingOwner && localStorage.setItem("activeCallId", call.id);
 				setShowCallUI(false); // Hide call UI
 
-				await fetch("/api/v1/calls/updateCall", {
-					method: "POST",
-					body: JSON.stringify({
-						callId: call.id,
-						call: { status: "Accepted" },
-					}),
-					headers: { "Content-Type": "application/json" },
-					keepalive: true,
-				});
-
-				isMeetingOwner &&
-					(await updateFirestoreSessions(currentUser?._id, call.id, "ongoing"));
-
 				logEvent(analytics, "call_accepted", {
 					callId: call.id,
+				});
+
+				await updateExpertStatus(callCreator?.custom?.phone as string, "Busy");
+
+				await axios.post(`${backendBaseUrl}/calls/updateCall`, {
+					callId: call.id,
+					call: { status: "Accepted" },
 				});
 
 				// Check the calling state before attempting to leave

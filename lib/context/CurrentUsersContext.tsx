@@ -8,16 +8,15 @@ import {
 	useState,
 	useMemo,
 } from "react";
-import { getCreatorById } from "../actions/creator.actions";
-import { getUserById } from "../actions/client.actions";
+
 import { clientUser, creatorUser } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
 import axios from "axios";
-import jwt from "jsonwebtoken";
-import { deleteDoc, doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
+import { deleteDoc, doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import * as Sentry from "@sentry/nextjs";
+import { backendBaseUrl } from "../utils";
 
 // Define the shape of the context value
 interface CurrentUsersContextValue {
@@ -52,25 +51,6 @@ export const useCurrentUsersContext = () => {
 	return context;
 };
 
-// Utility function to check if a token is valid
-const isTokenValid = (token: string): boolean => {
-	try {
-		const decodedToken: any = jwt.decode(token);
-
-		if (!decodedToken || typeof decodedToken !== "object") {
-			return false;
-		}
-
-		const currentTime = Math.floor(Date.now() / 1000);
-
-		return decodedToken.exp > currentTime;
-	} catch (error) {
-		Sentry.captureException(error);
-		console.error("Error decoding token:", error);
-		return false;
-	}
-};
-
 // Utility function to check if we're in the browser
 const isBrowser = () => typeof window !== "undefined";
 
@@ -82,6 +62,9 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	const [authenticationSheetOpen, setAuthenticationSheetOpen] = useState(false);
 	const [fetchingUser, setFetchingUser] = useState(false);
 	const [userType, setUserType] = useState<string | null>(null);
+	const [authToken, setAuthToken] = useState<string | null>(null);
+	const pathname = usePathname();
+
 	const { toast } = useToast();
 	const router = useRouter();
 
@@ -103,7 +86,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	}, [currentUser?._id]);
 
 	// Function to handle user signout
-	const handleSignout = () => {
+	const handleSignout = async () => {
 		const phone = currentUser?.phone; // Store phone number before resetting the state
 		if (phone) {
 			const userAuthRef = doc(db, "authToken", phone);
@@ -117,29 +100,18 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 					Sentry.captureException(error);
 					console.error("Error removing document: ", error);
 				});
-
-			// Optionally set user status to Offline in Firestore
-			setDoc(
-				doc(db, "userStatus", phone),
-				{ status: "Offline" },
-				{ merge: true }
-			)
-				.then(() => {
-					console.log("User status set to Offline on signout");
-				})
-				.catch((error: any) => {
-					Sentry.captureException(error);
-					console.error("Error setting user status to Offline: ", error);
-				});
 		}
 
 		// Clear user data and local storage
-		if (isBrowser()) {
-			localStorage.removeItem("currentUserID");
-			localStorage.removeItem("authToken");
+		await axios.post(`${backendBaseUrl}/user/endSession`);
+
+		localStorage.removeItem("currentUserID");
+		localStorage.removeItem("authToken");
+		localStorage.removeItem("notifyList");
+		if (pathname === "/home") {
 			localStorage.removeItem("creatorURL");
-			localStorage.removeItem("notifyList");
 		}
+
 		setClientUser(null);
 		setCreatorUser(null);
 	};
@@ -148,55 +120,41 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	const fetchCurrentUser = async () => {
 		try {
 			setFetchingUser(true);
-			if (isBrowser()) {
-				const authToken = localStorage.getItem("authToken");
-				const userId = localStorage.getItem("currentUserID");
+			// Call the backend endpoint to get the profile data
 
-				if (authToken && isTokenValid(authToken)) {
-					const decodedToken: any = jwt.decode(authToken);
-					const phoneNumber = decodedToken.phone;
+			const response = await axios.get(`${backendBaseUrl}/user/getProfile`, {
+				withCredentials: true, // Ensure cookies are sent with the request
+			});
 
-					// Fetch user details using phone number
-					const response = await axios.post("/api/v1/user/getUserByPhone", {
-						phone: phoneNumber,
-					});
-					const user = response.data;
+			const { success, data, token } = response.data;
 
-					if (user) {
-						if (userType === "creator") {
-							setCreatorUser(user);
-							setClientUser(null);
-						} else {
-							setClientUser(user);
-							setCreatorUser(null);
-						}
-						localStorage.setItem(
-							"userType",
-							(user.userType as string) ?? "client"
-						);
-					} else {
-						console.error("User not found with phone number:", phoneNumber);
-					}
-				} else if (authToken && userId) {
-					const isCreator = userType === "creator";
-
-					if (isCreator) {
-						const response = await getCreatorById(userId);
-						setCreatorUser(response);
-						setClientUser(null);
-					} else {
-						const response = await getUserById(userId);
-						setClientUser(response);
-						setCreatorUser(null);
-					}
+			if (success && data) {
+				if (data.userType === "creator") {
+					setCreatorUser(data);
+					setClientUser(null);
+					setUserType("creator");
 				} else {
-					handleSignout();
+					setClientUser(data);
+					setCreatorUser(null);
+					setUserType("client");
 				}
+				setAuthToken(token);
+				localStorage.setItem("userType", data.userType);
+			} else {
+				handleSignout();
 			}
-		} catch (error) {
-			Sentry.captureException(error);
-			console.error("Error fetching current user:", error);
-			handleSignout();
+		} catch (error: any) {
+			if (error.response && error.response.status === 401) {
+				console.warn("Unauthorized access - logging out");
+				toast({
+					variant: "destructive",
+					title: "Unauthorized access",
+					description: `Authentication Required`,
+				});
+				handleSignout();
+			} else {
+				console.error("Error fetching current user:", error);
+			}
 		} finally {
 			setFetchingUser(false);
 		}
@@ -204,16 +162,9 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 
 	// Call fetchCurrentUser when the component mounts
 	useEffect(() => {
-		if (isBrowser()) {
-			const authToken = localStorage.getItem("authToken");
-
-			if (authToken && !isTokenValid(authToken)) {
-				handleSignout();
-			} else {
-				if (userType) fetchCurrentUser();
-			}
-		}
-	}, [userType, currentUser?._id]);
+		// Fetch current user on mount
+		fetchCurrentUser();
+	}, []);
 
 	// Function to refresh the current user data
 	const refreshCurrentUser = async () => {
@@ -222,7 +173,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 
 	// Redirect to /updateDetails if username is missing
 	useEffect(() => {
-		if (currentUser && userType === "creator" && !currentUser.username) {
+		if (currentUser && userType === "creator" && !currentUser.firstName) {
 			router.replace("/updateDetails");
 			setTimeout(() => {
 				toast({
@@ -234,9 +185,9 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		}
 	}, [router, userType]);
 
-	// Use heartbeat and beforeunload to update user status
+	// real-time session monitoring
 	useEffect(() => {
-		if (!currentUser || !currentUser.phone) {
+		if (!currentUser) {
 			return;
 		}
 
@@ -249,8 +200,6 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 					if (doc.exists()) {
 						const data = doc.data();
 						if (isBrowser()) {
-							const authToken = localStorage.getItem("authToken");
-
 							if (data?.token && data.token !== authToken) {
 								handleSignout();
 								toast({

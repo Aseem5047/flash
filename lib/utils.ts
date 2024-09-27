@@ -2,6 +2,9 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 import Razorpay from "razorpay";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { db } from "./firebase";
+import * as Sentry from "@sentry/nextjs";
 
 const key_id = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
 const key_secret = process.env.NEXT_PUBLIC_RAZORPAY_SECRET;
@@ -20,6 +23,32 @@ export const razorpay = new Razorpay({
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
+
+// Base URL's
+
+export const frontendBaseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+// export const backendBaseUrl = "https://backend.flashcall.me/api/v1";
+export const backendBaseUrl = process.env.NEXT_PUBLIC_BASE_URL_BACKEND;
+
+// setBodyBackgroundColor
+export const setBodyBackgroundColor = (color: string) => {
+	document.body.style.backgroundColor = color;
+};
+
+export const resetBodyBackgroundColor = () => {
+	document.body.style.backgroundColor = "";
+};
+
+// default profile images based on
+export const placeholderImages = {
+	male: "https://firebasestorage.googleapis.com/v0/b/flashcallchat.appspot.com/o/assets%2FM_preview.png?alt=media&token=750fc704-c540-4843-9cbd-bfc4609780e0",
+	female:
+		"https://firebasestorage.googleapis.com/v0/b/flashcallchat.appspot.com/o/assets%2FF_preview.png?alt=media&token=ed601090-05ed-4148-90b7-ea079bc2a245",
+	other:
+		"https://firebasestorage.googleapis.com/v0/b/flashcallchat.appspot.com/o/assets%2FOthers_preview.png?alt=media&token=846916d0-b031-4eed-830a-ec6e73c33350",
+	generic:
+		"https://firebasestorage.googleapis.com/v0/b/flashcallchat.appspot.com/o/assets%2Fgeneric.png?alt=media&token=da7a462f-6461-4cb0-bb2d-b4e6b8a6bae9",
+};
 
 export const handleError = (error: unknown) => {
 	console.error(error);
@@ -164,4 +193,69 @@ export const validateUsername = (username: string) => {
 		return false;
 	}
 	return true;
+};
+
+export const updateFirestoreSessions = async (
+	userId: string,
+	callId: string,
+	status: string,
+	members: any[]
+) => {
+	try {
+		const SessionDocRef = doc(db, "sessions", userId);
+		const SessionDoc = await getDoc(SessionDocRef);
+		if (SessionDoc.exists()) {
+			await updateDoc(SessionDocRef, {
+				ongoingCall: { id: callId, status: status, members },
+			});
+		} else {
+			await setDoc(SessionDocRef, {
+				ongoingCall: { id: callId, status: status, members },
+			});
+		}
+	} catch (error) {
+		Sentry.captureException(error);
+		console.error("Error updating Firestore Sessions: ", error);
+	}
+};
+
+// Function to update expert's status
+export const updateExpertStatus = async (
+	phone: string,
+	status: string,
+	flag?: string
+) => {
+	try {
+		const response = await fetch("/api/set-status", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ phone, status }),
+		});
+
+		const data = await response.json();
+		if (!response.ok) {
+			throw new Error(data.message || "Failed to update status");
+		}
+
+		console.log("Expert status updated to:", status);
+	} catch (error) {
+		Sentry.captureException(error);
+		console.error("Error updating expert status:", error);
+	}
+};
+
+// Stop camera and microphone
+export const stopMediaStreams = () => {
+	navigator.mediaDevices
+		.getUserMedia({ video: true, audio: true })
+		.then((mediaStream) => {
+			mediaStream.getTracks().forEach((track) => {
+				track.stop();
+			});
+		})
+		.catch((error) => {
+			console.error("Error stopping media streams: ", error);
+		});
 };

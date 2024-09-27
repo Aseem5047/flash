@@ -38,13 +38,37 @@ const Navbar = () => {
 	const [userTheme, setUserTheme] = useState("#000000");
 	const [creator, setCreator] = useState<creatorUser>();
 	const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false); // State to manage sheet visibility
+	const [isVisible, setIsVisible] = useState(true);
+	const [lastScrollY, setLastScrollY] = useState(0);
 	const pathname = usePathname();
 	const creatorURL = localStorage.getItem("creatorURL");
-	const currentCreatorUsername = creatorURL
-		? creatorURL.split("/home").filter((url) => url)[0]
-		: pathname.split("/home")[1];
 
-	// const isCreatorOrExpertPath = pathname.includes(`/${currentCreatorUsername}`);
+	const isCreatorOrExpertPath = pathname.includes(`${creatorURL}`);
+	const followCreatorTheme = isCreatorOrExpertPath ? "#ffffff" : "#000000";
+	const invertCreatorTheme = isCreatorOrExpertPath ? "#000000" : "#ffffff";
+
+	const handleScroll = () => {
+		if (typeof window !== "undefined") {
+			if (window.scrollY > lastScrollY) {
+				// If scrolling down
+				setIsVisible(false);
+			} else {
+				// If scrolling up
+				setIsVisible(true);
+			}
+			setLastScrollY(window.scrollY);
+		}
+	};
+
+	useEffect(() => {
+		if (typeof window !== "undefined") {
+			window.addEventListener("scroll", handleScroll);
+
+			return () => {
+				window.removeEventListener("scroll", handleScroll);
+			};
+		}
+	}, [lastScrollY]);
 
 	useEffect(() => {
 		const storedCreator = localStorage.getItem("currentCreator");
@@ -103,9 +127,9 @@ const Navbar = () => {
 
 	const AppLink = () => (
 		<Button
-			className="flex items-center gap-2 bg-green-1 py-2 px-4 lg:ml-2 text-white rounded-[4px] hoverScaleDownEffect"
+			className="flex items-center gap-2 bg-green-1 py-2 px-4 lg:ml-2 text-white rounded-[4px] hoverScaleDownEffect border border-black"
 			style={{
-				boxShadow: `5px 5px 0px 0px ${userTheme}`,
+				boxShadow: `5px 5px 0px 0px #000000`,
 			}}
 			onClick={handleAppRedirect}
 		>
@@ -133,9 +157,12 @@ const Navbar = () => {
 
 	return (
 		<nav
-			className="justify-between items-center fixed z-40 top-0 left-0 w-full px-2 sm:px-4 py-4 bg-white shadow-sm"
+			className={`justify-between items-center fixed z-40 top-0 left-0 w-full px-4 py-4 shadow-sm blurEffect transition-transform duration-300 ${
+				isVisible ? "translate-y-0" : "-translate-y-full"
+			}`}
 			style={{
 				display: `${authenticationSheetOpen && !currentUser ? "none" : "flex"}`,
+				background: `${isCreatorOrExpertPath ? "transparent" : "#ffffff"} `,
 			}}
 		>
 			{currentUser ? (
@@ -149,9 +176,9 @@ const Navbar = () => {
 							width={1000}
 							height={1000}
 							alt="flashcall logo"
-							className="w-[130px] md:w-[144px] h-[40px] p-2 bg-green-1 rounded-[4px] hoverScaleDownEffect"
+							className="w-[130px] md:w-[144px] h-[40px] p-2 bg-green-1 rounded-[4px] hoverScaleDownEffect border border-black"
 							style={{
-								boxShadow: `5px 5px 0px 0px ${userTheme}`,
+								boxShadow: `4px 4px 0px 0px #000000`,
 							}}
 						/>
 					</Link>
@@ -167,11 +194,14 @@ const Navbar = () => {
 					{walletBalance >= 0 ? (
 						<Link
 							href="/payment"
-							className={`w-fit flex items-center justify-center gap-2 text-black p-3 border border-black rounded-[4px] hover:bg-green-1 ${
-								pathname.includes("/payment") && "bg-green-1 text-white"
-							} group`}
+							className={`w-fit flex items-center justify-center gap-2 p-3 rounded-[4px] hoverScaleDownEffect ${
+								pathname.includes("/payment") && "!bg-green-1 !text-white"
+							}`}
 							style={{
-								boxShadow: `5px 5px 0px 0px ${userTheme}`,
+								boxShadow: `4px 4px 0px 0px ${followCreatorTheme}`,
+								color: `${followCreatorTheme}`,
+								border: `1px solid ${followCreatorTheme}`,
+								backgroundColor: `${invertCreatorTheme}`,
 							}}
 						>
 							<Image
@@ -179,11 +209,13 @@ const Navbar = () => {
 								width={100}
 								height={100}
 								alt="wallet"
-								className={`w-4 h-4 group-hover:text-white group-hover:invert ${
-									pathname.includes("/payment") && "invert"
+								className={`w-4 h-4 ${
+									isCreatorOrExpertPath || pathname.includes("/payment")
+										? "invert"
+										: "invert-0"
 								}`}
 							/>
-							<span className="w-full text-xs whitespace-nowrap font-semibold group-hover:text-white">
+							<span className="w-full text-xs whitespace-nowrap font-semibold">
 								{`Rs. ${Math.round(walletBalance)}`}
 							</span>
 						</Link>
@@ -200,9 +232,10 @@ const Navbar = () => {
 					size="lg"
 					onClick={handleRouting}
 					style={{
-						boxShadow: `5px 5px 0px 0px ${userTheme}`,
-						color: userTheme,
-						border: `2px solid ${userTheme}`,
+						boxShadow: `4px 4px 0px 0px ${followCreatorTheme}`,
+						color: `${followCreatorTheme}`,
+						border: `1px solid ${followCreatorTheme}`,
+						backgroundColor: `${invertCreatorTheme}`,
 					}}
 				>
 					Login

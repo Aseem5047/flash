@@ -21,11 +21,13 @@ import { useRouter } from "next/navigation";
 import { useToast } from "../ui/use-toast";
 import { CreateCreatorParams, CreateUserParams } from "@/types";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import * as Sentry from "@sentry/nextjs";
 import { trackEvent } from "@/lib/mixpanel";
 import usePlatform from "@/hooks/usePlatform";
+import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
+import ContentLoading from "../shared/ContentLoading";
+import { backendBaseUrl } from "@/lib/utils";
+import GetRandomImage from "@/utils/GetRandomImage";
 
 const formSchema = z.object({
 	phone: z
@@ -53,12 +55,15 @@ const AuthenticateViaOTP = ({
 	const router = useRouter();
 	const { refreshCurrentUser, setAuthenticationSheetOpen } =
 		useCurrentUsersContext();
+	const { updateWalletBalance } = useWalletBalanceContext();
+
 	const [showOTP, setShowOTP] = useState(false);
 	const [phoneNumber, setPhoneNumber] = useState("");
-	const [token, setToken] = useState<string | null>(null);
 	const [isSendingOTP, setIsSendingOTP] = useState(false);
 	const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
 	const [verificationSuccess, setVerificationSuccess] = useState(false);
+
+	const [firstLogin, setFirstLogin] = useState(false);
 	const [error, setError] = useState({});
 	const { toast } = useToast();
 	const { getDevicePlatform } = usePlatform();
@@ -83,11 +88,10 @@ const AuthenticateViaOTP = ({
 	const handleSignUpSubmit = async (values: z.infer<typeof formSchema>) => {
 		setIsSendingOTP(true);
 		try {
-			const response = await axios.post("/api/v1/send-otp", {
+			await axios.post(`${backendBaseUrl}/otp/send-otp`, {
 				phone: values.phone,
 			});
 			setPhoneNumber(values.phone);
-			setToken(response.data.token); // Store the token received from the API
 			setShowOTP(true);
 			trackEvent("Login_Bottomsheet_OTP_Generated", {
 				Platform: getDevicePlatform(),
@@ -101,35 +105,13 @@ const AuthenticateViaOTP = ({
 		}
 	};
 
-	// managing single session authentication
-	const updateFirestoreAuthToken = async (token: string) => {
-		try {
-			let updatedPhoneNumber = `+91${phoneNumber}`;
-			const authTokenDocRef = doc(db, "authToken", updatedPhoneNumber);
-			const authTokenDoc = await getDoc(authTokenDocRef);
-			if (authTokenDoc.exists()) {
-				await updateDoc(authTokenDocRef, {
-					token,
-				});
-			} else {
-				await setDoc(authTokenDocRef, {
-					token,
-				});
-			}
-		} catch (error) {
-			Sentry.captureException(error);
-			console.error("Error updating Firestore Data: ", error);
-		}
-	};
-
 	// Handle OTP submission
 	const handleOTPSubmit = async (values: z.infer<typeof FormSchemaOTP>) => {
 		setIsVerifyingOTP(true);
 		try {
-			const response = await axios.post("/api/v1/verify-otp", {
+			const response = await axios.post(`${backendBaseUrl}/otp/verify-otp`, {
 				phone: phoneNumber,
 				otp: values.pin,
-				token: token,
 			});
 
 			// Extract the session token and user from the response
@@ -146,14 +128,11 @@ const AuthenticateViaOTP = ({
 				Platform: getDevicePlatform(),
 			});
 
-			// Update Firestore with the auth token
-			updateFirestoreAuthToken(sessionToken);
-
 			const decodedToken = jwt.decode(sessionToken) as { user?: any };
 
 			// Save the auth token (with 1 days expiry) in localStorage
-			localStorage.setItem("authToken", sessionToken);
-			console.log("OTP verified and token saved:");
+			// localStorage.setItem("authToken", sessionToken);
+			// console.log("OTP verified and token saved:");
 
 			setVerificationSuccess(true);
 
@@ -182,7 +161,7 @@ const AuthenticateViaOTP = ({
 			} else {
 				// No user found, proceed as new user
 				console.log("No user found. Proceeding as a new user.");
-
+				setFirstLogin(true);
 				let newUser: CreateCreatorParams | CreateUserParams;
 
 				const formattedPhone = phoneNumber.startsWith("+91")
@@ -213,7 +192,7 @@ const AuthenticateViaOTP = ({
 						firstName: "",
 						lastName: "",
 						username: formattedPhone as string,
-						photo: "",
+						photo: GetRandomImage() || "",
 						phone: formattedPhone,
 						role: "client",
 						bio: "",
@@ -225,12 +204,12 @@ const AuthenticateViaOTP = ({
 				try {
 					if (userType === "creator") {
 						await axios.post(
-							"/api/v1/creator/createUser",
+							`${backendBaseUrl}/creator/createUser`,
 							newUser as CreateCreatorParams
 						);
 					} else {
 						await axios.post(
-							"/api/v1/client/createUser",
+							`${backendBaseUrl}/client/createUser`,
 							newUser as CreateUserParams
 						);
 					}
@@ -247,12 +226,23 @@ const AuthenticateViaOTP = ({
 
 			localStorage.setItem("userType", resolvedUserType);
 			refreshCurrentUser();
+			updateWalletBalance();
 			setAuthenticationSheetOpen(false);
 			const creatorURL = localStorage.getItem("creatorURL");
 
-			router.replace(
-				`${creatorURL && userType !== "creator" ? creatorURL : "/home"}`
-			);
+			if (resolvedUserType === "client") {
+				if (creatorURL) {
+					router.replace(creatorURL);
+				} else {
+					router.replace("/home");
+				}
+			} else if (resolvedUserType === "creator") {
+				if (firstLogin) {
+					router.replace("/updateDetails");
+				} else {
+					router.replace("/home");
+				}
+			}
 		} catch (error: any) {
 			console.error("Error verifying OTP:", error);
 			let newErrors = { ...error };
@@ -285,7 +275,6 @@ const AuthenticateViaOTP = ({
 	const resetState = () => {
 		setShowOTP(false);
 		setPhoneNumber("");
-		setToken(null);
 		setVerificationSuccess(false);
 		signUpForm.reset(); // Reset sign-up form
 		otpForm.reset(); // Reset OTP form
@@ -419,7 +408,6 @@ const AuthenticateViaOTP = ({
 					isVerifyingOTP={isVerifyingOTP}
 					errors={error}
 					changeError={setError}
-					setToken={setToken}
 				/>
 			)}
 
@@ -427,7 +415,7 @@ const AuthenticateViaOTP = ({
 				<p className="text-xs text-gray-400 text-center mt-7 pb-2 w-3/4 leading-loose">
 					By signing up you agree to our <br />
 					<Link
-						href="https://www.flashcall.me/terms-of-services"
+						href="https://flashcall.me/terms-and-conditions"
 						target="_blank"
 						className="underline hover:text-green-1 text-black"
 					>
@@ -435,7 +423,7 @@ const AuthenticateViaOTP = ({
 					</Link>{" "}
 					and{" "}
 					<Link
-						href="https://www.flashcall.me/privacy-policy"
+						href="https://flashcall.me/privacy-policy"
 						target="_blank"
 						className="underline hover:text-green-1 text-black"
 					>

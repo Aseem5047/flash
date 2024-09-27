@@ -93,10 +93,6 @@ const PaymentSettings = () => {
 		[]
 	);
 
-	const generateVerificationId = () => {
-		return `${currentUser?._id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-	};
-
 	const handleSave = async () => {
 		let hasError = false;
 		const newErrors = {
@@ -152,21 +148,6 @@ const PaymentSettings = () => {
 			};
 
 			try {
-				// const verification_id = generateVerificationId();
-				// const reversePennyDrop = await fetch('/api/v1/reverse-penny-drop', {
-				// 	method: 'POST',
-				// 	headers: {
-				// 		'Content-Type': 'application/json'
-				// 	},
-				// 	body: JSON.stringify({
-				// 		verification_id,
-				// 		name: currentUser?.firstName + ' ' + currentUser?.lastName
-				// 	})
-				// })
-
-				// const result  = await reversePennyDrop.json();
-
-				const verification_id = generateVerificationId();
 				if (paymentData.paymentMode === 'UPI') {
 					const response = await fetch('/api/v1/creator/verifyUpi', {
 						method: 'POST',
@@ -174,7 +155,7 @@ const PaymentSettings = () => {
 							'Content-Type': 'application/json'
 						},
 						body: JSON.stringify({
-							verification_id,
+							userId: currentUser?._id,
 							vpa: paymentData.upiId,
 						})
 					})
@@ -185,6 +166,9 @@ const PaymentSettings = () => {
 						alert("Failed to save payment details.");
 						return;
 					}
+					else{
+						alert('Payment Details Saved');
+					}
 
 				}
 				else if (paymentData.paymentMode === 'BankTransfer') {
@@ -194,6 +178,7 @@ const PaymentSettings = () => {
 							'Content-Type': 'application/json'
 						},
 						body: JSON.stringify({
+							userId: currentUser?._id,
 							bank_account: paymentData.bankDetails.accountNumber,
 							ifsc: paymentData.bankDetails.ifsc
 						})
@@ -205,23 +190,26 @@ const PaymentSettings = () => {
 						alert("Failed to save payment details.");
 						return;
 					}
+					else {
+						alert('Saved Payment Details');
+					}
 				}
 
 				// if(result.success){
-				const response = await fetch("/api/v1/creator/savePayment", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(paymentData),
-				});
+				// const response = await fetch("/api/v1/creator/savePayment", {
+				// 	method: "POST",
+				// 	headers: { "Content-Type": "application/json" },
+				// 	body: JSON.stringify(paymentData),
+				// });
 
-				if (response.ok) {
-					alert("Payment details saved successfully!");
-					// Update initial states to reflect the new saved state
-					setInitialPaymentMethod(paymentMethod);
-					setInitialBankDetails(bankDetails);
-				} else {
-					alert("Failed to save payment details.");
-				}
+				// if (response.ok) {
+				// 	alert("Payment details saved successfully!");
+				// 	// Update initial states to reflect the new saved state
+				// 	setInitialPaymentMethod(paymentMethod);
+				// 	setInitialBankDetails(bankDetails);
+				// } else {
+				// 	alert("Failed to save payment details.");
+				// }
 				// }
 				// else {
 				// 	alert('Penny Drop Failed');

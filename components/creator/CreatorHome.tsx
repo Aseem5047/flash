@@ -108,12 +108,13 @@ const CreatorHome = () => {
 			// Get today's date in local YYYY-MM-DD format
 			const today = new Date();
 			const localDate = today.toLocaleDateString("en-CA"); // 'en-CA' gives YYYY-MM-DD format
-			console.log(localDate);
+
 			const response = await axios.get(
 				`/api/v1/transaction/getTodaysEarnings?userId=${creatorUser?._id}&date=${localDate}`
 			);
 			const fetchedTransactions = response.data.transactions;
 			const totalEarnings = calculateTotalEarnings(fetchedTransactions);
+
 			setTodaysEarning(totalEarnings.toFixed(2));
 		} catch (error) {
 			Sentry.captureException(error);
@@ -316,7 +317,6 @@ const CreatorHome = () => {
 						chatAllowed: services.chat,
 					},
 				} as UpdateCreatorParams);
-
 				refreshCurrentUser();
 			} catch (error) {
 				Sentry.captureException(error);
