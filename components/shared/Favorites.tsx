@@ -76,9 +76,7 @@ const Favorites = ({
 							: "h-[36px] w-full rounded-[6px] border-black hoverScaleDownEffect"
 					}  ${
 						markedFavorite
-							? isFavoritesPath
-								? "bg-green-1 text-white"
-								: "bg-black/35 text-white"
+							? isFavoritesPath && "bg-green-1 text-white"
 							: "bg-transparent"
 					} flex gap-2 items-center`}
 					onClick={handleToggleFavorite}
@@ -112,7 +110,7 @@ const Favorites = ({
 								viewBox="0 0 24 24"
 								strokeWidth={1.5}
 								stroke="currentColor"
-								className={`${isFavoritesPath ? "size-4" : "size-6"} invert`}
+								className={`size-4`}
 							>
 								<path
 									strokeLinecap="round"
@@ -122,7 +120,7 @@ const Favorites = ({
 							</svg>
 						) : (
 							<span className="text-center w-full font-bold text-sm">
-								UnFollow
+								Following
 							</span>
 						)
 					) : (

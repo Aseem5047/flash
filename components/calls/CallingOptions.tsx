@@ -591,7 +591,13 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 					<button
 						disabled={!service.enabled}
 						key={service.type}
-						className={`callOptionContainer `}
+						className={`callOptionContainer ${
+							(isProcessing ||
+								!service.enabled ||
+								onlineStatus === "Busy" ||
+								isClientBusy) &&
+							"!cursor-not-allowed"
+						}`}
 						onClick={service.onClick}
 					>
 						<div className={`flex gap-4 items-center font-bold text-white`}>
@@ -600,7 +606,10 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 						</div>
 						<p
 							className={`font-medium tracking-widest rounded-[18px] px-4 h-[36px] text-black flex items-center justify-center ${
-								(isProcessing || !service.enabled || onlineStatus === "Busy") &&
+								(isProcessing ||
+									!service.enabled ||
+									onlineStatus === "Busy" ||
+									isClientBusy) &&
 								"border border-white/50 text-white"
 							}`}
 							style={{
