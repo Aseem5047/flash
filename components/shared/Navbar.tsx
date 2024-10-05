@@ -12,6 +12,7 @@ import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import AuthenticationSheet from "../shared/AuthenticationSheet";
 import { trackEvent } from "@/lib/mixpanel";
 import { creatorUser } from "@/types";
+import { getDarkHexCode } from "@/lib/utils";
 
 const NavLoader = () => {
 	return (
@@ -25,52 +26,33 @@ const NavLoader = () => {
 	);
 };
 
-const Navbar = () => {
+const Navbar = ({
+	isVisible,
+	isMobile,
+}: {
+	isVisible: boolean;
+	isMobile: boolean;
+}) => {
 	const {
 		currentUser,
 		fetchingUser,
 		userType,
 		authenticationSheetOpen,
 		setAuthenticationSheetOpen,
+		currentTheme,
 	} = useCurrentUsersContext();
 	const router = useRouter();
 	const [creator, setCreator] = useState<creatorUser>();
 	const [isAuthSheetOpen, setIsAuthSheetOpen] = useState(false);
-	const [isVisible, setIsVisible] = useState(true);
-	const [lastScrollY, setLastScrollY] = useState(0);
+
 	const pathname = usePathname();
 	const creatorURL = localStorage.getItem("creatorURL");
 
 	const isCreatorOrExpertPath = pathname.includes(`${creatorURL}`);
 	const followCreatorTheme = isCreatorOrExpertPath ? "#ffffff" : "#000000";
-	const invertCreatorTheme = isCreatorOrExpertPath ? "transparent" : "#ffffff";
-
-	const handleScroll = () => {
-		if (typeof window !== "undefined") {
-			if (window.innerWidth <= 768) {
-				if (window.scrollY > lastScrollY) {
-					// If scrolling down
-					setIsVisible(false);
-				} else {
-					// If scrolling up
-					setIsVisible(true);
-				}
-				setLastScrollY(window.scrollY);
-			} else {
-				setIsVisible(true);
-			}
-		}
-	};
-
-	useEffect(() => {
-		if (typeof window !== "undefined") {
-			window.addEventListener("scroll", handleScroll);
-
-			return () => {
-				window.removeEventListener("scroll", handleScroll);
-			};
-		}
-	}, [lastScrollY]);
+	const invertCreatorTheme = isCreatorOrExpertPath
+		? getDarkHexCode(currentTheme)
+		: "#ffffff";
 
 	useEffect(() => {
 		const storedCreator = localStorage.getItem("currentCreator");
@@ -119,57 +101,82 @@ const Navbar = () => {
 
 	const AppLink = () => (
 		<Button
-			className="flex items-center gap-2 bg-green-1 py-2 px-4 lg:ml-2 text-white rounded-[4px] hoverScaleDownEffect border border-black"
+			className="flex items-center justify-center gap-2 px-4 lg:ml-2 rounded-[6px] hoverScaleDownEffect w-[128px] h-[40px] xl:w-[200px] xl:h-[48px]"
 			style={{
-				boxShadow: `5px 5px 0px 0px #000000`,
+				boxShadow: `4px 4px 0px 0px #000000`,
+				color: `${
+					isMobile && followCreatorTheme ? "#000000" : followCreatorTheme
+				}`,
+				border: `1px solid #000000`,
+				backgroundColor: `${
+					isCreatorOrExpertPath
+						? isMobile
+							? currentTheme
+							: "#333333"
+						: "#ffffff"
+				}`,
 			}}
 			onClick={handleAppRedirect}
 		>
 			<Image
-				src="/icons/logoDarkCircle.png"
+				src="/icons/logo_icon.png"
 				width={100}
 				height={100}
 				alt="flashcall logo"
-				className="w-6 h-6 rounded-full"
+				className={`size-6 xl:w-[28px] xl:h-[36px] rounded-full`}
 			/>
 
-			<span className="w-full whitespace-nowrap text-xs font-semibold">
+			<span className="w-fit whitespace-nowrap text-xs font-semibold">
 				Get Your Link
 			</span>
 		</Button>
 	);
 
-	if (isAuthSheetOpen && !currentUser)
-		return (
-			<AuthenticationSheet
-				isOpen={isAuthSheetOpen}
-				onOpenChange={setIsAuthSheetOpen} // Handle sheet close
-			/>
-		);
-
 	return (
 		<nav
-			className={`justify-between items-center fixed z-40 top-0 left-0 w-full px-4 py-4   transition-transform duration-300 shadow-sm blurEffect
-			 ${isVisible ? "translate-y-0" : "-translate-y-full"}`}
+			className={`flex justify-between items-center fixed h-[76px] z-40 top-0 left-0 ${
+				isCreatorOrExpertPath && "border-b border-white/20"
+			}  ${
+				isVisible ? "translate-y-0" : "-translate-y-full"
+			} w-full px-4 py-4 transition-transform duration-300 shadow-sm blurEffect
+			 `}
 			style={{
-				display: `${authenticationSheetOpen && !currentUser ? "none" : "flex"}`,
-				background: `${isCreatorOrExpertPath ? "transparent" : "#ffffff"} `,
+				background: `${
+					isCreatorOrExpertPath
+						? isMobile
+							? currentTheme
+							: "#000000"
+						: "#ffffff"
+				} `,
 			}}
 		>
 			{currentUser ? (
 				userType === "creator" ? (
 					<Link
 						href="/home"
-						className="flex items-center justify-center lg:ml-2"
+						className="flex items-center justify-center size-fit"
 					>
 						<Image
-							src="/icons/logoMain.png"
+							src="/icons/logo_new_light.png"
 							width={1000}
 							height={1000}
 							alt="flashcall logo"
-							className="w-[130px] md:w-[144px] h-[40px] p-2 bg-green-1 rounded-[4px] hoverScaleDownEffect border border-black"
+							className="flex items-center justify-center gap-2 px-4 lg:ml-2 rounded-[6px] hoverScaleDownEffect w-[128px] h-[40px] xl:w-[175px] xl:h-[48px]"
 							style={{
 								boxShadow: `4px 4px 0px 0px #000000`,
+								color: `${
+									isMobile && followCreatorTheme
+										? "#000000"
+										: followCreatorTheme
+								}`,
+								border: `1px solid #000000`,
+								backgroundColor: `${
+									isCreatorOrExpertPath
+										? isMobile
+											? currentTheme
+											: "#333333"
+										: "#ffffff"
+								}`,
 							}}
 						/>
 					</Link>
@@ -185,14 +192,24 @@ const Navbar = () => {
 					{walletBalance >= 0 ? (
 						<Link
 							href="/payment"
-							className={`w-fit flex items-center justify-center gap-2 p-3 rounded-[4px] hoverScaleDownEffect ${
+							className={`w-fit flex items-center justify-center gap-2 p-3 rounded-[6px] hoverScaleDownEffect h-[40px] xl:h-[48px] ${
 								pathname.includes("/payment") && "!bg-green-1 !text-white"
 							}`}
 							style={{
 								boxShadow: `4px 4px 0px 0px #000000`,
-								color: `${followCreatorTheme}`,
+								color: `${
+									isMobile && followCreatorTheme
+										? "#000000"
+										: followCreatorTheme
+								}`,
 								border: `1px solid #000000`,
-								backgroundColor: `${invertCreatorTheme}`,
+								backgroundColor: `${
+									isCreatorOrExpertPath
+										? isMobile
+											? currentTheme
+											: invertCreatorTheme
+										: "#ffffff"
+								}`,
 							}}
 						>
 							<Image
@@ -201,7 +218,8 @@ const Navbar = () => {
 								height={100}
 								alt="wallet"
 								className={`w-4 h-4 ${
-									(pathname.includes("/payment") || isCreatorOrExpertPath) &&
+									(pathname.includes("/payment") ||
+										(isCreatorOrExpertPath && !isMobile)) &&
 									"invert"
 								}`}
 							/>
@@ -218,7 +236,7 @@ const Navbar = () => {
 				<NavLoader />
 			) : (
 				<Button
-					className="hover:!bg-green-1 hover:!text-white transition-all duration-300 hover:bg-green-700font-semibold w-fit mr-1 rounded-md"
+					className="hoverScaleDownEffect font-semibold w-fit h-[40px] xl:h-[48px]  mr-1 rounded-md"
 					size="lg"
 					onClick={handleRouting}
 					style={{
@@ -230,6 +248,13 @@ const Navbar = () => {
 				>
 					Login
 				</Button>
+			)}
+
+			{isAuthSheetOpen && (
+				<AuthenticationSheet
+					isOpen={isAuthSheetOpen}
+					onOpenChange={setIsAuthSheetOpen} // Handle sheet close
+				/>
 			)}
 		</nav>
 	);

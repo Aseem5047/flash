@@ -75,10 +75,8 @@ const HomePage = () => {
 		);
 	}
 
-	console.log(creators);
-
 	return (
-		<main className="flex flex-col size-full">
+		<main className="flex flex-col pt-4 md:pt-0 size-full">
 			{userType === "client" ? (
 				<Suspense fallback={<PostLoader count={6} />}>
 					{isError ? (
@@ -136,11 +134,11 @@ const HomePage = () => {
 
 					{!hasNextPage && !isFetching && (
 						<div className="text-center text-gray-500 py-4">
-							You have reached the end of the list.
+							You have reached the end of the list
 						</div>
 					)}
 
-					{hasNextPage && <div ref={ref} className=" pt-10 w-full" />}
+					{hasNextPage && <div ref={ref} className="pt-10 w-full" />}
 				</Suspense>
 			) : (
 				<CreatorHome />

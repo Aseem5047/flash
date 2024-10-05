@@ -20,9 +20,13 @@ import {
 	isValidHexColor,
 	updateFirestoreSessions,
 	trackCallEvents,
+	fetchFCMToken,
+	sendNotification,
 	// fetchFCMToken,
 	// sendNotification,
 } from "@/lib/utils";
+import useChat from "@/hooks/useChat";
+import Loader from "../shared/Loader";
 
 interface CallingOptions {
 	creator: creatorUser;
@@ -31,6 +35,7 @@ interface CallingOptions {
 const CallingOptions = ({ creator }: CallingOptions) => {
 	const router = useRouter();
 	const { walletBalance } = useWalletBalanceContext();
+	const { loading } = useChat();
 	const client = useStreamVideoClient();
 	const { clientUser, userType, setAuthenticationSheetOpen } =
 		useCurrentUsersContext();
@@ -158,7 +163,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 							setSheetOpen(false);
 							setChatReqSent(false);
 							setChatState(data.status);
-							localStorage.removeItem("chatRequestId");
+							// localStorage.removeItem("chatRequestId");
 							localStorage.removeItem("user2");
 							unsubscribe();
 						} else if (
@@ -214,53 +219,6 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			}
 		};
 	}, [chatState]);
-
-	// defining the actions for call accept and call reject
-	const handleCallAccepted = async (callType: string) => {
-		setIsProcessing(false); // Reset processing state
-
-		toast({
-			variant: "destructive",
-			title: "Call Accepted",
-			description: "The call has been accepted. Redirecting to meeting...",
-		});
-
-		setSheetOpen(false);
-
-		const createdAtDate = clientUser?.createdAt
-			? new Date(clientUser.createdAt)
-			: new Date();
-		const formattedDate = createdAtDate.toISOString().split("T")[0];
-
-		if (callType === "audio") {
-			try {
-				trackEvent("BookCall_Audio_Connected", {
-					Client_ID: clientUser?._id,
-					User_First_Seen: formattedDate,
-					Creator_ID: creator._id,
-				});
-			} catch (error) {
-				console.log(error);
-			}
-		} else {
-			try {
-				trackEvent("BookCall_Video_Connected", {
-					Client_ID: clientUser?._id,
-					User_First_Seen: formattedDate,
-					Creator_ID: creator._id,
-				});
-			} catch (error) {
-				console.log(error);
-			}
-		}
-
-		// router.replace(`/meeting/${call.id}`);
-	};
-
-	const handleCallRejected = () => {
-		setIsProcessing(false); // Reset processing state
-		setSheetOpen(false);
-	};
 
 	const createMeeting = async (callType: string) => {
 		if (!client || !clientUser) return;
@@ -328,6 +286,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				Walletbalance_Available: clientUser?.walletBalance,
 			});
 
+			// Check if the call exists or create it
 			await call.getOrCreate({
 				members_limit: 2,
 				ring: true,
@@ -340,21 +299,9 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				},
 			});
 
-			// Utilize helper functions
-			// const fcmToken = await fetchFCMToken(creator.phone);
-			// if (fcmToken) {
-			// 	sendNotification(
-			// 		fcmToken,
-			// 		`Incoming Call`,
-			// 		`${callType} Call Request from ${clientUser.username}`,
-			// 		creator,
-			// 		`https:flashcall.me/meeting/${id}`
-			// 	);
-			// }
-
 			trackCallEvents(callType, clientUser, creator);
 
-			fetch(`${backendBaseUrl}/calls/registerCall`, {
+			await fetch(`${backendBaseUrl}/calls/registerCall`, {
 				method: "POST",
 				body: JSON.stringify({
 					callId: id as string,
@@ -369,23 +316,15 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			await updateFirestoreSessions(
 				clientUser?._id as string,
 				call.id,
-				"ongoing",
-				[
-					{
-						user_id: creator?._id,
-						expert: creator?.username,
-						status: "joining",
-					},
-					{
-						user_id: clientUser?._id,
-						client: clientUser?.username,
-						status: "joining",
-					},
-				]
+				"ongoing"
 			);
 
-			call.on("call.accepted", () => handleCallAccepted(callType));
-			call.on("call.rejected", handleCallRejected);
+			// call.on("call.session_participant_joined", () =>
+			// 	router.replace(`/meeting/${call.id}`)
+			// );
+
+			// call.on("call.accepted", () => handleCallAccepted(callType));
+			// call.on("call.rejected", handleCallRejected);
 		} catch (error) {
 			Sentry.captureException(error);
 			console.error(error);
@@ -454,7 +393,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		}
 	};
 
-	const handleChatClick = () => {
+	const handleChatClick = async () => {
 		if (userType === "creator") {
 			toast({
 				variant: "destructive",
@@ -471,6 +410,17 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				status: onlineStatus,
 			});
 			setChatReqSent(true);
+			// Utilize helper functions
+			const fcmToken = await fetchFCMToken(creator.phone);
+			if (fcmToken) {
+				sendNotification(
+					fcmToken,
+					`Incoming Call`,
+					`Chat Request from ${clientUser.username}`,
+					creator,
+					`https:flashcall.me/`
+				);
+			}
 			handleChat(creator, clientUser);
 			let maxCallDuration =
 				(walletBalance / parseInt(creator.chatRate, 10)) * 60;
@@ -486,16 +436,6 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			setIsAuthSheetOpen(true);
 		}
 	};
-
-	const theme = `5px 5px 0px 0px ${themeColor}`;
-
-	if (isAuthSheetOpen && !clientUser)
-		return (
-			<AuthenticationSheet
-				isOpen={isAuthSheetOpen}
-				onOpenChange={setIsAuthSheetOpen} // Handle sheet close
-			/>
-		);
 
 	const services = [
 		{
@@ -559,6 +499,10 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		const priority: any = { video: 1, audio: 2, chat: 3 };
 		return priority[a.type] - priority[b.type];
 	});
+
+	if (loading) {
+		return <Loader />;
+	}
 
 	return (
 		<>
@@ -632,6 +576,13 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 					</SheetContent>
 				</Sheet>
 			</div>
+
+			{isAuthSheetOpen && (
+				<AuthenticationSheet
+					isOpen={isAuthSheetOpen}
+					onOpenChange={setIsAuthSheetOpen} // Handle sheet close
+				/>
+			)}
 		</>
 	);
 };

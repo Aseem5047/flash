@@ -5,7 +5,7 @@ import { CurrentUsersProvider } from "@/lib/context/CurrentUsersContext";
 import { WalletBalanceProvider } from "@/lib/context/WalletBalanceContext";
 import { initMixpanel } from "@/lib/mixpanel";
 import { QueryProvider } from "@/lib/react-query/QueryProvider";
-import { resetBodyBackgroundColor } from "@/lib/utils";
+import { resetBodyBackgroundColor, setBodyBackgroundColor } from "@/lib/utils";
 import StreamVideoProvider from "@/providers/streamClientProvider";
 import axios from "axios";
 import { throttle } from "lodash";
@@ -42,21 +42,23 @@ const ClientRootLayout = ({ children }: { children: ReactNode }) => {
 	// Set body background color based on current route and theme
 	useEffect(() => {
 		const creatorURL = localStorage.getItem("creatorURL");
-		pathname !== creatorURL && resetBodyBackgroundColor();
+		pathname !== creatorURL
+			? resetBodyBackgroundColor()
+			: setBodyBackgroundColor("#121319");
 	}, [pathname]);
 
 	const renderContent = () => {
 		if (!isMounted) {
 			return (
-				<div className="absolute top-0 left-0 flex justify-center items-center h-screen w-full z-40">
+				<section className="absolute bg-[#121319] top-0 left-0 flex justify-center items-center h-screen w-full z-40">
 					<Image
-						src="/icons/logoMobile.png"
+						src="/icons/logo_splashScreen.png"
 						alt="Loading..."
 						width={500}
 						height={500}
-						className="w-40 h-36 animate-pulse"
+						className="w-36 h-36 animate-pulse"
 					/>
-				</div>
+				</section>
 			);
 		}
 

@@ -1,13 +1,11 @@
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
-import { analytics, db } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { creatorUser } from "@/types";
-import { logEvent } from "firebase/analytics";
-import { doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import * as Sentry from "@sentry/nextjs";
 import { trackEvent } from "@/lib/mixpanel";
-import { set } from "lodash";
 
 interface User2 {
 	_id: string;
@@ -61,8 +59,6 @@ const useEndChat = () => {
 			if (!response.ok) {
 				throw new Error(data.message || "Failed to update status");
 			}
-
-			console.log("Expert status updated to:", status);
 		} catch (error) {
 			Sentry.captureException(error);
 			console.error("Error updating expert status:", error);
@@ -79,7 +75,7 @@ const useEndChat = () => {
 					setCreatorPhone(parsedCreator?.phone);
 				}
 			}
-		}
+		};
 
 		if (chatId) getCreator();
 	}, []);
@@ -106,13 +102,10 @@ const useEndChat = () => {
 
 		if (chatEnded) {
 			hasChatEnded.current = true;
-			if (userType === 'client')
-				updateExpertStatus(creatorPhone, "Online");
-			if (userType === 'creator')
-				router.replace(`/home`);
+			if (userType === "client") updateExpertStatus(creatorPhone, "Online");
+			if (userType === "creator") router.replace(`/home`);
 			else {
 				router.replace(`/chat-ended/${chatId}/${user2?.clientId}`);
-
 			}
 		}
 	}, [chatEnded]);

@@ -102,12 +102,13 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 				});
 		}
 
-		// Clear user data and local storage
-		await axios.post(`${backendBaseUrl}/user/endSession`);
-
 		localStorage.removeItem("currentUserID");
 		localStorage.removeItem("authToken");
 		localStorage.removeItem("notifyList");
+
+		// Clear user data and local storage
+		await axios.post(`${backendBaseUrl}/user/endSession`);
+
 		if (pathname === "/home") {
 			localStorage.removeItem("creatorURL");
 		}
@@ -157,7 +158,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 
 				toast({
 					variant: "destructive",
-					title: status === 401 ? "Unauthorized Access" : "Error",
+					title: status === 401 ? "User Logged Out" : "Error",
 					description: message || "An unexpected error occurred.",
 				});
 
