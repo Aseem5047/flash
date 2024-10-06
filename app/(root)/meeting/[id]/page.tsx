@@ -22,6 +22,7 @@ import { logEvent } from "firebase/analytics";
 import { analytics } from "@/lib/firebase";
 import {
 	backendBaseUrl,
+	getDarkHexCode,
 	stopMediaStreams,
 	updateExpertStatus,
 } from "@/lib/utils";
@@ -100,9 +101,7 @@ const CallEnded = ({ toast, router, call }: any) => {
 	const [loading, setLoading] = useState(false);
 	const [toastShown, setToastShown] = useState(false);
 	const transactionHandled = useRef(false);
-	const { currentUser } = useCurrentUsersContext();
-
-	stopMediaStreams();
+	const { currentUser, currentTheme } = useCurrentUsersContext();
 
 	const removeActiveCallId = () => {
 		const activeCallId = localStorage.getItem("activeCallId");
@@ -123,18 +122,6 @@ const CallEnded = ({ toast, router, call }: any) => {
 	const isBrowser = () => typeof window !== "undefined";
 
 	useEffect(() => {
-		// Stop media streams every time the effect runs
-		stopMediaStreams();
-
-		// Calculate call duration
-		const callEndedTime = new Date(callEndedAt);
-		const callStartsAtTime = new Date(callStartsAt);
-		const duration = (
-			(callEndedTime.getTime() - callStartsAtTime.getTime()) /
-			1000
-		).toFixed(2);
-
-		// Clear localStorage session key
 		const localSessionKey = `meeting_${call.id}_${currentUser?._id}`;
 		localStorage.removeItem(localSessionKey);
 
@@ -153,6 +140,8 @@ const CallEnded = ({ toast, router, call }: any) => {
 			setLoading(true);
 			transactionHandled.current = true;
 
+			stopMediaStreams();
+
 			// Show toast notification
 			if (!toastShown) {
 				toast({
@@ -162,8 +151,6 @@ const CallEnded = ({ toast, router, call }: any) => {
 				});
 				setToastShown(true);
 			}
-
-			stopMediaStreams();
 
 			// Calculate call duration
 			const callEndedTime = new Date(callEndedAt);
@@ -233,7 +220,6 @@ const CallEnded = ({ toast, router, call }: any) => {
 					// Redirect to feedback page immediately
 					router.replace(`/feedback/${call.id}`);
 				} else {
-					// Handle failure gracefully
 					console.error("Failed to process transaction or update call status");
 					const creatorURL = localStorage.getItem("creatorURL");
 					router.replace(`${creatorURL ? creatorURL : "/home"}`);
@@ -254,6 +240,7 @@ const CallEnded = ({ toast, router, call }: any) => {
 		if (isMeetingOwner && !transactionHandled.current) {
 			handleCallEnd();
 		} else if (!isMeetingOwner) {
+			stopMediaStreams();
 			router.push(`/home`);
 		}
 
@@ -288,7 +275,7 @@ const CallEnded = ({ toast, router, call }: any) => {
 						deleteSpeed={50}
 						delaySpeed={2000}
 					/>
-					<Cursor cursorColor="#50A65C" />
+					<Cursor cursorColor={getDarkHexCode(currentTheme) as string} />
 				</h1>
 			</section>
 		);

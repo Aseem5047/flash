@@ -9,12 +9,10 @@ import { analytics, db } from "@/lib/firebase";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import {
-	backendBaseUrl,
 	stopMediaStreams,
 	updateExpertStatus,
 	updateFirestoreSessions,
 } from "@/lib/utils";
-import axios from "axios";
 import { trackEvent } from "@/lib/mixpanel";
 
 const MyCallUI = () => {
@@ -60,6 +58,11 @@ const MyCallUI = () => {
 								!hasRedirected
 							) {
 								setHasRedirected(true);
+								toast({
+									variant: "destructive",
+									title: "Ongoing / Pending Session",
+									description: "Redirecting you to the meeting ...",
+								});
 								router.replace(`/meeting/${ongoingCall.id}`);
 								return;
 							}
@@ -68,6 +71,11 @@ const MyCallUI = () => {
 						const storedCallId = localStorage.getItem("activeCallId");
 						if (storedCallId && !hide && !hasRedirected) {
 							setHasRedirected(true);
+							toast({
+								variant: "destructive",
+								title: "Ongoing / Pending Session",
+								description: "Redirecting you to the meeting ...",
+							});
 							router.replace(`/meeting/${storedCallId}`);
 							return;
 						}
