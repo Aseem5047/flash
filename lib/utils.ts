@@ -498,7 +498,7 @@ export const sendNotification = async (
 	token: string,
 	title: string,
 	body: string,
-	data: string,
+	data: any,
 	link?: string
 ) => {
 	try {
@@ -509,7 +509,7 @@ export const sendNotification = async (
 				token,
 				title,
 				message: body,
-				data: { message: "Hi", whatever_key: "value" },
+				data: data,
 				link,
 			}),
 		});
