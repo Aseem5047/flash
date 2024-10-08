@@ -419,7 +419,10 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 					fcmToken,
 					`Incoming Call`,
 					`Chat Request from ${clientUser.username}`,
-					`Gauri ne mera code barbaad krdia`,
+					{
+						creatorId: creator._id,
+						message: "gauri ne mera code barbaad krdia",
+					},
 					`https:flashcall.me/`
 				);
 			}
