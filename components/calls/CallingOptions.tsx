@@ -50,7 +50,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [isClientBusy, setIsClientBusy] = useState(false);
 	const [onlineStatus, setOnlineStatus] = useState<String>("");
-
+	const [callType, setCallType] = useState("");
 	const themeColor = isValidHexColor(creator.themeSelected)
 		? creator.themeSelected
 		: "#50A65C";
@@ -314,18 +314,15 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				headers: { "Content-Type": "application/json" },
 			});
 
-			await updateFirestoreSessions(
-				clientUser?._id as string,
-				call.id,
-				"ongoing"
-			);
-
-			// call.on("call.session_participant_joined", () =>
-			// 	router.replace(`/meeting/${call.id}`)
-			// );
-
-			// call.on("call.accepted", () => handleCallAccepted(callType));
-			// call.on("call.rejected", handleCallRejected);
+			await updateFirestoreSessions(clientUser?._id as string, {
+				callId: call.id,
+				status: "ongoing",
+				clientId: clientUser?._id as string,
+				expertId: creator._id,
+				isVideoCall: callType,
+				creatorPhone: creator.phone,
+				clientPhone: clientUser?.phone,
+			});
 		} catch (error) {
 			Sentry.captureException(error);
 			console.error(error);
@@ -413,13 +410,15 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			setChatReqSent(true);
 			// Utilize helper functions
 			const fcmToken = await fetchFCMToken(creator.phone);
-			console.log("token ", fcmToken);
 			if (fcmToken) {
 				sendNotification(
 					fcmToken,
 					`Incoming Call`,
 					`Chat Request from ${clientUser.username}`,
-					`Gauri ne mera code barbaad krdia`,
+					{
+						creatorId: creator._id,
+						message: "gauri ne mera code barbaad krdia",
+					},
 					`https:flashcall.me/`
 				);
 			}
@@ -439,23 +438,23 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		}
 	};
 
-	console.log(updatedCreator);
-
 	const services = [
 		{
 			type: "video",
 			enabled:
-				updatedCreator?.blocked?.some(
-					(client) => client._id === clientUser?._id
+				!clientUser ||
+				(!updatedCreator?.blocked?.some(
+					(clientId) => clientId === clientUser?._id
 				) &&
-				!isClientBusy &&
-				updatedCreator.videoAllowed &&
-				parseInt(updatedCreator.videoRate, 10) > 0,
+					!isClientBusy &&
+					updatedCreator.videoAllowed &&
+					parseInt(updatedCreator.videoRate, 10) > 0),
 			rate: updatedCreator.videoRate,
 			label: "Video Call",
 			icon: video,
 			onClick: () => {
 				if (clientUser && onlineStatus !== "Busy") {
+					setCallType("video");
 					handleClickOption("video");
 				} else if (clientUser && onlineStatus === "Busy") {
 					toast({
@@ -472,17 +471,19 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		{
 			type: "audio",
 			enabled:
-				updatedCreator?.blocked?.some(
-					(client) => client._id === clientUser?._id
+				!clientUser ||
+				(!updatedCreator?.blocked?.some(
+					(clientId) => clientId === clientUser?._id
 				) &&
-				!isClientBusy &&
-				updatedCreator.audioAllowed &&
-				parseInt(updatedCreator.audioRate, 10) > 0,
+					!isClientBusy &&
+					updatedCreator.audioAllowed &&
+					parseInt(updatedCreator.audioRate, 10) > 0),
 			rate: updatedCreator.audioRate,
 			label: "Audio Call",
 			icon: audio,
 			onClick: () => {
 				if (clientUser && onlineStatus !== "Busy") {
+					setCallType("audio");
 					handleClickOption("audio");
 				} else if (clientUser && onlineStatus === "Busy") {
 					toast({
@@ -499,17 +500,19 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		{
 			type: "chat",
 			enabled:
-				updatedCreator?.blocked?.some(
-					(client) => client._id === clientUser?._id
+				!clientUser ||
+				(!updatedCreator?.blocked?.some(
+					(clientId) => clientId === clientUser?._id
 				) &&
-				!isClientBusy &&
-				updatedCreator.chatAllowed &&
-				parseInt(updatedCreator.chatRate, 10) > 0,
+					!isClientBusy &&
+					updatedCreator.chatAllowed &&
+					parseInt(updatedCreator.chatRate, 10) > 0),
 			rate: updatedCreator.chatRate,
 			label: "Chat Now",
 			icon: chat,
 			onClick: () => {
 				if (clientUser && onlineStatus !== "Busy") {
+					setCallType("chat");
 					handleChatClick();
 				} else if (clientUser && onlineStatus === "Busy") {
 					toast({
