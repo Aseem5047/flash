@@ -15,6 +15,7 @@ interface User2 {
 	fullName: string;
 	photo: string;
 	User_First_Seen: string;
+	phone: string;
 }
 
 interface Chat {
@@ -45,25 +46,27 @@ const useEndChat = () => {
 	const [creatorPhone, setCreatorPhone] = useState("");
 
 	// Function to update expert's status
-	const updateExpertStatus = async (phone: string, status: string) => {
-		try {
-			const response = await fetch("/api/set-status", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ phone, status }),
-			});
+	// const updateExpertStatus = async (phone: string, status: string) => {
+	// 	try {
+	// 		const response = await fetch("/api/set-status", {
+	// 			method: "POST",
+	// 			headers: {
+	// 				"Content-Type": "application/json",
+	// 			},
+	// 			body: JSON.stringify({ phone, status }),
+	// 		});
 
-			const data = await response.json();
-			if (!response.ok) {
-				throw new Error(data.message || "Failed to update status");
-			}
-		} catch (error) {
-			Sentry.captureException(error);
-			console.error("Error updating expert status:", error);
-		}
-	};
+	// 		const data = await response.json();
+	// 		if (!response.ok) {
+	// 			throw new Error(data.message || "Failed to update status");
+	// 		}
+
+	// 		console.log("Expert status updated to:", status);
+	// 	} catch (error) {
+	// 		Sentry.captureException(error);
+	// 		console.error("Error updating expert status:", error);
+	// 	}
+	// };
 
 	useEffect(() => {
 		const getCreator = () => {
@@ -102,9 +105,13 @@ const useEndChat = () => {
 
 		if (chatEnded) {
 			hasChatEnded.current = true;
-			if (userType === "client") updateExpertStatus(creatorPhone, "Online");
+			// if (userType === 'client')
+			// updateExpertStatus(creatorPhone, "Online");
 			if (userType === "creator") router.replace(`/home`);
 			else {
+				localStorage.removeItem("chatRequestId");
+				localStorage.removeItem("chatId");
+				localStorage.removeItem("user2");
 				router.replace(`/chat-ended/${chatId}/${user2?.clientId}`);
 			}
 		}
@@ -140,6 +147,8 @@ const useEndChat = () => {
 			});
 
 			localStorage.removeItem("chatRequestId");
+			localStorage.removeItem("chatId");
+			localStorage.removeItem("user2");
 
 			trackEvent("BookCall_Chat_Ended", {
 				Client_ID: user2?.clientId,

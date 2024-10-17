@@ -94,7 +94,7 @@ const MyIncomingCallUI = ({ call }: { call: Call }) => {
 
 	const handleCallState = async (action: string) => {
 		if (action === "declined") {
-			await call.leave({ reject: true });
+			await call.reject();
 			setCallState("declined");
 		} else if (action === "accepted") {
 			const expertPhone = expert?.custom?.phone;
@@ -146,7 +146,7 @@ const MyIncomingCallUI = ({ call }: { call: Call }) => {
 			</div>
 			<div className="flex items-center justify-evenly w-full">
 				<button
-					className="bg-green-500 text-white p-4 rounded-full hoverScaleEffect"
+					className="bg-green-500 text-white p-4 rounded-full hoverScaleDownEffect"
 					onClick={() => {
 						handleCallState("accepted");
 					}}

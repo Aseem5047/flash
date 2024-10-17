@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import * as Sentry from "@sentry/nextjs";
 import { audio, chat, video } from "@/constants/icons";
-import { creatorUser, MemberRequest } from "@/types";
+import { creatorUser } from "@/types";
 import { useRouter } from "next/navigation";
 import { useToast } from "../ui/use-toast";
-import { Call, useStreamVideoClient } from "@stream-io/video-react-sdk";
+import { useStreamVideoClient } from "@stream-io/video-react-sdk";
 import { logEvent } from "firebase/analytics";
-import { doc, updateDoc, onSnapshot, getDoc, setDoc } from "firebase/firestore";
+import { doc, updateDoc, onSnapshot } from "firebase/firestore";
 import { analytics, db } from "@/lib/firebase";
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
 import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
@@ -22,12 +22,11 @@ import {
 	trackCallEvents,
 	fetchFCMToken,
 	sendNotification,
-	// fetchFCMToken,
-	// sendNotification,
+	updateExpertStatus,
+	getDisplayName,
 } from "@/lib/utils";
 import useChat from "@/hooks/useChat";
 import Loader from "../shared/Loader";
-import { ReturnDocument } from "mongodb";
 
 interface CallingOptions {
 	creator: creatorUser;
@@ -50,7 +49,6 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [isClientBusy, setIsClientBusy] = useState(false);
 	const [onlineStatus, setOnlineStatus] = useState<String>("");
-	const [callType, setCallType] = useState("");
 	const themeColor = isValidHexColor(creator.themeSelected)
 		? creator.themeSelected
 		: "#50A65C";
@@ -64,6 +62,23 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		audioAllowed: creator.audioAllowed,
 		chatAllowed: creator.chatAllowed,
 	});
+
+	const fullName = getDisplayName(creator);
+
+	const handleTabClose = () => {
+		console.log("Tab Closed");
+		const chatRequestId = localStorage.getItem("chatRequestId");
+		const data = chatRequestId;
+		const url = `${backendBaseUrl}endChat/rejectChat`; // Example endpoint
+		navigator.sendBeacon(url, data);
+	};
+
+	useEffect(() => {
+		window.addEventListener("unload", handleTabClose);
+		return () => {
+			window.removeEventListener("unload", handleTabClose);
+		};
+	}, []);
 
 	useEffect(() => {
 		setAuthenticationSheetOpen(isAuthSheetOpen);
@@ -127,7 +142,10 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 							const clientStatusData = clientStatusDoc.data();
 
 							if (clientStatusData) {
-								setIsClientBusy(clientStatusData.status === "Busy");
+								setIsClientBusy(
+									clientStatusData.status === "Busy" ||
+										clientStatusData.status === "Payment Pending"
+								);
 							} else {
 								setIsClientBusy(false);
 							}
@@ -147,12 +165,15 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	}, [creator._id, isAuthSheetOpen]);
 
 	useEffect(() => {
-		if (!chatReqSent) return;
+		if (!chatReqSent) {
+			console.log("Chat request not sent");
+			return;
+		}
 
 		const intervalId = setInterval(() => {
 			const chatRequestId = localStorage.getItem("chatRequestId");
 
-			if (chatRequestId) {
+			if (chatRequestId && chatReqSent) {
 				clearInterval(intervalId); // Clear the interval once the ID is found
 
 				const chatRequestDoc = doc(db, "chatRequests", chatRequestId);
@@ -160,12 +181,17 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				const unsubscribe = onSnapshot(chatRequestDoc, (docSnapshot) => {
 					const data = docSnapshot.data();
 					if (data) {
+						console.log(data);
 						if (data.status === "ended" || data.status === "rejected") {
+							console.log(data.status);
 							setSheetOpen(false);
+							console.log("Chat Request Ended or Rejected");
 							setChatReqSent(false);
 							setChatState(data.status);
-							// localStorage.removeItem("chatRequestId");
 							localStorage.removeItem("user2");
+							localStorage.removeItem("chatRequestId");
+							localStorage.removeItem("chatId");
+							// updateExpertStatus(creator.phone as string, "Online");
 							unsubscribe();
 						} else if (
 							data.status === "accepted" &&
@@ -177,12 +203,14 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 								clientId: clientUser?._id,
 								creatorId: data.creatorId,
 							});
-							setChatReqSent(false);
+							console.log("Chat Accepted");
+							updateExpertStatus(data.creatorPhone as string, "Busy");
 							setTimeout(() => {
-								router.push(
+								router.replace(
 									`/chat/${data.chatId}?creatorId=${data.creatorId}&clientId=${data.clientId}`
 								);
 							}, 2000);
+							setChatReqSent(false);
 						} else {
 							setChatState(data.status);
 						}
@@ -237,7 +265,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				{
 					user_id: creator?._id,
 					custom: {
-						name: String(creator.username),
+						name: fullName,
 						type: "expert",
 						image: creator.photo || "/images/defaultProfile.png",
 						phone: creator.phone,
@@ -287,7 +315,6 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				Walletbalance_Available: clientUser?.walletBalance,
 			});
 
-			// Check if the call exists or create it
 			await call.getOrCreate({
 				members_limit: 2,
 				ring: true,
@@ -316,7 +343,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 
 			await updateFirestoreSessions(clientUser?._id as string, {
 				callId: call.id,
-				status: "ongoing",
+				status: "initiated",
 				clientId: clientUser?._id as string,
 				expertId: creator._id,
 				isVideoCall: callType,
@@ -392,6 +419,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 	};
 
 	const handleChatClick = async () => {
+		console.log("Chat now clicked");
 		if (userType === "creator") {
 			toast({
 				variant: "destructive",
@@ -402,26 +430,14 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			return;
 		}
 		if (clientUser) {
+			console.log(clientUser);
+			// updateExpertStatus(creator.phone as string, "Busy");
 			trackEvent("BookCall_Chat_Clicked", {
 				utm_source: "google",
 				creator_id: creator._id,
 				status: onlineStatus,
 			});
 			setChatReqSent(true);
-			// Utilize helper functions
-			const fcmToken = await fetchFCMToken(creator.phone);
-			if (fcmToken) {
-				sendNotification(
-					fcmToken,
-					`Incoming Call`,
-					`Chat Request from ${clientUser.username}`,
-					{
-						creatorId: creator._id,
-						message: "gauri ne mera code barbaad krdia",
-					},
-					`https:flashcall.me/`
-				);
-			}
 			handleChat(creator, clientUser);
 			let maxCallDuration =
 				(walletBalance / parseInt(creator.chatRate, 10)) * 60;
@@ -454,7 +470,6 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			icon: video,
 			onClick: () => {
 				if (clientUser && onlineStatus !== "Busy") {
-					setCallType("video");
 					handleClickOption("video");
 				} else if (clientUser && onlineStatus === "Busy") {
 					toast({
@@ -483,7 +498,6 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			icon: audio,
 			onClick: () => {
 				if (clientUser && onlineStatus !== "Busy") {
-					setCallType("audio");
 					handleClickOption("audio");
 				} else if (clientUser && onlineStatus === "Busy") {
 					toast({
@@ -512,7 +526,6 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			icon: chat,
 			onClick: () => {
 				if (clientUser && onlineStatus !== "Busy") {
-					setCallType("chat");
 					handleChatClick();
 				} else if (clientUser && onlineStatus === "Busy") {
 					toast({
@@ -543,76 +556,87 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 
 	return (
 		<>
-			<div className="flex flex-col w-full items-center justify-center gap-4">
-				{sortedServices.map((service) => (
-					<button
-						disabled={!service.enabled}
-						key={service.type}
-						className={`callOptionContainer ${
-							(isProcessing ||
-								!service.enabled ||
-								onlineStatus === "Busy" ||
-								isClientBusy) &&
-							"!cursor-not-allowed"
-						}`}
-						onClick={service.onClick}
-					>
-						<div className={`flex gap-4 items-center font-bold text-white`}>
-							{service.icon}
-							{service.label}
-						</div>
-						<p
-							className={`font-medium tracking-widest rounded-[18px] px-4 h-[36px] text-black flex items-center justify-center ${
+			{!updatedCreator?.blocked?.some(
+				(clientId) => clientId === clientUser?._id
+			) && (
+				<div className="flex flex-col w-full items-center justify-center gap-4">
+					{sortedServices.map((service) => (
+						<button
+							disabled={!service.enabled}
+							key={service.type}
+							className={`callOptionContainer ${
 								(isProcessing ||
 									!service.enabled ||
 									onlineStatus === "Busy" ||
 									isClientBusy) &&
-								"border border-white/50 text-white"
+								"!cursor-not-allowed"
 							}`}
-							style={{
-								backgroundColor:
-									isProcessing || !service.enabled || onlineStatus === "Busy"
-										? "transparent"
-										: themeColor,
-							}}
+							onClick={service.onClick}
 						>
-							Rs.<span className="ml-1">{service.rate}</span>/min
-						</p>
-					</button>
-				))}
-
-				<Sheet
-					open={isSheetOpen}
-					onOpenChange={async () => {
-						setSheetOpen(false);
-						try {
-							const chatRequestId = localStorage.getItem("chatRequestId");
-							await updateDoc(doc(chatRequestsRef, chatRequestId as string), {
-								status: "ended",
-							});
-						} catch (error) {
-							Sentry.captureException(error);
-							console.error(error);
-						}
-					}}
-				>
-					<SheetTrigger asChild>
-						<div className="hidden"></div>
-					</SheetTrigger>
-					<SheetContent
-						side="bottom"
-						className="flex flex-col items-center justify-center border-none rounded-t-xl px-10 py-7 bg-white min-h-[200px] max-h-fit w-full sm:max-w-[444px] mx-auto"
-					>
-						<div className="relative flex flex-col items-center gap-7">
-							<div className="flex flex-col py-5 items-center justify-center gap-4 w-full text-center">
-								<span className="font-semibold text-xl">
-									Waiting for the creator to accept your chat request...
-								</span>
+							<div className={`flex gap-4 items-center font-bold text-white`}>
+								{service.icon}
+								{service.label}
 							</div>
-						</div>
-					</SheetContent>
-				</Sheet>
-			</div>
+							<p
+								className={`font-medium tracking-widest rounded-[18px] px-4 h-[36px] text-black flex items-center justify-center ${
+									(isProcessing ||
+										!service.enabled ||
+										onlineStatus === "Busy" ||
+										isClientBusy) &&
+									"border border-white/50 text-white"
+								}`}
+								style={{
+									backgroundColor:
+										isProcessing || !service.enabled || onlineStatus === "Busy"
+											? "transparent"
+											: themeColor,
+								}}
+							>
+								Rs.<span className="ml-1">{service.rate}</span>/min
+							</p>
+						</button>
+					))}
+
+					<Sheet
+						open={isSheetOpen}
+						onOpenChange={async () => {
+							setSheetOpen(false);
+							try {
+								const chatRequestId = localStorage.getItem("chatRequestId");
+								await updateDoc(doc(chatRequestsRef, chatRequestId as string), {
+									status: "ended",
+								});
+							} catch (error) {
+								Sentry.captureException(error);
+								console.error(error);
+							} finally {
+								localStorage.removeItem("chatRequestId");
+								localStorage.removeItem("chatId");
+							}
+						}}
+					>
+						<SheetTrigger asChild>
+							<div className="hidden"></div>
+						</SheetTrigger>
+						<SheetContent
+							side="bottom"
+							onInteractOutside={(event) => {
+								// Prevent sheet from closing when clicking outside
+								event.preventDefault();
+							}}
+							className="flex flex-col items-center justify-center border-none rounded-t-xl px-10 py-7 bg-white min-h-[200px] max-h-fit w-full sm:max-w-[444px] mx-auto"
+						>
+							<div className="relative flex flex-col items-center gap-7">
+								<div className="flex flex-col py-5 items-center justify-center gap-4 w-full text-center">
+									<span className="font-semibold text-xl">
+										Waiting for the creator to accept your chat request...
+									</span>
+								</div>
+							</div>
+						</SheetContent>
+					</Sheet>
+				</div>
+			)}
 
 			{isAuthSheetOpen && (
 				<AuthenticationSheet

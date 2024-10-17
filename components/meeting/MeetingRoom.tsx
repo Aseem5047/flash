@@ -15,7 +15,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { Users } from "lucide-react";
 import EndCallButton from "../calls/EndCallButton";
 import CallTimer from "../calls/CallTimer";
-import { useCallTimerContext } from "@/lib/context/CallTimerContext";
 import { useToast } from "../ui/use-toast";
 import useWarnOnUnload from "@/hooks/useWarnOnUnload";
 import { VideoToggleButton } from "../calls/VideoToggleButton";
@@ -28,6 +27,8 @@ import CreatorCallTimer from "../creator/CreatorCallTimer";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import * as Sentry from "@sentry/nextjs";
 import { useRouter } from "next/navigation";
+import { backendBaseUrl, getDarkHexCode } from "@/lib/utils";
+import { Cursor, Typewriter } from "react-simple-typewriter";
 
 type CallLayoutType = "grid" | "speaker-bottom";
 
@@ -49,44 +50,41 @@ const useScreenSize = () => {
 };
 
 const MeetingRoom = () => {
-	const [showParticipants, setShowParticipants] = useState(false);
-	const {
-		useCallCallingState,
-		useCallEndedAt,
-		useParticipantCount,
-		useParticipants,
-	} = useCallStateHooks();
+	const { useCallCallingState, useCallEndedAt, useParticipants } =
+		useCallStateHooks();
+	const { currentUser, userType, currentTheme } = useCurrentUsersContext();
 	const hasAlreadyJoined = useRef(false);
+	const [showParticipants, setShowParticipants] = useState(false);
 	const [showAudioDeviceList, setShowAudioDeviceList] = useState(false);
-	const { currentUser } = useCurrentUsersContext();
 	const call = useCall();
 	const callEndedAt = useCallEndedAt();
 	const callHasEnded = !!callEndedAt;
 	const { toast } = useToast();
 	const isVideoCall = useMemo(() => call?.type === "default", [call]);
-	const [endCallTimeoutId, setEndCallTimeoutId] =
-		useState<NodeJS.Timeout | null>(null);
 	const callingState = useCallCallingState();
-	const participantCount = useParticipantCount();
 	const participants = useParticipants();
-	const { anyModalOpen } = useCallTimerContext();
 	const [layout, setLayout] = useState<CallLayoutType>("grid");
-
 	const router = useRouter();
 
+	const [showCountdown, setShowCountdown] = useState(false);
+	const [countdown, setCountdown] = useState<number | null>(null);
+	const [hasVisited, setHasVisited] = useState(false);
+
+	const countdownDuration = 15;
+
 	useWarnOnUnload("Are you sure you want to leave the meeting?", () => {
+		if (currentUser?._id) {
+			navigator.sendBeacon(
+				`${backendBaseUrl}/user/setCallStatus/${currentUser._id}`
+			);
+		}
 		call?.endCall();
 	});
 
 	const isMobile = useScreenSize();
 
 	const handleCallRejected = async () => {
-		// await call?.endCall().catch((err) => console.warn(err));
-		toast({
-			variant: "destructive",
-			title: "Call Ended",
-			description: "Less than 2 Participants",
-		});
+		await call?.endCall().catch((err) => console.warn(err));
 	};
 
 	useEffect(() => {
@@ -98,9 +96,7 @@ const MeetingRoom = () => {
 	}, [isMobile]);
 
 	useEffect(() => {
-		console.log("3 ... ", callingState);
 		const joinCall = async () => {
-			console.log("4 ... ", callingState);
 			if (
 				!call ||
 				!currentUser ||
@@ -114,7 +110,7 @@ const MeetingRoom = () => {
 			try {
 				const localSessionKey = `meeting_${call.id}_${currentUser._id}`;
 
-				if (localStorage.getItem(localSessionKey)) {
+				if (localStorage.getItem(localSessionKey) && participants.length > 1) {
 					toast({
 						variant: "destructive",
 						title: "Already in Call",
@@ -124,7 +120,8 @@ const MeetingRoom = () => {
 					return;
 				}
 				if (callingState === CallingState.IDLE) {
-					await call?.accept();
+					userType === "creator" && (await call?.accept());
+
 					await call?.join();
 					localStorage.setItem(localSessionKey, "joined");
 					hasAlreadyJoined.current = true;
@@ -139,7 +136,7 @@ const MeetingRoom = () => {
 		if (call) {
 			joinCall();
 		}
-	}, [call, callingState, currentUser, callHasEnded, participantCount]);
+	}, [call, callingState, currentUser, callHasEnded]);
 
 	useEffect(() => {
 		const handleResize = () => {
@@ -156,26 +153,51 @@ const MeetingRoom = () => {
 	}, []);
 
 	useEffect(() => {
-		let timeoutId: NodeJS.Timeout;
+		let timeoutId: NodeJS.Timeout | null = null;
 
-		if (participants.length < 2) {
-			// handleGracePeriodForCallEnd();
-			call?.on("call.session_participant_left", handleCallRejected);
+		let countdownInterval: NodeJS.Timeout | null = null;
+
+		if (!hasVisited) {
+			setHasVisited(true);
+			return;
 		}
 
-		if (participants.length < 2 || anyModalOpen) {
-			timeoutId = setTimeout(async () => {
-				toast({
-					variant: "destructive",
-					title: "Call Ended",
-					description: "Less than 2 Participants",
+		if (participants.length === 1) {
+			setShowCountdown(true);
+			setCountdown(countdownDuration);
+
+			if (isVideoCall) call?.camera?.disable();
+			call?.microphone?.disable();
+
+			countdownInterval = setInterval(() => {
+				setCountdown((prevCountdown) => {
+					if (prevCountdown && prevCountdown > 1) {
+						return prevCountdown - 1;
+					} else {
+						return null;
+					}
 				});
+			}, 1000);
+
+			timeoutId = setTimeout(async () => {
 				await call?.endCall();
-			}, 60000); // 1 minute
+			}, countdownDuration * 1000);
+		} else {
+			if (timeoutId) {
+				clearTimeout(timeoutId);
+			}
+			if (countdownInterval) {
+				clearInterval(countdownInterval);
+			}
+			setShowCountdown(false);
+			setCountdown(null);
 		}
 
-		return () => clearTimeout(timeoutId);
-	}, [participantCount, anyModalOpen, call]);
+		return () => {
+			if (timeoutId) clearTimeout(timeoutId);
+			if (countdownInterval) clearInterval(countdownInterval);
+		};
+	}, [participants, call]);
 
 	const toggleCamera = async () => {
 		if (call && call.camera) {
@@ -191,13 +213,24 @@ const MeetingRoom = () => {
 	const CallLayout = useMemo(() => {
 		switch (layout) {
 			case "grid":
-				return <PaginatedGridLayout />;
+				return isVideoCall ? (
+					<PaginatedGridLayout />
+				) : (
+					<PaginatedGridLayout excludeLocalParticipant={true} />
+				);
 			default:
-				return (
+				return isVideoCall ? (
 					<SpeakerLayout
 						participantsBarPosition="bottom"
 						ParticipantViewUIBar={<CustomParticipantViewUI />}
 						ParticipantViewUISpotlight={<CustomParticipantViewUI />}
+					/>
+				) : (
+					<SpeakerLayout
+						participantsBarPosition="bottom"
+						ParticipantViewUIBar={<CustomParticipantViewUI />}
+						ParticipantViewUISpotlight={<CustomParticipantViewUI />}
+						excludeLocalParticipant={true}
 					/>
 				);
 		}
@@ -205,25 +238,57 @@ const MeetingRoom = () => {
 
 	const isMeetingOwner = currentUser?._id === call?.state?.createdBy?.id;
 
+	const NoParticipantsView = () => (
+		<section className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center flex flex-col items-center justify-center">
+			{/* <p className="text-white text-xl">No other participants in the call</p> */}
+			<div className="size-full flex items-center justify-center">
+				<h1
+					className="text-xl md:text-2xl font-semibold"
+					style={{ color: "#ffffff" }}
+				>
+					<Typewriter
+						words={[
+							"You're the first one here",
+							"Waiting for others to join.",
+							"Hang tight",
+						]}
+						loop={true}
+						cursor
+						cursorStyle="_"
+						typeSpeed={50}
+						deleteSpeed={50}
+						delaySpeed={2000}
+					/>
+					<Cursor cursorColor="#ffffff" />
+				</h1>
+			</div>
+		</section>
+	);
+
 	if (callingState !== CallingState.JOINED) {
 		return (
-			<section
-				className="w-full h-screen flex items-center justify-center"
-				style={{ height: "calc(var(--vh, 1vh) * 100)" }}
-			>
+			<section className="w-full h-screen flex items-center justify-center ">
 				<SinglePostLoader />
 			</section>
 		);
 	}
 
+	// Display countdown notification or modal to the user
+	const CountdownDisplay = () => (
+		<div className="absolute top-4 left-4 z-40 w-fit rounded-md px-4 py-2 h-10 bg-red-500 text-white flex items-center justify-center">
+			<p>Ending call in {countdown}s</p>
+		</div>
+	);
+
 	return (
 		<section
-			className="relative w-full overflow-hidden pt-4 text-white bg-dark-2"
+			className="relative w-full overflow-hidden pt-4 md:pt-0 text-white bg-dark-2"
 			style={{ height: "calc(var(--vh, 1vh) * 100)" }}
 		>
+			{showCountdown && countdown && <CountdownDisplay />}
 			<div className="relative flex size-full items-center justify-center transition-all">
 				<div className="flex size-full max-w-[95%] md:max-w-[1000px] items-center transition-all">
-					{CallLayout}
+					{participants.length > 1 ? CallLayout : <NoParticipantsView />}
 				</div>
 
 				{showParticipants && (
@@ -233,13 +298,15 @@ const MeetingRoom = () => {
 				)}
 			</div>
 
-			{!callHasEnded && isMeetingOwner ? (
+			{!callHasEnded && isMeetingOwner && !showCountdown ? (
 				<CallTimer
 					handleCallRejected={handleCallRejected}
 					isVideoCall={isVideoCall}
 				/>
 			) : (
-				call && <CreatorCallTimer callId={call.id} />
+				!showCountdown &&
+				call &&
+				participants.length > 1 && <CreatorCallTimer callId={call.id} />
 			)}
 
 			{/* Call Controls */}
@@ -247,12 +314,18 @@ const MeetingRoom = () => {
 			<section className="call-controls fixed bg-dark-1 bottom-0 flex w-full items-center justify-start py-2 px-4 transition-all">
 				<div className="flex overflow-x-scroll no-scrollbar w-fit px-4 items-center mx-auto justify-start gap-4">
 					{/* Audio Button */}
-					<SpeakingWhileMutedNotification>
-						{isMobile ? <AudioToggleButton /> : <ToggleAudioPublishingButton />}
-					</SpeakingWhileMutedNotification>
+					{!showCountdown && (
+						<SpeakingWhileMutedNotification>
+							{isMobile ? (
+								<AudioToggleButton />
+							) : (
+								<ToggleAudioPublishingButton />
+							)}
+						</SpeakingWhileMutedNotification>
+					)}
 
 					{/* Audio Device List */}
-					{isMobile && (
+					{isMobile && !showCountdown && (
 						<AudioDeviceList
 							showAudioDeviceList={showAudioDeviceList}
 							setShowAudioDeviceList={setShowAudioDeviceList}
@@ -261,6 +334,7 @@ const MeetingRoom = () => {
 
 					{/* Video Button */}
 					{isVideoCall &&
+						!showCountdown &&
 						(isMobile ? (
 							<VideoToggleButton />
 						) : (
@@ -268,22 +342,24 @@ const MeetingRoom = () => {
 						))}
 
 					{/* Switch Camera */}
-					{isVideoCall && isMobile && (
+					{isVideoCall && isMobile && !showCountdown && (
 						<SwitchCameraType toggleCamera={toggleCamera} />
 					)}
 
-					<Tooltip>
-						<TooltipTrigger className="hidden md:block">
-							<button onClick={() => setShowParticipants((prev) => !prev)}>
-								<div className="cursor-pointer rounded-full bg-[#ffffff14] p-3 hover:bg-[#4c535b] flex items-center">
-									<Users size={20} className="text-white" />
-								</div>
-							</button>
-						</TooltipTrigger>
-						<TooltipContent className="mb-2 bg-gray-700  border-none">
-							<p className="!text-white">Participants</p>
-						</TooltipContent>
-					</Tooltip>
+					{!showCountdown && (
+						<Tooltip>
+							<TooltipTrigger className="hidden md:block">
+								<section onClick={() => setShowParticipants((prev) => !prev)}>
+									<section className="cursor-pointer rounded-full bg-[#ffffff14] p-3 hover:bg-[#4c535b] flex items-center">
+										<Users size={20} className="text-white" />
+									</section>
+								</section>
+							</TooltipTrigger>
+							<TooltipContent className="mb-2 bg-gray-700  border-none">
+								<p className="!text-white">Participants</p>
+							</TooltipContent>
+						</Tooltip>
+					)}
 
 					{/* End Call Button */}
 					<Tooltip>
@@ -295,7 +371,7 @@ const MeetingRoom = () => {
 						</TooltipContent>
 					</Tooltip>
 
-					{isVideoCall && (
+					{isVideoCall && !showCountdown && (
 						<div className="absolute bottom-3 right-4 z-20 w-fit hidden md:flex items-center gap-2">
 							<DeviceSettings />
 						</div>

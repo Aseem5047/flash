@@ -12,13 +12,13 @@ import { trackEvent } from "@/lib/mixpanel";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
+import { updateFirestoreSessions } from "@/lib/utils";
 
 const EndCallButton = () => {
 	const call = useCall();
 	const [showDialog, setShowDialog] = useState(false);
 	const { setAnyModalOpen } = useCallTimerContext();
 	const { currentUser } = useCurrentUsersContext();
-	const router = useRouter();
 	if (!call) {
 		throw new Error(
 			"useStreamCall must be used within a StreamCall component."
@@ -33,6 +33,10 @@ const EndCallButton = () => {
 	const handleDecisionDialog = async () => {
 		const callDocRef = doc(db, "calls", call.id);
 		const docSnap = await getDoc(callDocRef);
+
+		await updateFirestoreSessions(call?.state?.createdBy?.id as string, {
+			status: "payment pending",
+		});
 
 		trackEvent("BookCall_Chat_Ended", {
 			Client_ID: call.state.createdBy?.id,

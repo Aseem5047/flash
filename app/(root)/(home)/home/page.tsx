@@ -10,7 +10,7 @@ import PostLoader from "@/components/shared/PostLoader";
 import Image from "next/image";
 import { trackEvent } from "@/lib/mixpanel";
 import { doc, getDoc } from "firebase/firestore";
-import { db, getFCMToken } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import SinglePostLoader from "@/components/shared/SinglePostLoader";
 import { useGetCreators } from "@/lib/react-query/queries";
 
@@ -22,7 +22,10 @@ const HomePage = () => {
 		useCurrentUsersContext();
 	const router = useRouter();
 	const pathname = usePathname();
-	const { ref, inView } = useInView();
+	const { ref, inView } = useInView({
+		threshold: 0.1,
+		triggerOnce: false,
+	});
 	const {
 		data: creators,
 		fetchNextPage,
@@ -32,24 +35,13 @@ const HomePage = () => {
 		isLoading,
 	} = useGetCreators();
 
-	useEffect(() => {
-		if (inView) {
-			fetchNextPage();
-		}
-	}, [inView]);
-
-	useEffect(() => {
-		if (pathname === "/home") {
-			localStorage.removeItem("creatorURL");
-		}
-	}, [router, pathname]);
-
 	const handleCreatorCardClick = async (
 		phone: string,
 		username: string,
 		theme: string,
 		id: string
 	) => {
+		sessionStorage.setItem("scrollPosition", window.scrollY.toString());
 		setLoadingCard(true);
 		updateCreatorURL(`/${username}`);
 		localStorage.setItem("creatorURL", `/${username}`);
@@ -68,6 +60,36 @@ const HomePage = () => {
 		// Trigger the route change immediately
 		router.push(`/${username}`);
 	};
+
+	useEffect(() => {
+		const restoreScrollPosition = () => {
+			const storedScrollPosition = sessionStorage.getItem("scrollPosition");
+
+			if (storedScrollPosition) {
+				window.scrollTo({
+					top: parseInt(storedScrollPosition, 10),
+					behavior: "smooth", // This enables smooth scrolling
+				});
+				sessionStorage.removeItem("scrollPosition");
+			}
+		};
+
+		if (!isLoading) {
+			setTimeout(restoreScrollPosition, 1000);
+		}
+	}, [isLoading]);
+
+	useEffect(() => {
+		if (inView && hasNextPage && !isFetching) {
+			fetchNextPage();
+		}
+	}, [inView, hasNextPage, isFetching]);
+
+	useEffect(() => {
+		if (pathname === "/home") {
+			localStorage.removeItem("creatorURL");
+		}
+	}, [router, pathname]);
 
 	if (isLoading || loadingCard) {
 		return (
@@ -105,10 +127,7 @@ const HomePage = () => {
 								page.map((creator: creatorUser, index: number) => (
 									<section
 										key={creator._id}
-										className="w-full cursor-pointer creator-card entered"
-										style={
-											{ "--delay": `${index * 0.2}s` } as React.CSSProperties
-										}
+										className="w-full cursor-pointer"
 										onClick={() =>
 											handleCreatorCardClick(
 												creator.phone,

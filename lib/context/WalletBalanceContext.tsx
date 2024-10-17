@@ -10,6 +10,9 @@ import { getUserById } from "../actions/client.actions";
 import { getCreatorById } from "../actions/creator.actions";
 import { useCurrentUsersContext } from "./CurrentUsersContext";
 import * as Sentry from "@sentry/nextjs";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "../firebase";
+import { creatorUser } from "@/types";
 
 interface WalletBalanceContextProps {
 	walletBalance: number;
@@ -59,18 +62,46 @@ export const WalletBalanceProvider = ({
 	};
 
 	const fetchAndSetWalletBalance = async () => {
-		try {
-			currentUser && setWalletBalance(currentUser?.walletBalance ?? 0);
-		} catch (error) {
-			Sentry.captureException(error);
-			console.error("Error fetching current user:", error);
-			setWalletBalance(0);
+		if (currentUser) {
+			setWalletBalance(currentUser.walletBalance ?? 0);
 		}
 	};
 
 	useEffect(() => {
 		fetchAndSetWalletBalance();
 	}, [userType, authenticationSheetOpen, isCreator]);
+
+	useEffect(() => {
+		if (!currentUser) return;
+		const creatorId =
+			userType === "client"
+				? JSON.parse(localStorage.getItem("currentCreator") || "{}")?._id
+				: currentUser._id;
+
+		if (!creatorId) {
+			console.warn("Creator ID not found");
+			return;
+		}
+
+		const creatorRef = doc(db, "transactions", creatorId);
+		const unsubscribe = onSnapshot(
+			creatorRef,
+			(snapshot) => {
+				if (snapshot.exists()) {
+					console.log("Updating Wallet");
+					updateWalletBalance();
+				} else {
+					console.warn("Document does not exist");
+				}
+			},
+			(error) => {
+				console.error("Error fetching transactions: ", error);
+				updateWalletBalance();
+			}
+		);
+
+		return () => unsubscribe();
+	}, [currentUser]);
 
 	const updateWalletBalance = async () => {
 		await updateAndSetWalletBalance();

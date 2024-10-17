@@ -140,7 +140,7 @@ const MobileNav = () => {
 				</SheetTrigger>
 				<SheetContent
 					side="right"
-					className="border-none bg-black rounded-l-xl size-full max-w-xs sm:max-w-sm "
+					className="border-none bg-black rounded-l-xl size-full max-w-xs sm:max-w-sm z-50"
 				>
 					<div className="flex h-[calc(100vh-72px)] w-full  flex-col justify-between overflow-y-auto no-scrollbar">
 						<SheetTitle>

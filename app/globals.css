@@ -131,6 +131,7 @@ html {
 
 .str-video__participant-view {
 	min-height: 172px !important;
+	aspect-ratio: 16 / 9 !important;
 }
 
 .str-video__speaker-layout
@@ -218,6 +219,10 @@ html {
 }
 
 /* Other Styles */
+
+.headroom {
+	z-index: 40 !important;
+}
 
 .blurEffect {
 	/* box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37); */

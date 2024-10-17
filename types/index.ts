@@ -61,6 +61,7 @@ export type clientUser = {
 
 export type creatorUser = {
 	_id: string;
+	fullName?: string;
 	firstName: string;
 	lastName: string;
 	username: string;
@@ -247,6 +248,7 @@ export interface UpdateChatParams {
 }
 
 export interface ChatDetails {
+	price: number;
 	status: string;
 	startedAt: Date;
 	endedAt?: Date;
@@ -262,6 +264,7 @@ export interface SelectedChat {
 	startedAt?: Date;
 	endedAt?: Date;
 	duration?: number;
+	price?: number;
 }
 
 export type UpdateCallParams = {

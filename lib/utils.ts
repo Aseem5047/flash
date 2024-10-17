@@ -43,7 +43,9 @@ export const handleInterruptedCall = async (
 	call: Call,
 	currentUserPhone: string,
 	userType: "client" | "expert",
-	backendBaseUrl: string
+	backendBaseUrl: string,
+	expertPhone: string,
+	clientPhone: string
 ) => {
 	if (!callId || !currentUserPhone) {
 		console.error("Invalid callId or user phone");
@@ -60,6 +62,8 @@ export const handleInterruptedCall = async (
 			(member) => member.custom.type === "expert"
 		)?.user_id,
 		clientId: call.state.createdBy?.id,
+		expertPhone,
+		clientPhone,
 	};
 
 	try {
@@ -196,11 +200,11 @@ export const resetBodyBackgroundColor = () => {
 
 // default profile images based on
 export const placeholderImages = {
-	male: "https://firebasestorage.googleapis.com/v0/b/flashcallchat.appspot.com/o/assets%2FM_preview.png?alt=media&token=33e4f14e-2e14-4c8a-a785-60c762c9ce50",
+	male: "https://firebasestorage.googleapis.com/v0/b/flashcall-1d5e2.appspot.com/o/assets%2FM_preview.png?alt=media&token=87e5c8f2-4729-476d-9bcc-a169b7c56759",
 	female:
-		"https://firebasestorage.googleapis.com/v0/b/flashcallchat.appspot.com/o/assets%2FF_preview.png?alt=media&token=63a66328-04ea-4800-8b5f-4ee8f3c6ea67",
+		"https://firebasestorage.googleapis.com/v0/b/flashcall-1d5e2.appspot.com/o/assets%2FF_preview.png?alt=media&token=96191c53-ef0c-4562-9b66-61e07c1402c8",
 	other:
-		"https://firebasestorage.googleapis.com/v0/b/flashcallchat.appspot.com/o/assets%2FOthers_preview.png?alt=media&token=07e9bb20-d4fd-45d4-b997-991715464805",
+		"https://firebasestorage.googleapis.com/v0/b/flashcall-1d5e2.appspot.com/o/assets%2FOthers_preview.png?alt=media&token=20c9d684-3e3d-40cb-a51c-4b0a0caacdbc",
 };
 
 export const getProfileImagePlaceholder = (gender?: string): string => {
@@ -240,6 +244,39 @@ export const getDarkHexCode = (lightHex: string): string | null => {
 		: `#${lightHex.toUpperCase()}`;
 
 	return colorMap[formattedLightHex] || "#50A65C";
+};
+
+export const getDisplayName = (
+	creator: {
+		fullName?: string;
+		firstName?: string;
+		lastName?: string;
+		username: string;
+	},
+	maxNameLength: number = 20
+): string => {
+	const fullName = creator?.fullName?.trim();
+
+	const combinedName = `${creator?.firstName || ""} ${
+		creator?.lastName || ""
+	}`.trim();
+
+	if (fullName && fullName.length <= maxNameLength) {
+		return fullName;
+	}
+
+	if (combinedName && combinedName.length <= maxNameLength) {
+		return combinedName;
+	}
+
+	if (creator.username.startsWith("+91")) {
+		return creator.username.replace(
+			/(\+91)(\d+)/,
+			(match, p1, p2) => `${p1} ${p2.replace(/(\d{5})$/, "xxxxx")}`
+		);
+	}
+
+	return creator.username;
 };
 
 export const handleError = (error: unknown) => {
@@ -313,8 +350,16 @@ export const analyticEvent = ({ action, category, label, value }: any) => {
 
 export const isValidUrl = (url: string) => {
 	try {
-		new URL(url);
-		return true;
+		const parsedUrl = new URL(url);
+
+		// Ensure it starts with http or https
+		const isHttpOrHttps =
+			parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:";
+
+		// Check if there is a valid hostname and it contains at least one dot (.)
+		const hasValidDomain = parsedUrl.hostname.includes(".");
+
+		return isHttpOrHttps && hasValidDomain;
 	} catch {
 		return false;
 	}
@@ -477,7 +522,6 @@ export const stopMediaStreams = () => {
 export const fetchFCMToken = async (phone: string) => {
 	const fcmTokenRef = doc(db, "FCMtoken", phone);
 	const fcmTokenDoc = await getDoc(fcmTokenRef);
-	console.log("Doc ", fcmTokenDoc);
 	return fcmTokenDoc.exists() ? fcmTokenDoc.data().token : null;
 };
 

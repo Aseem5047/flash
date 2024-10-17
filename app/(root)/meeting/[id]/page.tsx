@@ -12,28 +12,34 @@ import { useToast } from "@/components/ui/use-toast";
 import { CallTimerProvider } from "@/lib/context/CallTimerContext";
 import MeetingRoom from "@/components/meeting/MeetingRoom";
 import { useGetCallById } from "@/hooks/useGetCallById";
-import { handleTransaction } from "@/utils/TransactionUtils";
 import { Cursor, Typewriter } from "react-simple-typewriter";
-import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import SinglePostLoader from "@/components/shared/SinglePostLoader";
 import ContentLoading from "@/components/shared/ContentLoading";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
-import { logEvent } from "firebase/analytics";
-import { analytics } from "@/lib/firebase";
 import {
 	backendBaseUrl,
 	getDarkHexCode,
 	stopMediaStreams,
 	updateExpertStatus,
+	updateFirestoreSessions,
 } from "@/lib/utils";
+import useWarnOnUnload from "@/hooks/useWarnOnUnload";
 
 const MeetingPage = () => {
 	const { id } = useParams();
 	const router = useRouter();
 	const { toast } = useToast();
 	const { call, isCallLoading } = useGetCallById(id);
-	const { currentUser } = useCurrentUsersContext();
+	const { currentUser, userType } = useCurrentUsersContext();
 	const creatorURL = localStorage.getItem("creatorURL");
+
+	useWarnOnUnload("Are you sure you want to leave the meeting?", () => {
+		if (currentUser?._id && userType === "creator") {
+			navigator.sendBeacon(
+				`${backendBaseUrl}/user/setCallStatus/${currentUser._id}`
+			);
+		}
+	});
 
 	useEffect(() => {
 		if (!isCallLoading && !call) {
@@ -95,135 +101,37 @@ const MeetingRoomWrapper = ({ toast, router, call }: any) => {
 };
 
 const CallEnded = ({ toast, router, call }: any) => {
-	const callEndedAt = call?.state?.endedAt;
-	const callStartsAt = call?.state?.startsAt;
-	const { updateWalletBalance } = useWalletBalanceContext();
 	const [loading, setLoading] = useState(false);
 	const [toastShown, setToastShown] = useState(false);
 	const transactionHandled = useRef(false);
 	const { currentUser, currentTheme } = useCurrentUsersContext();
-
-	const removeActiveCallId = () => {
-		const activeCallId = localStorage.getItem("activeCallId");
-		if (activeCallId) {
-			localStorage.removeItem("activeCallId");
-			console.log("activeCallId removed successfully");
-		} else {
-			console.warn("activeCallId was not found in localStorage");
-		}
-	};
-
 	const isMeetingOwner = currentUser?._id === call?.state?.createdBy?.id;
-	const expert = call?.state?.members?.find(
-		(member: any) => member.custom.type === "expert"
-	);
-	const expertId = expert?.user_id;
-	const clientId = call?.state?.createdBy?.id;
-	const isBrowser = () => typeof window !== "undefined";
 
 	useEffect(() => {
-		const localSessionKey = `meeting_${call.id}_${currentUser?._id}`;
-		localStorage.removeItem(localSessionKey);
-
-		const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-			navigator.sendBeacon(
-				`${backendBaseUrl}/calls/transaction/handleInterrupted`,
-				JSON.stringify({
-					callId: call?.id,
-				})
-			);
-		};
-
 		const handleCallEnd = async () => {
 			if (transactionHandled.current) return;
-
-			setLoading(true);
 			transactionHandled.current = true;
-
-			stopMediaStreams();
-
-			// Show toast notification
-			if (!toastShown) {
-				toast({
-					variant: "destructive",
-					title: "Session Has Ended",
-					description: "Checking for Pending Transactions ...",
-				});
-				setToastShown(true);
-			}
-
-			// Calculate call duration
-			const callEndedTime = new Date(callEndedAt);
-			const callStartsAtTime = new Date(callStartsAt);
-			const duration = (
-				(callEndedTime.getTime() - callStartsAtTime.getTime()) /
-				1000
-			).toFixed(2);
-
-			const localSessionKey = `meeting_${call.id}_${currentUser?._id}`;
-			localStorage.removeItem(localSessionKey);
-
-			const transactionPayload = {
-				expertId,
-				clientId,
-				callId: call.id,
-				duration,
-				isVideoCall: call.type === "default",
-			};
-			const callUpdatePayload = {
-				callId: call.id,
-				call: {
-					status: "Ended",
-					startedAt: callStartsAtTime,
-					endedAt: callEndedTime,
-					duration: duration,
-				},
-			};
-
 			try {
-				const [transactionResponse, callUpdateResponse] = await Promise.all([
-					fetch(`${backendBaseUrl}/calls/transaction/handleTransaction`, {
-						method: "POST",
-						body: JSON.stringify(transactionPayload),
-						headers: {
-							"Content-Type": "application/json",
-						},
-					}),
-					fetch(`${backendBaseUrl}/calls/updateCall`, {
-						method: "POST",
-						body: JSON.stringify(callUpdatePayload),
-						headers: { "Content-Type": "application/json" },
-					}),
-				]);
-
-				if (transactionResponse.ok && callUpdateResponse.ok) {
-					// Update expert status
-					await updateExpertStatus(
-						call?.state?.createdBy?.custom?.phone as string,
-						"Idle"
-					);
-
-					if (expert) {
-						await updateExpertStatus(expert?.custom?.phone, "Online");
-					}
-					// Execute the logic after successful transaction
-					removeActiveCallId();
-					logEvent(analytics, "call_ended", {
-						callId: call.id,
-						duration,
-						type: call.type === "default" ? "video" : "audio",
+				setLoading(true);
+				await updateFirestoreSessions(call?.state?.createdBy?.id as string, {
+					status: "payment pending",
+				});
+				await updateExpertStatus(
+					call.state.createdBy?.custom?.phone as string,
+					"Payment Pending"
+				);
+				// Show toast notification
+				if (!toastShown) {
+					stopMediaStreams();
+					toast({
+						variant: "destructive",
+						title: "Session Has Ended",
+						description: "Checking for Pending Transactions ...",
 					});
-
-					// Update wallet balance asynchronously
-					updateWalletBalance();
-
-					// Redirect to feedback page immediately
-					router.replace(`/feedback/${call.id}`);
-				} else {
-					console.error("Failed to process transaction or update call status");
-					const creatorURL = localStorage.getItem("creatorURL");
-					router.replace(`${creatorURL ? creatorURL : "/home"}`);
+					setToastShown(true);
 				}
+
+				router.replace(`/feedback/${call.id}`);
 			} catch (error) {
 				console.error("Error handling call end", error);
 				const creatorURL = localStorage.getItem("creatorURL");
@@ -233,33 +141,13 @@ const CallEnded = ({ toast, router, call }: any) => {
 			}
 		};
 
-		if (isBrowser()) {
-			window.addEventListener("beforeunload", handleBeforeUnload);
-		}
-
 		if (isMeetingOwner && !transactionHandled.current) {
 			handleCallEnd();
 		} else if (!isMeetingOwner) {
 			stopMediaStreams();
 			router.push(`/home`);
 		}
-
-		return () => {
-			if (isBrowser()) {
-				window.removeEventListener("beforeunload", handleBeforeUnload);
-			}
-		};
-	}, [
-		isMeetingOwner,
-		callEndedAt,
-		callStartsAt,
-		call?.id,
-		toast,
-		router,
-		updateWalletBalance,
-		toastShown,
-		currentUser?.phone,
-	]);
+	}, [call?.id, currentUser?._id]);
 
 	if (loading) {
 		return (

@@ -20,7 +20,10 @@ const CallListMobileclient = () => {
 	const { currentUser, userType } = useCurrentUsersContext();
 	const { walletBalance } = useWalletBalanceContext();
 	const pathname = usePathname();
-	const { ref, inView } = useInView();
+	const { ref, inView } = useInView({
+		threshold: 0.1,
+		triggerOnce: false,
+	});
 	const {
 		data: userCalls,
 		fetchNextPage,
@@ -31,10 +34,10 @@ const CallListMobileclient = () => {
 	} = useGetPreviousCalls(currentUser?._id as string, userType as string);
 
 	useEffect(() => {
-		if (inView) {
+		if (inView && hasNextPage && !isFetching) {
 			fetchNextPage();
 		}
-	}, [inView]);
+	}, [inView, hasNextPage, isFetching]);
 
 	return (
 		<>

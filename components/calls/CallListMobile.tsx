@@ -3,10 +3,11 @@
 import {
 	backendBaseUrl,
 	formatDateTime,
+	getDisplayName,
 	getProfileImagePlaceholder,
 	isValidUrl,
 } from "@/lib/utils";
-import { RegisterCallParams } from "@/types";
+import { clientUser, creatorUser, RegisterCallParams } from "@/types";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -26,7 +27,10 @@ const CallListMobile = () => {
 	const pathname = usePathname();
 	const router = useRouter();
 	const { toast } = useToast();
-	const { ref, inView } = useInView();
+	const { ref, inView } = useInView({
+		threshold: 0.1,
+		triggerOnce: false,
+	});
 	const {
 		data: userCalls,
 		fetchNextPage,
@@ -40,10 +44,10 @@ const CallListMobile = () => {
 	}>({});
 
 	useEffect(() => {
-		if (inView) {
+		if (inView && hasNextPage && !isFetching) {
 			fetchNextPage();
 		}
-	}, [inView]);
+	}, [inView, hasNextPage, isFetching]);
 
 	useEffect(() => {
 		const fetchReportStatus = async (callId: string, creatorId: string) => {
@@ -102,7 +106,7 @@ const CallListMobile = () => {
 			) : (
 				<>
 					<section
-						className={`w-full h-fit grid grid-cols-1 xl:grid-cols-2 3xl:grid-cols-3 items-center gap-5 xl:gap-10 text-black px-4`}
+						className={`w-full h-fit grid grid-cols-1 xl:grid-cols-2 3xl:grid-cols-3 items-center gap-5 text-black px-4`}
 					>
 						{userCalls?.pages?.flatMap((page: any) =>
 							page?.calls?.map((userCall: RegisterCallParams) => {
@@ -110,6 +114,8 @@ const CallListMobile = () => {
 									userCall.startedAt as Date
 								);
 								const creator = userCall.expertDetails;
+
+								const fullName = getDisplayName(creator);
 
 								const handleRedirect = () => {
 									if (creator?.username) {
@@ -153,7 +159,7 @@ const CallListMobile = () => {
 												{/* creator details */}
 												<div className="flex flex-col items-start justify-start">
 													<p className="text-base tracking-wide whitespace-nowrap">
-														{creator?.username || "Creator"}
+														{fullName || "Creator"}
 													</p>
 													<span className="text-xs whitespace-nowrap">
 														{creator?.profession || "Expert"}
@@ -161,7 +167,7 @@ const CallListMobile = () => {
 												</div>
 											</button>
 											{/* call details */}
-											<div className="flex flex-wrap-reverse items-center justify-start gap-2 pl-16">
+											<div className="flex flex-wrap items-center justify-start gap-2 pl-16">
 												<span
 													className={`text-sm ${
 														userCall.status === "Ended"

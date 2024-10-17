@@ -47,7 +47,10 @@ const Payment: React.FC<PaymentProps> = ({ callType }) => {
 	const router = useRouter();
 	const { clientUser } = useCurrentUsersContext();
 
-	const { ref, inView } = useInView();
+	const { ref, inView } = useInView({
+		threshold: 0.1,
+		triggerOnce: false,
+	});
 	const {
 		data: transactions,
 		fetchNextPage,
@@ -58,10 +61,10 @@ const Payment: React.FC<PaymentProps> = ({ callType }) => {
 	} = useGetUserTransactionsByType(currentUser?._id as string, btn);
 
 	useEffect(() => {
-		if (inView) {
+		if (inView && hasNextPage && !isFetching) {
 			fetchNextPage();
 		}
-	}, [inView]);
+	}, [inView, hasNextPage, isFetching]);
 
 	useEffect(() => {
 		const storedCreator = localStorage.getItem("currentCreator");

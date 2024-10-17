@@ -45,7 +45,7 @@ export const transactionHandler = async ({
 		console.log("Transaction for this callId has already been completed.");
 		await updateFirestoreTransactionStatus(callId);
 		await updateFirestoreSessions(clientId, {
-			status: "ended"
+			status: "ended",
 		});
 		return;
 	}
@@ -99,8 +99,8 @@ export const transactionHandler = async ({
 		]);
 
 		await updateFirestoreTransactionStatus(callId);
-		await updateFirestoreSessions(clientId,{
-			status: "ended"
+		await updateFirestoreSessions(clientId, {
+			status: "ended",
 		});
 	} catch (error) {
 		Sentry.captureException(error);

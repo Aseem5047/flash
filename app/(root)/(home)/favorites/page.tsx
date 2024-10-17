@@ -35,7 +35,10 @@ const Favorites = () => {
 	const { walletBalance } = useWalletBalanceContext();
 	const stickyRef = useRef<HTMLDivElement>(null);
 
-	const { ref, inView } = useInView();
+	const { ref, inView } = useInView({
+		threshold: 0.1,
+		triggerOnce: false,
+	});
 	const {
 		data: userFavorites,
 		fetchNextPage,
@@ -166,7 +169,7 @@ const Favorites = () => {
 			</div>
 			{/* Filter Popup */}
 			{isFilterOpen && (
-				<div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-40">
+				<div className="fixed size-full h-screen inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
 					<section className="bg-white p-5 rounded-xl shadow-lg lg:w-fit w-[85%] ">
 						<h2 className="text-2xl font-semibold mb-4 tracking-wide text-green-1">
 							Filter Options
@@ -265,7 +268,7 @@ const Favorites = () => {
 				</div>
 			) : (
 				<div
-					className={`grid grid-cols-1 xl:grid-cols-2 px-2.5 gap-5 lg:px-0 items-start pb-8 lg:pb-5`}
+					className={`size-full grid grid-cols-1 xl:grid-cols-2 px-2.5 gap-5 lg:px-0 items-start pb-8 lg:pb-5`}
 				>
 					{groupBy === "profession"
 						? Object.entries(filteredFavorites()).map(
