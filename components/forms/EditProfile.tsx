@@ -550,9 +550,9 @@ const EditProfile = ({
 												{professions?.map((profession: any) => (
 													<section
 														className={`cursor-pointer flex flex-col gap-2 items-center hoverScaleDownEffect`}
+														key={profession.id}
 													>
 														<section
-															key={profession.id}
 															className={`${
 																profession.name === field.value &&
 																"ring-2 ring-offset-2 ring-green-1"
