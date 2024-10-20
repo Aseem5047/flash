@@ -76,7 +76,7 @@ const CreatorDetails = ({ creator }: { creator: creatorUser }) => {
 
 			if (data) {
 				const services = data.services;
-
+				console.log(services);
 				// Check if any of the services are enabled
 				const isOnline =
 					services?.videoCall || services?.audioCall || services?.chat;
@@ -87,7 +87,7 @@ const CreatorDetails = ({ creator }: { creator: creatorUser }) => {
 				// Now listen for the user's status
 				const unsubscribeStatus = onSnapshot(statusDocRef, (statusDoc) => {
 					const statusData = statusDoc.data();
-
+					console.log(statusData);
 					if (statusData) {
 						// Check if status is "Busy"
 						if (statusData.status === "Busy") {
@@ -109,6 +109,8 @@ const CreatorDetails = ({ creator }: { creator: creatorUser }) => {
 			unsubscribeServices();
 		};
 	}, [creator._id, creator.phone]);
+
+	console.log(status);
 
 	const handleToggleFavorite = async () => {
 		if (!clientUser) {
@@ -149,11 +151,12 @@ const CreatorDetails = ({ creator }: { creator: creatorUser }) => {
 		backgroundSize: "cover",
 		backgroundPosition: "center",
 		backgroundRepeat: "no-repeat",
+		backgroundColor: "#ffffff",
 	};
 
 	return (
 		// Wrapper Section
-		<section className="size-full xl:w-[704px] md:mx-auto md:pt-4 flex flex-col items-center gap-4">
+		<section className="size-full xl:w-[704px] md:mx-auto md:pt-4 flex flex-col items-center">
 			{/* Creator Details */}
 			<section
 				className={`h-fit px-4 w-full flex flex-col md:flex-row gap-4 items-start md:items-center justify-center p-5 md:rounded-[16px]`}
@@ -162,7 +165,20 @@ const CreatorDetails = ({ creator }: { creator: creatorUser }) => {
 				{/* Creator Info */}
 				<section className="w-full h-fit flex items-center justify-start gap-4 ">
 					{/* 1. Creator Status and Image */}
-					<section className="relative flex border-[3px] border-[#098D26] rounded-full min-h-[94px] min-w-[94px] p-1">
+					<section
+						className="relative flex  rounded-full min-h-[94px] min-w-[94px] p-1"
+						style={{
+							border: `3px solid ${
+								status === "Online"
+									? "#098D26"
+									: status === "Offline"
+									? "#f87171"
+									: status === "Busy"
+									? "#fb923c"
+									: "#f87171"
+							}`,
+						}}
+					>
 						{/* Creator Image */}
 						<div
 							className="w-full h-auto rounded-full"
@@ -204,7 +220,7 @@ const CreatorDetails = ({ creator }: { creator: creatorUser }) => {
 										? "Offline"
 										: status === "Busy"
 										? "Busy"
-										: "Idle"}
+										: "Offline"}
 								</span>
 							</div>
 						</section>
@@ -269,34 +285,37 @@ const CreatorDetails = ({ creator }: { creator: creatorUser }) => {
 				{/* Creator Links */}
 				{creator?.links && creator?.links?.length > 0 && (
 					<section className="grid grid-cols-1 gap-4 w-full items-center">
-						{creator?.links?.map((link: LinkType, index: number) => (
-							<Link
-								href={link.url}
-								className="grid grid-cols-3 px-4 border border-white/20 bg-[#4E515C4D] rounded-[24px] h-[52px] justify-between font-semibold items-center text-center w-full hoverScaleDownEffect cursor-pointer capitalize"
-								key={index + link.title}
-								title={link.title}
-							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									fill="none"
-									viewBox="0 0 24 24"
-									strokeWidth={1.5}
-									stroke="currentColor"
-									className="size-5"
+						{creator?.links
+							?.filter((link: LinkType) => link.isActive)
+							?.map((link: LinkType, index: number) => (
+								<Link
+									href={link.url}
+									target="_black"
+									className="grid grid-cols-3 px-4 border border-white/20 bg-[#4E515C4D] rounded-[24px] h-[52px] justify-between font-semibold items-center text-center w-full hoverScaleDownEffect cursor-pointer capitalize"
+									key={index + link.title}
+									title={link.title}
 								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"
-									/>
-								</svg>
-								<p className="text-ellipsis whitespace-nowrap overflow-hidden">
-									{link.title}
-								</p>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										fill="none"
+										viewBox="0 0 24 24"
+										strokeWidth={1.5}
+										stroke="currentColor"
+										className="size-5"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"
+										/>
+									</svg>
+									<p className="text-ellipsis whitespace-nowrap overflow-hidden">
+										{link.title}
+									</p>
 
-								<p />
-							</Link>
-						))}
+									<p />
+								</Link>
+							))}
 					</section>
 				)}
 

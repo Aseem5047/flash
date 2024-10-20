@@ -48,6 +48,12 @@ const ChatInput: React.FC<Props> = ({
 
     const textSizeClass = getDevicePlatform() === 'iOS' ? 'text-base' : 'text-sm'; // 'text-base' is 16px, 'text-sm' is 14px in Tailwind
 
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && text.trim()) {
+            e.preventDefault(); // Prevent the default action (like form submission)
+            handleSend();
+        }
+    };
 
     // If img.url is present, only display the image section
     if (img.url) {
@@ -86,7 +92,7 @@ const ChatInput: React.FC<Props> = ({
                             onChange={e => setText(e.target.value)}
                             className={`px-2 ${textSizeClass} font-normal flex-auto bg-transparent outline-none`}
                         />
-                        <button onClick={handleSend} onContextMenu={(e) => e.preventDefault()}>
+                        <button onClick={handleSend} onContextMenu={(e) => e.preventDefault()} disabled={isImgUploading}>
                             <div className='bg-[#25D366] p-1 rounded-full size-10 flex items-center justify-center'>
                                 <Image src="/send.svg" width={1000} height={1000} alt="Send" className="size-5" />
                             </div>
@@ -116,6 +122,7 @@ const ChatInput: React.FC<Props> = ({
                         placeholder={isAudioUploading ? 'Sending...' : "Message"}
                         value={isImgUploading ? 'Sending Image' : text}
                         onChange={e => setText(e.target.value)}
+                        onKeyDown={handleKeyDown} // Add this line
                         className={`px-2 ${textSizeClass} font-normal flex-auto bg-transparent outline-none`}
                         disabled={isAudioUploading}
                     />

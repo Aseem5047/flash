@@ -1,5 +1,3 @@
-// components/MovePageToTop.tsx
-
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -8,6 +6,7 @@ import { useEffect, useState } from "react";
 const MovePageToTop = () => {
 	const [isVisible, setIsVisible] = useState(false);
 	const pathname = usePathname();
+
 	const toggleVisibility = () => {
 		if (window.scrollY > 300) {
 			setIsVisible(true);
@@ -28,16 +27,15 @@ const MovePageToTop = () => {
 		return () => window.removeEventListener("scroll", toggleVisibility);
 	}, []);
 
+	const shouldDisplayButton =
+		!pathname.includes("chat") && !pathname.includes("meeting");
+
 	return (
-		<div
-			className={`${
-				pathname.includes("/payment") ? "hidden" : "hidden xl:block"
-			} `}
-		>
-			{isVisible && (
+		<>
+			{isVisible && shouldDisplayButton && (
 				<button
 					onClick={scrollToTop}
-					className="fixed bottom-5 right-5 lg:right-9 z-40 bg-green-1 text-white p-3 rounded-full shadow-lg hoverScaleEffect hover:bg-gray-500 transition-opacity duration-300"
+					className="fixed bottom-5 right-5 lg:right-9 z-40 bg-gray-100 p-3 rounded-full shadow-lg hoverScaleDownEffect"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -55,7 +53,7 @@ const MovePageToTop = () => {
 					</svg>
 				</button>
 			)}
-		</div>
+		</>
 	);
 };
 

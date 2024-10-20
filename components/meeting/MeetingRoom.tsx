@@ -27,10 +27,28 @@ import CreatorCallTimer from "../creator/CreatorCallTimer";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import * as Sentry from "@sentry/nextjs";
 import { useRouter } from "next/navigation";
-import { backendBaseUrl, getDarkHexCode } from "@/lib/utils";
+import { backendBaseUrl } from "@/lib/utils";
 import { Cursor, Typewriter } from "react-simple-typewriter";
+import { doc, getFirestore, onSnapshot } from "firebase/firestore";
 
 type CallLayoutType = "grid" | "speaker-bottom";
+
+interface LatestTip {
+	callId: string;
+	amount: number;
+}
+
+interface UserTipsData {
+	[key: string]: LatestTip;
+}
+
+const TipAnimation = ({ amount }: { amount: number }) => {
+	return (
+		<div className="absolute top-6 left-6 sm:top-4 sm:left-4 z-40 w-fit rounded-md px-4 py-2 h-10 bg-[#ffffff4d] text-white flex items-center justify-center">
+			<p>Tip ₹ {amount}</p>
+		</div>
+	);
+};
 
 // Custom hook to track screen size
 const useScreenSize = () => {
@@ -49,13 +67,26 @@ const useScreenSize = () => {
 	return isMobile;
 };
 
+export const isMobileDevice = () => {
+	const userAgent = navigator.userAgent || navigator.vendor;
+	if (/android/i.test(userAgent)) {
+		return true; // Android device
+	}
+	if (/iPad|iPhone|iPod/.test(userAgent)) {
+		return true; // iOS device
+	}
+	return false; // Not Android or iOS
+};
+
 const MeetingRoom = () => {
 	const { useCallCallingState, useCallEndedAt, useParticipants } =
 		useCallStateHooks();
-	const { currentUser, userType, currentTheme } = useCurrentUsersContext();
+	const { currentUser, userType } = useCurrentUsersContext();
 	const hasAlreadyJoined = useRef(false);
 	const [showParticipants, setShowParticipants] = useState(false);
 	const [showAudioDeviceList, setShowAudioDeviceList] = useState(false);
+	const [tipReceived, setTipReceived] = useState(false);
+	const [tipAmount, setTipAmount] = useState(0);
 	const call = useCall();
 	const callEndedAt = useCallEndedAt();
 	const callHasEnded = !!callEndedAt;
@@ -69,6 +100,7 @@ const MeetingRoom = () => {
 	const [showCountdown, setShowCountdown] = useState(false);
 	const [countdown, setCountdown] = useState<number | null>(null);
 	const [hasVisited, setHasVisited] = useState(false);
+	const firestore = getFirestore();
 
 	const countdownDuration = 15;
 
@@ -82,6 +114,7 @@ const MeetingRoom = () => {
 	});
 
 	const isMobile = useScreenSize();
+	const mobileDevice = isMobileDevice();
 
 	const handleCallRejected = async () => {
 		await call?.endCall().catch((err) => console.warn(err));
@@ -139,18 +172,31 @@ const MeetingRoom = () => {
 	}, [call, callingState, currentUser, callHasEnded]);
 
 	useEffect(() => {
-		const handleResize = () => {
-			const height = window.innerHeight;
-			document.documentElement.style.setProperty("--vh", `${height * 0.01}px`);
-		};
+		if (userType === "creator") {
+			const expert = call?.state?.members?.find(
+				(member) => member.custom.type === "expert"
+			);
+			const userTipsRef = doc(firestore, "userTips", expert?.user_id as string);
 
-		window.addEventListener("resize", handleResize);
-		handleResize();
+			const unsubscribe = onSnapshot(userTipsRef, async (doc) => {
+				const data = doc.data();
+				if (data) {
+					const currentTip = data[call?.id as string];
+					if (currentTip) {
+						setTipAmount(currentTip.amount);
+						setTipReceived(true);
+						setTimeout(() => {
+							setTipReceived(false);
+						}, 5000);
+					} else {
+						console.log("No tip for this call ID:", call?.id);
+					}
+				}
+			});
 
-		return () => {
-			window.removeEventListener("resize", handleResize);
-		};
-	}, []);
+			return () => unsubscribe();
+		}
+	}, [userType, call]);
 
 	useEffect(() => {
 		let timeoutId: NodeJS.Timeout | null = null;
@@ -275,16 +321,13 @@ const MeetingRoom = () => {
 
 	// Display countdown notification or modal to the user
 	const CountdownDisplay = () => (
-		<div className="absolute top-4 left-4 z-40 w-fit rounded-md px-4 py-2 h-10 bg-red-500 text-white flex items-center justify-center">
+		<div className="absolute top-6 left-6 sm:top-4 sm:left-4 z-40 w-fit rounded-md px-4 py-2 h-10 bg-red-500 text-white flex items-center justify-center">
 			<p>Ending call in {countdown}s</p>
 		</div>
 	);
 
 	return (
-		<section
-			className="relative w-full overflow-hidden pt-4 md:pt-0 text-white bg-dark-2"
-			style={{ height: "calc(var(--vh, 1vh) * 100)" }}
-		>
+		<section className="relative w-full overflow-hidden pt-4 md:pt-0 text-white bg-dark-2 h-dvh">
 			{showCountdown && countdown && <CountdownDisplay />}
 			<div className="relative flex size-full items-center justify-center transition-all">
 				<div className="flex size-full max-w-[95%] md:max-w-[1000px] items-center transition-all">
@@ -298,10 +341,15 @@ const MeetingRoom = () => {
 				)}
 			</div>
 
-			{!callHasEnded && isMeetingOwner && !showCountdown ? (
+			{userType === "creator" && tipReceived && (
+				<TipAnimation amount={tipAmount} />
+			)}
+
+			{!callHasEnded && isMeetingOwner && !showCountdown && call ? (
 				<CallTimer
 					handleCallRejected={handleCallRejected}
 					isVideoCall={isVideoCall}
+					callId={call.id}
 				/>
 			) : (
 				!showCountdown &&
@@ -316,7 +364,7 @@ const MeetingRoom = () => {
 					{/* Audio Button */}
 					{!showCountdown && (
 						<SpeakingWhileMutedNotification>
-							{isMobile ? (
+							{isMobile && mobileDevice ? (
 								<AudioToggleButton />
 							) : (
 								<ToggleAudioPublishingButton />
@@ -325,7 +373,7 @@ const MeetingRoom = () => {
 					)}
 
 					{/* Audio Device List */}
-					{isMobile && !showCountdown && (
+					{isMobile && mobileDevice && !showCountdown && (
 						<AudioDeviceList
 							showAudioDeviceList={showAudioDeviceList}
 							setShowAudioDeviceList={setShowAudioDeviceList}
@@ -335,16 +383,18 @@ const MeetingRoom = () => {
 					{/* Video Button */}
 					{isVideoCall &&
 						!showCountdown &&
-						(isMobile ? (
+						(isMobile && mobileDevice ? (
 							<VideoToggleButton />
 						) : (
 							<ToggleVideoPublishingButton />
 						))}
 
 					{/* Switch Camera */}
-					{isVideoCall && isMobile && !showCountdown && (
-						<SwitchCameraType toggleCamera={toggleCamera} />
-					)}
+					{isVideoCall &&
+						isMobile &&
+						mobileDevice &&
+						!showCountdown &&
+						mobileDevice && <SwitchCameraType toggleCamera={toggleCamera} />}
 
 					{!showCountdown && (
 						<Tooltip>

@@ -7,11 +7,11 @@ import { useToast } from "../ui/use-toast";
 import { logEvent } from "firebase/analytics";
 import { analytics, db } from "@/lib/firebase";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
-import { doc, onSnapshot } from "firebase/firestore";
+import { increment, doc, setDoc, getDoc, onSnapshot } from "firebase/firestore";
+import { updateFirestoreCallServices } from "@/lib/utils";
 import {
 	backendBaseUrl,
 	handleInterruptedCall,
-	stopMediaStreams,
 	updateExpertStatus,
 	updateFirestoreSessions,
 } from "@/lib/utils";
@@ -25,9 +25,31 @@ const MyCallUI = () => {
 	const { currentUser, userType } = useCurrentUsersContext();
 	const { toast } = useToast();
 	const [callId, setCallId] = useState<string | null>("");
+	const [endedByMe, setEndedByMe] = useState(false);
 	const { call, isCallLoading } = useGetCallById(callId || "");
 	let hide = pathname.includes("/meeting") || pathname.includes("/feedback");
 	const [showCallUI, setShowCallUI] = useState(false);
+
+	const checkFirestoreSession = (userId: string) => {
+		const sessionDocRef = doc(db, "sessions", userId);
+		const unsubscribe = onSnapshot(sessionDocRef, (sessionDoc) => {
+			if (sessionDoc.exists()) {
+				const { ongoingCall } = sessionDoc.data();
+
+				if (ongoingCall && ongoingCall.status === "payment pending" && !hide) {
+					setCallId(ongoingCall.callId);
+				}
+			}
+		});
+
+		// Check for stored call in localStorage
+		const storedCallId = localStorage.getItem("activeCallId");
+		if (storedCallId && !hide) {
+			setCallId(storedCallId);
+		}
+
+		return unsubscribe;
+	};
 
 	// Function to handle the interrupted call logic
 	const handleInterruptedCallOnceLoaded = async (updatedCall: Call | null) => {
@@ -55,30 +77,6 @@ const MyCallUI = () => {
 
 	// Firestore session listener
 	useEffect(() => {
-		const checkFirestoreSession = (userId: string) => {
-			const sessionDocRef = doc(db, "sessions", userId);
-			const unsubscribe = onSnapshot(sessionDocRef, (sessionDoc) => {
-				if (sessionDoc.exists()) {
-					const { ongoingCall } = sessionDoc.data();
-
-					if (
-						ongoingCall &&
-						ongoingCall.status === "payment pending" &&
-						!hide
-					) {
-						setCallId(ongoingCall.callId);
-					}
-				}
-				// Check for stored call in localStorage
-				const storedCallId = localStorage.getItem("activeCallId");
-				if (storedCallId && !hide) {
-					setCallId(storedCallId);
-				}
-			});
-
-			return unsubscribe;
-		};
-
 		if (currentUser?._id && !hide) {
 			const unsubscribe = checkFirestoreSession(currentUser._id);
 			return () => {
@@ -110,22 +108,22 @@ const MyCallUI = () => {
 		if (incomingCalls.length === 0) return;
 		const [incomingCall] = incomingCalls;
 
+		const expert = incomingCall.state?.members?.find(
+			(member) => member.custom.type === "expert"
+		);
+
 		const autoDeclineTimeout = setTimeout(async () => {
 			if (incomingCall?.state?.callingState === CallingState.RINGING) {
 				console.log("Auto-declining call due to timeout...");
 				await handleCallRejected({
-					title: "Call Timeout",
-					description:
-						"The call was not answered and has been automatically declined.",
+					title: "Missed Call",
+					description: "The call was not answered",
 				});
 			}
 		}, 30000);
 
 		const handleCallEnded = async () => {
-			stopMediaStreams();
-			const expertPhone = incomingCall?.state?.members?.find(
-				(member) => member.custom.type === "expert"
-			)?.custom?.phone;
+			const expertPhone = expert?.custom?.phone;
 			if (expertPhone) {
 				await updateExpertStatus(expertPhone, "Online");
 			}
@@ -138,13 +136,12 @@ const MyCallUI = () => {
 			title: string;
 			description: string;
 		}) => {
-			// Default message if no custom message is passed
 			const defaultMessage = {
 				title: `Call Declined`,
-				description: "The call was rejected",
+				description: "The call got Canceled",
 			};
 
-			const message = customMessage || defaultMessage; // Use custom message if passed
+			const message = customMessage || defaultMessage;
 
 			toast({
 				variant: "destructive",
@@ -155,46 +152,92 @@ const MyCallUI = () => {
 			setShowCallUI(false);
 			clearTimeout(autoDeclineTimeout);
 
-			await axios.post(`${backendBaseUrl}/calls/updateCall`, {
-				callId: incomingCall?.id,
-				call: {
-					status: "Rejected",
-				},
-			});
-			await updateFirestoreSessions(
-				incomingCall?.state?.createdBy?.id as string,
-				{
-					status: "ended",
-				}
-			);
 			logEvent(analytics, "call_rejected", { callId: incomingCall.id });
+		};
+
+		const handleCallAccepted = async () => {
+			clearTimeout(autoDeclineTimeout);
 		};
 
 		incomingCall.on("call.ended", handleCallEnded);
 		incomingCall.on("call.rejected", () => handleCallRejected());
+		incomingCall.on("call.accepted", handleCallAccepted);
 
 		return () => {
 			incomingCall.off("call.ended", handleCallEnded);
 			incomingCall.off("call.rejected", () => handleCallRejected());
+			incomingCall.off("call.accepted", () => handleCallAccepted());
 			clearTimeout(autoDeclineTimeout);
 		};
-	}, [incomingCalls, toast]);
+	}, [incomingCalls]);
 
 	// Handle outgoing call actions
 	useEffect(() => {
 		if (outgoingCalls.length === 0) return;
 		const [outgoingCall] = outgoingCalls;
 
-		const autoDeclineTimeout = setTimeout(async () => {
-			if (outgoingCall?.state?.callingState === CallingState.RINGING) {
-				console.log("Auto-declining call due to timeout...");
-				await handleCallRejected();
-			}
-		}, 30000);
-
 		const expert = outgoingCall.state?.members?.find(
 			(member) => member.custom.type === "expert"
 		);
+
+		const sessionTriggeredRef = doc(
+			db,
+			"sessionTriggered",
+			expert?.user_id as string
+		);
+
+		const autoDeclineTimeout = setTimeout(async () => {
+			await setDoc(
+				sessionTriggeredRef,
+				{
+					count: increment(1),
+				},
+				{ merge: true }
+			);
+
+			const sessionTriggeredDoc = await getDoc(sessionTriggeredRef);
+			if (!sessionTriggeredDoc.exists()) {
+				await setDoc(sessionTriggeredRef, { count: 0 });
+			}
+			if (sessionTriggeredDoc.exists()) {
+				const currentCount = sessionTriggeredDoc.data().count || 0;
+
+				if (currentCount >= 3) {
+					await updateFirestoreCallServices(
+						{
+							_id: expert?.user_id as string,
+							phone: expert?.custom?.phone,
+						},
+						{
+							myServices: false,
+							videoCall: false,
+							audioCall: false,
+							chat: false,
+						},
+						undefined,
+						"Offline"
+					);
+
+					await axios.put(
+						`${backendBaseUrl}/creator/updateUser/${expert?.user_id}`,
+						{
+							videoAllowed: false,
+							audioAllowed: false,
+							chatAllowed: false,
+						}
+					);
+
+					// Reset the count back to 0
+					await setDoc(sessionTriggeredRef, { count: 0 }, { merge: true });
+				}
+			}
+
+			if (outgoingCall?.state?.callingState === CallingState.RINGING) {
+				console.log("Auto-declining call due to timeout...");
+				await handleCallIgnored();
+			}
+		}, 30000);
+
 		const handleCallAccepted = async () => {
 			setShowCallUI(false);
 			clearTimeout(autoDeclineTimeout);
@@ -229,7 +272,7 @@ const MyCallUI = () => {
 					await outgoingCall
 						.leave()
 						.then(() => router.replace(`/meeting/${outgoingCall.id}`))
-						.catch((err) => console.log("redirection mein error ", err));
+						.catch((err) => console.log("redirection error ", err));
 				} catch (err) {
 					console.warn("unable to leave client user ... ", err);
 				}
@@ -238,17 +281,66 @@ const MyCallUI = () => {
 			}
 		};
 
-		const handleCallRejected = async (customMessage?: {
-			title: string;
-			description: string;
-		}) => {
-			// Default message if no custom message is passed
+		const handleCallRejected = async () => {
+			setShowCallUI(false);
+			clearTimeout(autoDeclineTimeout);
+
+			if (sessionStorage.getItem(`callRejected-${outgoingCall.id}`)) return;
+
+			sessionStorage.setItem(`callRejected-${outgoingCall.id}`, "true");
+
+			const response = await axios.get(
+				`${backendBaseUrl}/calls/getCallById/${outgoingCall?.id}`
+			);
+
+			const callData = response.data;
+			const currentStatus = callData?.data?.status;
+
+			await updateFirestoreSessions(
+				outgoingCall?.state?.createdBy?.id as string,
+				{
+					status: "ended",
+				}
+			);
+
+			logEvent(analytics, "call_rejected", { callId: outgoingCall.id });
+
+			if (currentStatus !== "Not Answered" || currentStatus === "Canceled") {
+				const defaultMessage = {
+					title: endedByMe
+						? "Call Canceled"
+						: `${expert?.custom?.name || "User"} is Busy`,
+					description: endedByMe
+						? "You ended the Call"
+						: "Please try again later",
+				};
+
+				const message = defaultMessage;
+
+				toast({
+					variant: "destructive",
+					title: message.title,
+					description: message.description,
+				});
+
+				await axios.post(`${backendBaseUrl}/calls/updateCall`, {
+					callId: outgoingCall?.id,
+					call: {
+						status: endedByMe ? "Canceled" : "Rejected",
+					},
+				});
+
+				setEndedByMe(false);
+			}
+		};
+
+		const handleCallIgnored = async () => {
 			const defaultMessage = {
-				title: `${expert?.custom?.name || "User"} is Busy`,
+				title: `${expert?.custom?.name || "User"} is not answering`,
 				description: "Please try again later",
 			};
 
-			const message = customMessage || defaultMessage; // Use custom message if passed
+			const message = defaultMessage;
 
 			toast({
 				variant: "destructive",
@@ -256,46 +348,34 @@ const MyCallUI = () => {
 				description: message.description,
 			});
 
-			setShowCallUI(false);
-			clearTimeout(autoDeclineTimeout);
 			await axios.post(`${backendBaseUrl}/calls/updateCall`, {
 				callId: outgoingCall?.id,
 				call: {
-					status: "Rejected",
+					status: "Not Answered",
 				},
 			});
-			await updateFirestoreSessions(
-				outgoingCall?.state?.createdBy?.id as string,
-				{
-					status: "ended",
-				}
-			);
-			logEvent(analytics, "call_rejected", { callId: outgoingCall.id });
 		};
 
 		const handleCallEnded = async () => {
-			stopMediaStreams();
-			await updateExpertStatus(
-				outgoingCall.state.createdBy?.custom?.phone as string,
-				"Busy"
-			);
 			setShowCallUI(false);
 			clearTimeout(autoDeclineTimeout);
+			await updateExpertStatus(
+				outgoingCall.state.createdBy?.custom?.phone as string,
+				"Idle"
+			);
 		};
 
 		outgoingCall.on("call.accepted", handleCallAccepted);
-		// outgoingCall.on("call.session_participant_joined", handleCallAccepted);
-		outgoingCall.on("call.rejected", () => handleCallRejected());
+		outgoingCall.on("call.rejected", handleCallRejected);
 		outgoingCall.on("call.ended", handleCallEnded);
 
 		return () => {
 			outgoingCall.off("call.accepted", handleCallAccepted);
-			// outgoingCall.off("call.session_participant_joined", handleCallAccepted);
-			outgoingCall.off("call.rejected", () => handleCallRejected());
+			outgoingCall.off("call.rejected", handleCallRejected);
 			outgoingCall.off("call.ended", handleCallEnded);
 			clearTimeout(autoDeclineTimeout);
 		};
-	}, [outgoingCalls, router, currentUser]);
+	}, [outgoingCalls]);
 
 	// Handle displaying the call UI
 	useEffect(() => {
@@ -310,7 +390,9 @@ const MyCallUI = () => {
 	}
 
 	if (outgoingCalls.length > 0 && showCallUI && !hide) {
-		return <MyOutgoingCallUI call={outgoingCalls[0]} />;
+		return (
+			<MyOutgoingCallUI call={outgoingCalls[0]} setEndedByMe={setEndedByMe} />
+		);
 	}
 
 	return null; // No calls to handle

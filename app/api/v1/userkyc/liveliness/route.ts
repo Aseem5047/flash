@@ -141,6 +141,15 @@ export async function POST(request: NextRequest) {
 							const user = {
 								kyc_status: "FAILED",
 							};
+
+							let reason: string;
+
+							if(!faceMatchResult.success) {
+								reason = "The face in the Aadhaar and the selfie do not match. Our team will contact you for manual verification, which may take up to 2 business days."
+							} else {
+								reason = "The name in the PAN and the Aadhaar do not match. Our team will contact you for manual verification, which may take up to 2 business days."
+							}
+
 							const userResponse = await fetch(
 								"https://flashcall.me/api/v1/creator/updateUser",
 								{
@@ -158,12 +167,13 @@ export async function POST(request: NextRequest) {
 							const kyc = {
 								userId: userId,
 								kyc_status: user.kyc_status,
+								reason: reason,
 							};
 
 							await createUserKyc(kyc, "status");
 
 							return NextResponse.json({
-								success: false,
+								success: true,
 								kycStatus: false,
 								message:
 									"Our team will verify the details you have submitted. This usually takes 24 hours.",

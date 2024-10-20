@@ -22,10 +22,16 @@ import Script from "next/script";
 import { useCallTimerContext } from "@/lib/context/CallTimerContext";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import * as Sentry from "@sentry/nextjs";
+import { backendBaseUrl } from "@/lib/utils";
+import { usePathname } from "next/navigation";
 
 const RechargeModal = ({
+	inTipModal,
+	walletBalance,
 	setWalletBalance,
 }: {
+	inTipModal?: boolean;
+	walletBalance: number;
 	setWalletBalance: React.Dispatch<React.SetStateAction<number>>;
 }) => {
 	const [rechargeAmount, setRechargeAmount] = useState("");
@@ -34,27 +40,7 @@ const RechargeModal = ({
 	const { toast } = useToast();
 	const { currentUser } = useCurrentUsersContext();
 	const { pauseTimer, resumeTimer } = useCallTimerContext();
-
-	useEffect(() => {
-		const handleResize = () => {
-			// Get the viewport height and calculate the 1% vh unit
-			const vh = window.innerHeight * 0.01;
-			// Set the --vh custom property to the root of the document
-			document.documentElement.style.setProperty("--vh", `${vh}px`);
-		};
-
-		// Initial calculation
-		handleResize();
-
-		// Add event listener for resize event to handle keyboard open/close
-		window.addEventListener("resize", handleResize);
-
-		// Cleanup the event listener
-		return () => {
-			window.removeEventListener("resize", handleResize);
-		};
-	}, []);
-
+	const pathname = usePathname();
 	useEffect(() => {
 		if (isSheetOpen || onGoingPayment) {
 			pauseTimer();
@@ -131,19 +117,18 @@ const RechargeModal = ({
 							}
 						);
 
-						const jsonRes: any = await validateRes.json();
-
 						// Add money to user wallet upon successful validation
 						const userId = currentUser?._id as string; // Replace with actual user ID
-						const userType = "Client"; // Replace with actual user type
+						const userType = "Client";
 						setWalletBalance((prev) => prev + parseInt(rechargeAmount));
 
-						await fetch("/api/v1/wallet/addMoney", {
+						fetch(`${backendBaseUrl}/wallet/addMoney`, {
 							method: "POST",
 							body: JSON.stringify({
-								userId,
-								userType,
+								userId: userId,
+								userType: "Creator",
 								amount: rechargeAmount,
+								category: "Recharge",
 							}),
 							headers: { "Content-Type": "application/json" },
 						});
@@ -208,7 +193,11 @@ const RechargeModal = ({
 			<Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
 				<SheetTrigger asChild>
 					<Button
-						className="bg-red-500 mt-2 w-full hoverScaleEffect"
+						className={`${
+							pathname.includes("meeting") ? "bg-green-1" : "bg-red-500"
+						} text-white ${
+							inTipModal ? "mt-0" : "mt-2"
+						}  w-full hoverScaleEffect`}
 						onClick={() => setIsSheetOpen(true)}
 					>
 						Recharge
@@ -216,13 +205,15 @@ const RechargeModal = ({
 				</SheetTrigger>
 				<SheetContent
 					side="bottom"
-					className="flex flex-col items-center justify-center border-none rounded-t-xl px-10 py-7 bg-white max-h-[444px] min-h-[420px] w-full sm:max-w-[444px] mx-auto"
-					style={{ height: "calc(var(--vh, 1vh) * 100)" }}
+					className="flex flex-col items-center justify-center border-none rounded-t-xl px-10 py-7 bg-white max-h-[444px] min-h-[420px] w-full sm:max-w-[444px] h-dvh mx-auto"
 				>
 					<SheetHeader className="flex flex-col items-center justify-center">
-						<SheetTitle>Your balance is low.</SheetTitle>
+						<SheetTitle>
+							{inTipModal ? "Recharge to Provide Tip" : "Your balance is low."}
+						</SheetTitle>
 						<SheetDescription>
-							Recharge to continue this video call
+							Recharge to{" "}
+							{inTipModal ? "proceed with tip" : "continue this video call"}
 						</SheetDescription>
 					</SheetHeader>
 					<div className="grid gap-4 py-4 w-full">

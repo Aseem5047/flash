@@ -30,11 +30,11 @@ const MeetingPage = () => {
 	const router = useRouter();
 	const { toast } = useToast();
 	const { call, isCallLoading } = useGetCallById(id);
-	const { currentUser, userType } = useCurrentUsersContext();
+	const { currentUser } = useCurrentUsersContext();
 	const creatorURL = localStorage.getItem("creatorURL");
 
 	useWarnOnUnload("Are you sure you want to leave the meeting?", () => {
-		if (currentUser?._id && userType === "creator") {
+		if (currentUser?._id) {
 			navigator.sendBeacon(
 				`${backendBaseUrl}/user/setCallStatus/${currentUser._id}`
 			);
@@ -49,7 +49,7 @@ const MeetingPage = () => {
 				description: "Redirecting Back...",
 			});
 			setTimeout(() => {
-				router.push(`${creatorURL ? creatorURL : "/home"}`);
+				router.replace(`${creatorURL ? creatorURL : "/home"}`);
 			}, 1000);
 		}
 	}, [isCallLoading, call, router, toast]);
@@ -122,7 +122,6 @@ const CallEnded = ({ toast, router, call }: any) => {
 				);
 				// Show toast notification
 				if (!toastShown) {
-					stopMediaStreams();
 					toast({
 						variant: "destructive",
 						title: "Session Has Ended",
@@ -142,10 +141,11 @@ const CallEnded = ({ toast, router, call }: any) => {
 		};
 
 		if (isMeetingOwner && !transactionHandled.current) {
+			stopMediaStreams();
 			handleCallEnd();
 		} else if (!isMeetingOwner) {
 			stopMediaStreams();
-			router.push(`/home`);
+			router.replace(`/home`);
 		}
 	}, [call?.id, currentUser?._id]);
 

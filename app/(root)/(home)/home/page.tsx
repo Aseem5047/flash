@@ -68,16 +68,16 @@ const HomePage = () => {
 			if (storedScrollPosition) {
 				window.scrollTo({
 					top: parseInt(storedScrollPosition, 10),
-					behavior: "smooth", // This enables smooth scrolling
+					behavior: "smooth",
 				});
 				sessionStorage.removeItem("scrollPosition");
 			}
 		};
 
-		if (!isLoading) {
-			setTimeout(restoreScrollPosition, 1000);
+		if (!isLoading && !loadingCard && !isFetching) {
+			setTimeout(restoreScrollPosition, 100);
 		}
-	}, [isLoading]);
+	}, [isLoading, loadingCard, isFetching]);
 
 	useEffect(() => {
 		if (inView && hasNextPage && !isFetching) {
@@ -108,17 +108,17 @@ const HomePage = () => {
 			{userType === "client" ? (
 				<Suspense fallback={<PostLoader count={6} />}>
 					{isError ? (
-						<div className="size-full flex items-center justify-center text-2xl font-semibold text-center text-red-500">
-							Failed to fetch creators <br />
-							Please try again later.
+						<div className="size-full flex flex-col items-center justify-center text-2xl font-semibold text-center text-red-500">
+							Failed to fetch creators
+							<span className="text-lg">Please try again later.</span>
 						</div>
 					) : creators && creators.pages[0].length === 0 && !isLoading ? (
-						<p className="size-full flex items-center justify-center text-2xl font-semibold text-center text-gray-500">
+						<p className="size-full flex items-center justify-center text-xl font-semibold text-center text-gray-500">
 							No creators found.
 						</p>
 					) : (
 						<section
-							className={`grid xs:grid-cols-2 2xl:grid-cols-3 h-auto gap-3.5 lg:gap-5 px-3.5  lg:px-0 items-center overflow-hidden`}
+							className={`grid xs:grid-cols-2 2xl:grid-cols-3 h-auto gap-3.5 lg:gap-5 2xl:gap-7 px-3.5 lg:px-0 items-center overflow-hidden`}
 							style={{
 								WebkitTransform: "translateZ(0)",
 							}}
@@ -157,11 +157,14 @@ const HomePage = () => {
 						/>
 					)}
 
-					{!hasNextPage && !isFetching && (
-						<div className="text-center text-gray-500 py-4">
-							You have reached the end of the list
-						</div>
-					)}
+					{!hasNextPage &&
+						!isFetching &&
+						creators &&
+						creators?.pages[0]?.length !== 0 && (
+							<div className="text-center text-gray-500 py-4">
+								You have reached the end of the list
+							</div>
+						)}
 
 					{hasNextPage && <div ref={ref} className="pt-10 w-full" />}
 				</Suspense>

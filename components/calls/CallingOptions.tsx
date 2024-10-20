@@ -8,7 +8,13 @@ import { useStreamVideoClient } from "@stream-io/video-react-sdk";
 import { logEvent } from "firebase/analytics";
 import { doc, updateDoc, onSnapshot } from "firebase/firestore";
 import { analytics, db } from "@/lib/firebase";
-import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
+import {
+	Sheet,
+	SheetContent,
+	SheetDescription,
+	SheetTitle,
+	SheetTrigger,
+} from "../ui/sheet";
 import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import AuthenticationSheet from "../shared/AuthenticationSheet";
@@ -20,8 +26,6 @@ import {
 	isValidHexColor,
 	updateFirestoreSessions,
 	trackCallEvents,
-	fetchFCMToken,
-	sendNotification,
 	updateExpertStatus,
 	getDisplayName,
 } from "@/lib/utils";
@@ -142,10 +146,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 							const clientStatusData = clientStatusDoc.data();
 
 							if (clientStatusData) {
-								setIsClientBusy(
-									clientStatusData.status === "Busy" ||
-										clientStatusData.status === "Payment Pending"
-								);
+								setIsClientBusy(clientStatusData.status === "Busy");
 							} else {
 								setIsClientBusy(false);
 							}
@@ -166,7 +167,6 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 
 	useEffect(() => {
 		if (!chatReqSent) {
-			console.log("Chat request not sent");
 			return;
 		}
 
@@ -181,13 +181,22 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				const unsubscribe = onSnapshot(chatRequestDoc, (docSnapshot) => {
 					const data = docSnapshot.data();
 					if (data) {
-						console.log(data);
 						if (data.status === "ended" || data.status === "rejected") {
-							console.log(data.status);
 							setSheetOpen(false);
 							console.log("Chat Request Ended or Rejected");
 							setChatReqSent(false);
 							setChatState(data.status);
+							if (data.status === "rejected") {
+								toast({
+									variant: "destructive",
+									title: "The user is busy, please try again later",
+								});
+							} else {
+								toast({
+									variant: "destructive",
+									title: "User is not asnwering please try again later",
+								});
+							}
 							localStorage.removeItem("user2");
 							localStorage.removeItem("chatRequestId");
 							localStorage.removeItem("chatId");
@@ -199,17 +208,13 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 						) {
 							setChatState(data.status);
 							unsubscribe();
-							logEvent(analytics, "call_connected", {
-								clientId: clientUser?._id,
-								creatorId: data.creatorId,
-							});
 							console.log("Chat Accepted");
-							updateExpertStatus(data.creatorPhone as string, "Busy");
+							// updateExpertStatus(data.creatorPhone as string, "Busy");
 							setTimeout(() => {
 								router.replace(
 									`/chat/${data.chatId}?creatorId=${data.creatorId}&clientId=${data.clientId}`
 								);
-							}, 2000);
+							});
 							setChatReqSent(false);
 						} else {
 							setChatState(data.status);
@@ -357,10 +362,9 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 		}
 	};
 
-	// if any of the calling option is selected open the respective modal
-	const handleClickOption = (callType: string) => {
-		if (isProcessing) return; // Prevent double-click
-		setIsProcessing(true); // Set processing state
+	const handleClickOption = async (callType: string) => {
+		if (isProcessing) return;
+		setIsProcessing(true);
 
 		if (userType === "creator") {
 			toast({
@@ -430,7 +434,6 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 			return;
 		}
 		if (clientUser) {
-			console.log(clientUser);
 			// updateExpertStatus(creator.phone as string, "Busy");
 			trackEvent("BookCall_Chat_Clicked", {
 				utm_source: "google",
@@ -626,6 +629,8 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 							}}
 							className="flex flex-col items-center justify-center border-none rounded-t-xl px-10 py-7 bg-white min-h-[200px] max-h-fit w-full sm:max-w-[444px] mx-auto"
 						>
+							<SheetTitle></SheetTitle>
+							<SheetDescription></SheetDescription>
 							<div className="relative flex flex-col items-center gap-7">
 								<div className="flex flex-col py-5 items-center justify-center gap-4 w-full text-center">
 									<span className="font-semibold text-xl">
