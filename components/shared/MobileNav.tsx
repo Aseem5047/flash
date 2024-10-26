@@ -14,14 +14,19 @@ import {
 	SheetTrigger,
 } from "@/components/ui/sheet";
 import { sidebarLinks, sidebarLinksCreator } from "@/constants";
-import { cn, getProfileImagePlaceholder, isValidUrl } from "@/lib/utils";
+import {
+	cn,
+	getImageSource,
+	getProfileImagePlaceholder,
+	isValidUrl,
+} from "@/lib/utils";
 import { Button } from "../ui/button";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { trackEvent } from "@/lib/mixpanel";
-import { creatorUser } from "@/types";
+import { clientUser, creatorUser } from "@/types";
 
 const MobileNav = () => {
 	const pathname = usePathname();
@@ -55,8 +60,9 @@ const MobileNav = () => {
 		});
 	}, []);
 
-	const sidebarItems =
-		userType === "creator" ? sidebarLinksCreator : sidebarLinks;
+	const sidebarItems = useMemo(() => {
+		return userType === "creator" ? sidebarLinksCreator : sidebarLinks;
+	}, [userType]);
 
 	const handleAuthentication = () => {
 		trackEvent("Menu_Signout clicked", {
@@ -121,10 +127,7 @@ const MobileNav = () => {
 		}
 	};
 
-	const imageSrc =
-		currentUser?.photo && isValidUrl(currentUser?.photo)
-			? currentUser?.photo
-			: getProfileImagePlaceholder((currentUser?.gender as string) ?? "");
+	const imageSrc = getImageSource(currentUser as clientUser | creatorUser);
 
 	return (
 		<section className="flex items-center justify-center w-fit relative">
@@ -198,7 +201,8 @@ const MobileNav = () => {
 														alt={item.label}
 														width={20}
 														height={20}
-														className="invert-0 brightness-200 w-6 h-6 object-cover "
+														className="invert-0 brightness-200 w-6 h-6 object-cover"
+														priority
 													/>
 													<p className="font-semibold">{item.label}</p>
 												</Link>

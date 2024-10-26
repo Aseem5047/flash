@@ -1,6 +1,7 @@
 import { db } from "@/lib/firebase";
 import {
 	getDisplayName,
+	getImageSource,
 	getProfileImagePlaceholder,
 	isValidUrl,
 } from "@/lib/utils";
@@ -13,10 +14,7 @@ const CreatorsGrid = ({ creator }: { creator: creatorUser }) => {
 	const [status, setStatus] = useState<string>("Offline");
 	const fullName = getDisplayName(creator);
 
-	const imageSrc =
-		creator?.photo && isValidUrl(creator.photo)
-			? creator.photo
-			: getProfileImagePlaceholder(creator && (creator.gender as string));
+	const imageSrc = getImageSource(creator);
 
 	useEffect(() => {
 		const creatorRef = doc(db, "services", creator._id);
@@ -67,12 +65,12 @@ const CreatorsGrid = ({ creator }: { creator: creatorUser }) => {
 				<Image
 					src={imageSrc}
 					alt={creator.firstName || creator.username}
-					width={300}
-					height={300}
-					quality={75}
+					width={500}
+					height={500}
 					className="w-full h-full absolute top-0 object-cover rounded-xl"
 					placeholder="blur"
 					blurDataURL="/icons/blurryPlaceholder.png"
+					priority
 				/>
 				<div className="text-white flex flex-col items-start w-full creatorsGirdHighlight">
 					{/* Username */}

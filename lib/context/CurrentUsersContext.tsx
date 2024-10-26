@@ -118,24 +118,8 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 
 	// Function to handle user signout
 	const handleSignout = async () => {
-		const phone = currentUser?.phone; // Store phone number before resetting the state
-		if (phone) {
-			const userAuthRef = doc(db, "authToken", phone);
-
-			// Remove the session from Firestore
-			deleteDoc(userAuthRef)
-				.then(() => {
-					console.log("Document successfully deleted!");
-				})
-				.catch((error: any) => {
-					Sentry.captureException(error);
-					console.error("Error removing document: ", error);
-				});
-		}
-
 		localStorage.removeItem("currentUserID");
 		localStorage.removeItem("authToken");
-		localStorage.removeItem("notifyList");
 
 		// Clear user data and local storage
 		await axios.post(`${backendBaseUrl}/user/endSession`);
@@ -152,10 +136,9 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	const fetchCurrentUser = async () => {
 		try {
 			setFetchingUser(true);
-			// Call the backend endpoint to get the profile data
 
 			const response = await axios.get(`${backendBaseUrl}/user/getProfile`, {
-				withCredentials: true, // Ensure cookies are sent with the request
+				withCredentials: true,
 			});
 
 			const { success, data, token } = response.data;
@@ -187,12 +170,6 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 					data: { message },
 				} = error.response;
 
-				// toast({
-				// 	variant: "destructive",
-				// 	title: status === 401 ? "User Logged Out" : "Error",
-				// 	description: message || "An unexpected error occurred.",
-				// });
-
 				if (status === 401) {
 					handleSignout();
 				}
@@ -209,9 +186,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		}
 	};
 
-	// Call fetchCurrentUser when the component mounts
 	useEffect(() => {
-		// Fetch current user on mount
 		fetchCurrentUser();
 	}, []);
 
@@ -273,7 +248,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		return () => {
 			unsubscribe();
 		};
-	}, [currentUser?.phone]);
+	}, [currentUser?._id, authToken]);
 
 	// Provide the context value to children
 	return (

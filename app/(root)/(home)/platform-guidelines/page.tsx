@@ -1,7 +1,8 @@
 import React from "react";
-import { guidelines } from "../../../../constants/services/PlatformGuidelines.json";
+import platformGuidelines from "../../../../constants/services/PlatformGuidelines.json";
 
 const PlatformGuidelines = () => {
+	const { guidelines } = platformGuidelines;
 	const enforcements = guidelines.enforcement;
 	const harassment = guidelines.bullyingHarassment;
 	const contentRestrictions = guidelines.contentRestrictions;

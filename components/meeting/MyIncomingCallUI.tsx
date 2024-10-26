@@ -3,7 +3,6 @@ import { Call } from "@stream-io/video-react-sdk";
 import { useToast } from "../ui/use-toast";
 import * as Sentry from "@sentry/nextjs";
 import { updateExpertStatus } from "@/lib/utils";
-import GetRandomImage from "@/utils/GetRandomImage";
 import { useRouter } from "next/navigation";
 
 const MyIncomingCallUI = ({ call }: { call: Call }) => {
@@ -94,7 +93,7 @@ const MyIncomingCallUI = ({ call }: { call: Call }) => {
 
 	const handleCallState = async (action: string) => {
 		if (action === "declined") {
-			await call.reject();
+			await call.leave({ reject: true });
 			setCallState("declined");
 		} else if (action === "accepted") {
 			const expertPhone = expert?.custom?.phone;
@@ -102,7 +101,7 @@ const MyIncomingCallUI = ({ call }: { call: Call }) => {
 				await updateExpertStatus(expertPhone, "Busy");
 			}
 			// await call.accept();
-			// setCallState("accepted");
+			setCallState("accepted");
 			router.replace(`/meeting/${call?.id}`);
 		} else if (action === "ended") {
 			setCallState("ended");

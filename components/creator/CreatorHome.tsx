@@ -10,8 +10,7 @@ import { useToast } from "../ui/use-toast";
 import {
 	backendBaseUrl,
 	calculateTotalEarnings,
-	getProfileImagePlaceholder,
-	isValidUrl,
+	getImageSource,
 	updateFirestoreCallServices,
 } from "@/lib/utils";
 import ServicesCheckbox from "../shared/ServicesCheckbox";
@@ -28,7 +27,7 @@ import ProfileDialog from "./ProfileDialog";
 import useServices from "@/hooks/useServices";
 
 const CreatorHome = () => {
-	const { creatorUser, refreshCurrentUser } = useCurrentUsersContext();
+	const { creatorUser } = useCurrentUsersContext();
 	const { walletBalance, updateWalletBalance } = useWalletBalanceContext();
 	const { services, handleToggle, setServices } = useServices();
 	const { getDevicePlatform } = usePlatform();
@@ -40,10 +39,20 @@ const CreatorHome = () => {
 	const [todaysEarning, setTodaysEarning] = useState(0);
 	const [isPriceEditOpen, setIsPriceEditOpen] = useState(false);
 	const [prices, setPrices] = useState({
-		videoCall: creatorUser?.videoRate || "0",
-		audioCall: creatorUser?.audioRate || "0",
-		chat: creatorUser?.chatRate || "0",
+		videoCall: "0",
+		audioCall: "0",
+		chat: "0",
 	});
+
+	useEffect(() => {
+		if (creatorUser) {
+			setPrices({
+				videoCall: creatorUser.videoRate,
+				audioCall: creatorUser.audioRate,
+				chat: creatorUser.chatRate,
+			});
+		}
+	}, [creatorUser]);
 
 	const fetchCreatorLink = async () => {
 		try {
@@ -75,27 +84,6 @@ const CreatorHome = () => {
 			setLoading(false);
 		}, 1000);
 	}, []);
-
-	useEffect(() => {
-		if (creatorUser) {
-			setPrices({
-				videoCall: creatorUser?.videoRate,
-				audioCall: creatorUser?.audioRate,
-				chat: creatorUser?.chatRate,
-			});
-			setServices({
-				myServices:
-					creatorUser?.videoAllowed ||
-					creatorUser?.audioAllowed ||
-					creatorUser?.chatAllowed
-						? true
-						: false,
-				videoCall: creatorUser?.videoAllowed,
-				audioCall: creatorUser?.audioAllowed,
-				chat: creatorUser?.chatAllowed,
-			});
-		}
-	}, [creatorUser?._id]);
 
 	const fetchTransactions = async () => {
 		try {
@@ -275,7 +263,7 @@ const CreatorHome = () => {
 		if (creatorUser) {
 			updateServices();
 		}
-	}, [services]);
+	}, [creatorUser, services]);
 
 	if (!creatorUser || loading || walletBalance < 0)
 		return (
@@ -304,12 +292,7 @@ const CreatorHome = () => {
 			</section>
 		);
 
-	const imageSrc =
-		creatorUser.photo && isValidUrl(creatorUser.photo)
-			? creatorUser.photo
-			: getProfileImagePlaceholder(
-					creatorUser && (creatorUser.gender as string)
-			  );
+	const imageSrc = getImageSource(creatorUser);
 
 	return (
 		<>
@@ -320,7 +303,7 @@ const CreatorHome = () => {
 				<div className="flex justify-end p-2 absolute top-2 right-2">
 					<Link
 						href="/profile/editProfile"
-						className="px-4 py-2 text-black text-sm h-auto w-auto bg-white rounded-full hover:bg-gray-300"
+						className="px-4 py-2 text-black text-sm h-auto w-auto bg-white rounded-full hoverScaleDownEffect"
 					>
 						Edit Profile
 					</Link>

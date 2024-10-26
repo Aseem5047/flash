@@ -45,24 +45,13 @@ export async function POST(request: NextRequest) {
 				},
 			};
 
-			await createUserKyc(kyc, "liveliness");
+			const kycResult = await createUserKyc(kyc, "liveliness");
 
-			const kycResponse = await fetch(
-				`https://flashcall.me/api/v1/userkyc/getKyc?userId=${userId}`,
-				{
-					method: "GET",
-					headers: {
-						"Content-Type": "application/json",
-					},
-				}
-			);
-
-			const kycResult = await kycResponse.json();
-			if (kycResult.success) {
-				if (kycResult.data.aadhaar && kycResult.data.pan) {
+			if (kycResult.kyc_status) {
+				if (kycResult.aadhaar && kycResult.pan) {
 					if (
-						kycResult.data.aadhaar.status === "VALID" &&
-						kycResult.data.pan.valid
+						kycResult.aadhaar.status === "VALID" &&
+						kycResult.pan.valid
 					) {
 						const generateVerificationId = () => {
 							return `${userId}_${Date.now()}_${Math.random()
@@ -80,8 +69,8 @@ export async function POST(request: NextRequest) {
 								},
 								body: JSON.stringify({
 									userId: userId,
-									name1: kycResult.data.pan.registered_name,
-									name2: kycResult.data.aadhaar.name,
+									name1: kycResult.pan.registered_name,
+									name2: kycResult.aadhaar.name,
 									verificationId,
 								}),
 							}
@@ -98,8 +87,8 @@ export async function POST(request: NextRequest) {
 								},
 								body: JSON.stringify({
 									userId: userId,
-									first_img: kycResult.data.liveliness.img_url,
-									second_img: kycResult.data.aadhaar.img_link,
+									first_img: kycResult.liveliness.img_url,
+									second_img: kycResult.aadhaar.img_link,
 									verificationId,
 								}),
 							}
@@ -109,7 +98,7 @@ export async function POST(request: NextRequest) {
 
 						if (faceMatchResult.success && nameMatchResult.success) {
 							const user = {
-								kyc_status: "COMPLETED",
+								kycStatus: "COMPLETED",
 							};
 							const userResponse = await fetch(
 								"https://flashcall.me/api/v1/creator/updateUser",
@@ -125,9 +114,12 @@ export async function POST(request: NextRequest) {
 								}
 							);
 
+							const userResult = await userResponse.json();
+							console.log(userResult);
+
 							const kyc = {
 								userId: userId,
-								kyc_status: user.kyc_status,
+								kyc_status: user.kycStatus,
 							};
 
 							await createUserKyc(kyc, "status");
@@ -139,12 +131,12 @@ export async function POST(request: NextRequest) {
 							});
 						} else {
 							const user = {
-								kyc_status: "FAILED",
+								kycStatus: "FAILED",
 							};
 
 							let reason: string;
 
-							if(!faceMatchResult.success) {
+							if (!faceMatchResult.success) {
 								reason = "The face in the Aadhaar and the selfie do not match. Our team will contact you for manual verification, which may take up to 2 business days."
 							} else {
 								reason = "The name in the PAN and the Aadhaar do not match. Our team will contact you for manual verification, which may take up to 2 business days."
@@ -164,47 +156,26 @@ export async function POST(request: NextRequest) {
 								}
 							);
 
+							const userResult = await userResponse.json();
+							console.log(userResult);
+
 							const kyc = {
 								userId: userId,
-								kyc_status: user.kyc_status,
+								kyc_status: user.kycStatus,
 								reason: reason,
 							};
 
-							await createUserKyc(kyc, "status");
+							const final = await createUserKyc(kyc, "status");
+							console.log(final);
 
 							return NextResponse.json({
 								success: true,
 								kycStatus: false,
 								message:
-									"Our team will verify the details you have submitted. This usually takes 24 hours.",
+									final.reason,
 							});
 						}
 					} else {
-						const user = {
-							kyc_status: "PENDING",
-						};
-						const userResponse = await fetch(
-							"https://flashcall.me/api/v1/creator/updateUser",
-							{
-								method: "PUT",
-								headers: {
-									"Content-Type": "application/json",
-								},
-								body: JSON.stringify({
-									userId: userId,
-									user,
-								}),
-							}
-						);
-
-						const kyc = {
-							userId: userId,
-							kyc_status: user.kyc_status,
-						};
-
-						const dbResponse = await createUserKyc(kyc, "status");
-						const dbResult = await dbResponse.json();
-
 						return NextResponse.json({
 							success: true,
 							kycStatus: false,

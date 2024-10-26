@@ -4,6 +4,7 @@ import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import {
 	backendBaseUrl,
 	getDisplayName,
+	getImageSource,
 	getProfileImagePlaceholder,
 	isValidHexColor,
 	isValidUrl,
@@ -23,6 +24,7 @@ import Favorites from "../shared/Favorites";
 import ShareButton from "../shared/ShareButton";
 import axios from "axios";
 import Link from "next/link";
+import Image from "next/image";
 
 const CreatorDetails = ({ creator }: { creator: creatorUser }) => {
 	const {
@@ -43,10 +45,7 @@ const CreatorDetails = ({ creator }: { creator: creatorUser }) => {
 
 	const fullName = getDisplayName(creator);
 
-	const imageSrc =
-		creator?.photo && isValidUrl(creator?.photo)
-			? creator?.photo
-			: getProfileImagePlaceholder(creator && (creator.gender as string));
+	const imageSrc = getImageSource(creator);
 
 	const themeColor = isValidHexColor(creator.themeSelected)
 		? creator.themeSelected
@@ -76,41 +75,30 @@ const CreatorDetails = ({ creator }: { creator: creatorUser }) => {
 
 			if (data) {
 				const services = data.services;
-				console.log(services);
-				// Check if any of the services are enabled
 				const isOnline =
 					services?.videoCall || services?.audioCall || services?.chat;
 
-				// Set initial status to Online or Offline based on services
 				setStatus(isOnline ? "Online" : "Offline");
 
-				// Now listen for the user's status
 				const unsubscribeStatus = onSnapshot(statusDocRef, (statusDoc) => {
 					const statusData = statusDoc.data();
-					console.log(statusData);
 					if (statusData) {
-						// Check if status is "Busy"
 						if (statusData.status === "Busy") {
 							setStatus("Busy");
 						} else {
-							// Update status based on services
 							setStatus(isOnline ? "Online" : "Offline");
 						}
 					}
 				});
 
-				// Clean up the status listener
 				return () => unsubscribeStatus();
 			}
 		});
 
-		// Clean up the services listener
 		return () => {
 			unsubscribeServices();
 		};
 	}, [creator._id, creator.phone]);
-
-	console.log(status);
 
 	const handleToggleFavorite = async () => {
 		if (!clientUser) {
@@ -166,7 +154,7 @@ const CreatorDetails = ({ creator }: { creator: creatorUser }) => {
 				<section className="w-full h-fit flex items-center justify-start gap-4 ">
 					{/* 1. Creator Status and Image */}
 					<section
-						className="relative flex  rounded-full min-h-[94px] min-w-[94px] p-1"
+						className="relative flex item-center justify-center rounded-full min-h-[94px] min-w-[94px]"
 						style={{
 							border: `3px solid ${
 								status === "Online"
@@ -180,9 +168,21 @@ const CreatorDetails = ({ creator }: { creator: creatorUser }) => {
 						}}
 					>
 						{/* Creator Image */}
-						<div
+						{/* <div
 							className="w-full h-auto rounded-full"
 							style={backgroundImageStyle}
+						/> */}
+
+						<Image
+							src={imageSrc}
+							alt={creator.firstName || creator.username}
+							width={300}
+							height={300}
+							quality={75}
+							className="w-full h-full absolute left-0 top-0 object-cover rounded-full p-1"
+							placeholder="blur"
+							blurDataURL="/icons/blurryPlaceholder.png"
+							priority
 						/>
 
 						{/* Creator Status */}

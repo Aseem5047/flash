@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import OTPVerification from "./OTPVerification";
 import jwt from "jsonwebtoken";
@@ -24,7 +24,6 @@ import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import * as Sentry from "@sentry/nextjs";
 import { trackEvent } from "@/lib/mixpanel";
 import usePlatform from "@/hooks/usePlatform";
-import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import { backendBaseUrl } from "@/lib/utils";
 import GetRandomImage from "@/utils/GetRandomImage";
 import { getFCMToken } from "@/lib/firebase";
@@ -55,7 +54,6 @@ const AuthenticateViaOTP = ({
 	const router = useRouter();
 	const { refreshCurrentUser, setAuthenticationSheetOpen } =
 		useCurrentUsersContext();
-	const { updateWalletBalance } = useWalletBalanceContext();
 
 	const [showOTP, setShowOTP] = useState(false);
 	const [phoneNumber, setPhoneNumber] = useState("");
@@ -72,7 +70,6 @@ const AuthenticateViaOTP = ({
 
 	const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 584);
 
-	// Handle resizing to adjust height for mobile viewports
 	useEffect(() => {
 		const handleResize = () => {
 			setIsMobileView(window.innerWidth <= 584);
@@ -81,7 +78,7 @@ const AuthenticateViaOTP = ({
 		};
 
 		window.addEventListener("resize", handleResize);
-		handleResize(); // Call once on mount
+		handleResize();
 
 		return () => {
 			window.removeEventListener("resize", handleResize);
@@ -127,8 +124,8 @@ const AuthenticateViaOTP = ({
 
 	// Handle OTP submission
 	const handleOTPSubmit = async (values: z.infer<typeof FormSchemaOTP>) => {
-		setIsVerifyingOTP(true);
 		try {
+			setIsVerifyingOTP(true);
 			// Retrieve the FCM token
 			const fcmToken: any = await getFCMToken();
 
@@ -245,25 +242,24 @@ const AuthenticateViaOTP = ({
 				}
 			}
 
-			localStorage.setItem("userType", resolvedUserType);
-			refreshCurrentUser();
-			updateWalletBalance();
 			setAuthenticationSheetOpen(false);
 			onOpenChange && onOpenChange(false);
+			setIsVerifyingOTP(false);
+
 			const creatorURL = localStorage.getItem("creatorURL");
 
 			if (resolvedUserType === "client") {
-				if (creatorURL) {
-					router.replace(creatorURL);
-				} else {
-					router.replace("/home");
-				}
+				localStorage.setItem("userType", resolvedUserType);
+				router.replace(creatorURL ? creatorURL : "/home");
+				setTimeout(() => {
+					refreshCurrentUser();
+				}, 1000);
 			} else if (resolvedUserType === "creator") {
-				if (firstLogin) {
-					router.replace("/updateDetails");
-				} else {
-					router.replace("/home");
-				}
+				localStorage.setItem("userType", resolvedUserType);
+				router.replace(firstLogin ? "/updateDetails" : "/home");
+				setTimeout(() => {
+					refreshCurrentUser();
+				}, 1000);
 			}
 		} catch (error: any) {
 			console.error("Error verifying OTP:", error);
@@ -271,8 +267,6 @@ const AuthenticateViaOTP = ({
 			newErrors.otpVerificationError = error.message;
 			setError(newErrors);
 			otpForm.reset(); // Reset OTP form
-			setIsVerifyingOTP(false);
-		} finally {
 			setIsVerifyingOTP(false);
 		}
 	};
@@ -302,14 +296,9 @@ const AuthenticateViaOTP = ({
 		otpForm.reset(); // Reset OTP form
 	};
 
-	const sectionRef = useRef<HTMLElement>(null);
-
 	return (
-		<section
-			ref={sectionRef}
-			className="relative bg-[#F8F8F8] rounded-t-3xl sm:rounded-xl flex flex-col items-center justify-start gap-4 px-8 pt-4 shadow-lg w-screen h-fit sm:w-full sm:min-w-[24rem] sm:max-w-sm mx-auto"
-		>
-			{!showOTP ? (
+		<section className="relative bg-[#F8F8F8] rounded-t-3xl sm:rounded-xl flex flex-col items-center justify-start gap-4 px-8 pt-4 shadow-lg w-screen h-fit sm:w-full sm:min-w-[24rem] sm:max-w-sm mx-auto">
+			{!showOTP && !verificationSuccess ? (
 				// SignUp form
 				<>
 					<div className="flex flex-col items-center justify-enter gap-2 text-center">

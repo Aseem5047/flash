@@ -8,12 +8,12 @@ import * as Sentry from "@sentry/nextjs";
 
 export const useServices = () => {
 	const { creatorUser } = useCurrentUsersContext();
-	const [services, setServices] = useState({
+	const [services, setServices] = useState(() => ({
 		myServices: false,
 		videoCall: false,
 		audioCall: false,
 		chat: false,
-	});
+	}));
 
 	// Initialize services based on creatorUser
 	useEffect(() => {
@@ -23,9 +23,9 @@ export const useServices = () => {
 					creatorUser.videoAllowed ||
 					creatorUser.audioAllowed ||
 					creatorUser.chatAllowed,
-				videoCall: creatorUser.videoAllowed || false,
-				audioCall: creatorUser.audioAllowed || false,
-				chat: creatorUser.chatAllowed || false,
+				videoCall: creatorUser.videoAllowed,
+				audioCall: creatorUser.audioAllowed,
+				chat: creatorUser.chatAllowed,
 			});
 		}
 	}, [creatorUser]);

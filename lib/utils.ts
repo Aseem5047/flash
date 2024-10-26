@@ -11,6 +11,7 @@ import { analytics } from "@/lib/firebase";
 import { trackEvent } from "./mixpanel";
 import GetRandomImage from "@/utils/GetRandomImage";
 import { Call } from "@stream-io/video-react-sdk";
+import { clientUser, creatorUser } from "@/types";
 
 const key_id = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
 const key_secret = process.env.NEXT_PUBLIC_RAZORPAY_SECRET;
@@ -271,11 +272,9 @@ export const resetBodyBackgroundColor = () => {
 
 // default profile images based on
 export const placeholderImages = {
-	male: "https://firebasestorage.googleapis.com/v0/b/flashcall-1d5e2.appspot.com/o/assets%2FM_preview.png?alt=media&token=87e5c8f2-4729-476d-9bcc-a169b7c56759",
-	female:
-		"https://firebasestorage.googleapis.com/v0/b/flashcall-1d5e2.appspot.com/o/assets%2FF_preview.png?alt=media&token=96191c53-ef0c-4562-9b66-61e07c1402c8",
-	other:
-		"https://firebasestorage.googleapis.com/v0/b/flashcall-1d5e2.appspot.com/o/assets%2FOthers_preview.png?alt=media&token=20c9d684-3e3d-40cb-a51c-4b0a0caacdbc",
+	male: "https://dxvnlnyzij172.cloudfront.net/users/M_preview.png",
+	female: "https://dxvnlnyzij172.cloudfront.net/users/F_preview.png",
+	other: "https://dxvnlnyzij172.cloudfront.net/users/Others_preview.png",
 };
 
 export const getProfileImagePlaceholder = (gender?: string): string => {
@@ -340,14 +339,14 @@ export const getDisplayName = (
 		return combinedName;
 	}
 
-	if (creator.username.startsWith("+91")) {
+	if (creator?.username?.startsWith("+91")) {
 		return creator.username.replace(
 			/(\+91)(\d+)/,
 			(match, p1, p2) => `${p1} ${p2.replace(/(\d{5})$/, "xxxxx")}`
 		);
 	}
 
-	return creator.username;
+	return creator?.username || "Flashcall User";
 };
 
 export const handleError = (error: unknown) => {
@@ -458,23 +457,29 @@ export const isValidImageUrl = async (url: string) => {
 	}
 };
 
-export const imageSrc = (creator: any) => {
+export const getImageSource = (creator: creatorUser | clientUser) => {
 	const isValidUrl = (url: string) => {
 		try {
 			new URL(url);
 			return true;
-		} catch {
+		} catch (error) {
+			// console.error(`Invalid URL provided: ${url}`, error);
 			return false;
 		}
 	};
 
-	if (creator.photo && isValidUrl(creator.photo)) {
+	if (creator?.photo && isValidUrl(creator.photo)) {
 		return creator.photo;
 	} else {
-		return (
-			getProfileImagePlaceholder(creator.gender) ??
-			"/images/defaultProfileImage.png"
-		);
+		const placeholder = getProfileImagePlaceholder(creator?.gender);
+		if (placeholder) {
+			return placeholder;
+		} else {
+			console.warn(
+				`No valid photo or placeholder found for creator: ${creator?.username}`
+			);
+			return "/images/defaultProfileImage.png";
+		}
 	}
 };
 
