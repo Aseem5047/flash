@@ -4,7 +4,6 @@ import { UserFeedback } from "@/types";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import SinglePostLoader from "../shared/SinglePostLoader";
 import CreatorFeedbackCheck from "../feedbacks/CreatorFeedbackCheck";
 import { Switch } from "../ui/switch";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
@@ -13,7 +12,7 @@ import * as Sentry from "@sentry/nextjs";
 import GetRandomImage from "@/utils/GetRandomImage";
 import { backendBaseUrl, isValidUrl } from "@/lib/utils";
 import axios from "axios";
-import { useInView } from "react-intersection-observer";
+import { InfiniteData } from "@tanstack/react-query";
 
 // Function to reorder the array based on the drag result
 const reorder = (
@@ -38,69 +37,91 @@ type ExtendedUserFeedback = UserFeedback & {
 	callId: string;
 };
 
-const CreatorCallsFeedbacks = () => {
+const CreatorCallsFeedbacks = ({
+	feedbackData,
+}: {
+	feedbackData: InfiniteData<any, unknown> | undefined;
+}) => {
 	const [feedbacks, setFeedbacks] = useState<ExtendedUserFeedback[]>([]);
-	const [callsCount, setCallsCount] = useState(10);
-	const [loading, setLoading] = useState(true);
 	const { creatorUser } = useCurrentUsersContext();
 	const [loadingFeedbackId, setLoadingFeedbackId] = useState<string | null>(
 		null
 	);
+	const [loading, isLoading] = useState(false);
 
 	const pathname = usePathname();
-	const { ref, inView } = useInView({
-		threshold: 0.1,
-		triggerOnce: false,
-	});
-	useEffect(() => {
-		if (inView) {
-			setCallsCount((prevCount) => prevCount + 6);
-		}
-	}, [inView]);
 
 	useEffect(() => {
 		const getFeedbacks = async () => {
 			try {
-				const response = await axios.get(
-					`${backendBaseUrl}/feedback/call/getFeedbacks?creatorId=${String(
-						creatorUser?._id
-					)}`
-				);
+				isLoading(true);
+				if (feedbackData) {
+					const allFeedbacks = feedbackData.pages.flatMap(
+						(page) => page.creatorFeedbacks
+					);
+					const feedbacksWithCallId =
+						allFeedbacks?.map((item: FeedbackParams, index: number) => ({
+							...item.feedback,
+							callId: item.callId ?? "", // Default to an empty string if undefined
+							position:
+								item.feedback.position !== -1
+									? item.feedback.position
+									: index + 1,
+						})) || [];
 
-				let data = await response.data;
-
-				const feedbacksWithCallId = data.map(
-					(item: FeedbackParams, index: number) => ({
-						...item.feedback,
-						callId: item.callId,
-						position:
-							item.feedback.position !== -1
-								? item.feedback.position
-								: index + 1,
-					})
-				);
-
-				setFeedbacks(feedbacksWithCallId);
+					setFeedbacks(feedbacksWithCallId);
+				}
 			} catch (error) {
 				Sentry.captureException(error);
 				console.warn(error);
 			} finally {
-				setLoading(false);
+				isLoading(false);
 			}
 		};
 		if (creatorUser) {
 			getFeedbacks();
 		}
-	}, [pathname]);
+	}, [feedbackData, creatorUser]);
 
 	const handleSwitchToggle = async (
 		feedback: ExtendedUserFeedback,
 		showFeedback: boolean,
 		index: number
 	) => {
-		setLoadingFeedbackId(feedback.callId); // Set loading state
+		setLoadingFeedbackId(feedback.callId);
+
+		// Calculate the new position based on `showFeedback`
+		const newPosition = (() => {
+			if (showFeedback) {
+				// Calculate position just after the last toggled-on feedback
+				const lastOnPosition = feedbacks
+					.filter((fb) => fb.showFeedback)
+					.reduce((maxPos, fb: any) => Math.max(maxPos, fb.position), 0);
+				return lastOnPosition + 1;
+			} else {
+				// Calculate position after all feedbacks
+				const maxPosition = feedbacks.reduce(
+					(maxPos, fb: any) => Math.max(maxPos, fb.position),
+					0
+				);
+				return maxPosition + 1;
+			}
+		})();
+
+		// Now update feedbacks in a separate state update
+		setFeedbacks((prevFeedbacks) => {
+			const updatedFeedbacks = [...prevFeedbacks];
+			updatedFeedbacks[index] = {
+				...updatedFeedbacks[index],
+				showFeedback,
+				position: newPosition,
+			};
+			// Sort based on updated positions
+			return updatedFeedbacks.sort((a: any, b: any) => a.position - b.position);
+		});
 
 		try {
+			// Use `newPosition` in the API calls
 			const response = await axios.post(
 				`${backendBaseUrl}/feedback/creator/setFeedback`,
 				{
@@ -110,7 +131,7 @@ const CreatorCallsFeedbacks = () => {
 					feedbackText: feedback.feedback,
 					showFeedback: showFeedback,
 					createdAt: feedback.createdAt,
-					position: feedback.position,
+					position: newPosition,
 				}
 			);
 
@@ -126,19 +147,13 @@ const CreatorCallsFeedbacks = () => {
 				feedbackText: feedback.feedback,
 				showFeedback: showFeedback,
 				createdAt: feedback.createdAt,
-				position: feedback.position,
+				position: newPosition,
 			});
-
-			setFeedbacks((prevFeedbacks) =>
-				prevFeedbacks.map((fb, i) =>
-					i === index ? { ...fb, showFeedback: showFeedback } : fb
-				)
-			);
 		} catch (error) {
 			Sentry.captureException(error);
 			console.error("Error updating feedback visibility:", error);
 		} finally {
-			setLoadingFeedbackId(null); // Reset loading state
+			setLoadingFeedbackId(null);
 		}
 	};
 
@@ -219,30 +234,28 @@ const CreatorCallsFeedbacks = () => {
 		}
 	};
 
-	if (loading) {
-		return (
-			<section className="w-full h-full flex items-center justify-center">
-				<SinglePostLoader />
-			</section>
-		);
-	}
-
-	const visibleFeedbacks = feedbacks.slice(0, callsCount);
-
 	return (
 		<>
-			{feedbacks && feedbacks.length > 0 ? (
+			{loading || !feedbacks ? (
+				<section className="size-full m-auto flex items-center justify-center">
+					<Image
+						src="/icons/loading-circle.svg"
+						alt="Loading..."
+						width={50}
+						height={50}
+						className="mx-auto invert my-5 mt-10 z-20"
+					/>
+				</section>
+			) : feedbacks && feedbacks.length > 0 ? (
 				<DragDropContext onDragEnd={onDragEnd}>
 					<Droppable droppableId="feedbacks">
 						{(provided) => (
 							<section
-								className={`grid grid-cols-1 ${
-									feedbacks.length > 0 && "xl:grid-cols-2"
-								} items-start gap-5 xl:gap-10 w-full h-fit text-black px-4 overflow-x-hidden no-scrollbar`}
+								className={`grid grid-cols-1 items-start gap-5 xl:gap-10 w-full h-fit text-black px-4 overflow-x-hidden no-scrollbar`}
 								ref={provided.innerRef}
 								{...provided.droppableProps}
 							>
-								{visibleFeedbacks.map((feedback, index) => (
+								{feedbacks.map((feedback, index) => (
 									<Draggable
 										key={feedback.callId}
 										draggableId={feedback.callId}
@@ -253,9 +266,7 @@ const CreatorCallsFeedbacks = () => {
 												ref={provided.innerRef}
 												{...provided.draggableProps}
 												{...provided.dragHandleProps}
-												className={`relative flex flex-col items-start justify-center gap-4 xl:max-w-[568px]  border  rounded-xl p-4 pl-10 shadow-lg  border-gray-300  ${
-													pathname.includes("/profile") && "mx-auto"
-												}`}
+												className={`relative flex flex-col items-start justify-center gap-4 border rounded-xl p-4 pl-10 shadow-lg  border-gray-300 bg-white`}
 											>
 												<Image
 													src="/icons/dragIndicator.svg"

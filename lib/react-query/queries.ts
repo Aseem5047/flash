@@ -1,9 +1,4 @@
-import {
-	useQuery,
-	useMutation,
-	useQueryClient,
-	useInfiniteQuery,
-} from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
 import { QUERY_KEYS } from "@/lib/react-query/queryKeys";
 import { getUsersPaginated } from "../actions/creator.actions";
@@ -86,6 +81,37 @@ export const useGetUserFavorites = (userId: string) => {
 };
 
 // ============================================================
+// CLIENTS QUERIES
+// ============================================================
+
+export const useGetClients = () => {
+	const limit = 10;
+	return useInfiniteQuery({
+		queryKey: [QUERY_KEYS.GET_CLIENTS],
+		queryFn: async ({ pageParam = 1 }) => {
+			const response = await axios.get(`${backendBaseUrl}/client/getAllUsers`, {
+				params: {
+					page: pageParam,
+					limit,
+				},
+			});
+
+			if (response.status === 200) {
+				return response.data;
+			} else {
+				throw new Error("Error fetching clients");
+			}
+		},
+		getNextPageParam: (lastPage, allPages) => {
+			const totalPages = Math.ceil(lastPage.totalUsers / limit);
+			const nextPage = allPages.length + 1;
+			return nextPage <= totalPages ? nextPage : null;
+		},
+		initialPageParam: 1,
+	});
+};
+
+// ============================================================
 // CREATOR QUERIES
 // ============================================================
 
@@ -93,14 +119,59 @@ export const useGetCreators = () => {
 	const limit = 10;
 	return useInfiniteQuery({
 		queryKey: [QUERY_KEYS.GET_CREATORS],
-		queryFn: ({ pageParam = 0 }) => getUsersPaginated(pageParam, limit),
-		getNextPageParam: (lastPage: any, allPages: any) => {
-			if (lastPage && lastPage.length === 0) {
-				return null;
+		queryFn: async ({ pageParam = 1 }) => {
+			const response = await axios.get(
+				`${backendBaseUrl}/creator/getUsersFiltered`,
+				{
+					params: {
+						page: pageParam,
+						limit,
+					},
+				}
+			);
+
+			if (response.status === 200) {
+				return response.data;
+			} else {
+				throw new Error("Error fetching clients");
 			}
-			return allPages.length * limit;
 		},
-		initialPageParam: 0,
+		getNextPageParam: (lastPage, allPages) => {
+			const totalPages = Math.ceil(lastPage.totalUsers / limit);
+			const nextPage = allPages.length + 1;
+			return nextPage <= totalPages ? nextPage : null;
+		},
+		initialPageParam: 1,
+	});
+};
+
+export const useGetBlockedClients = (userId: string) => {
+	const limit = 10;
+
+	return useInfiniteQuery({
+		queryKey: [QUERY_KEYS.GET_BLOCKED_CLIENTS, userId],
+		queryFn: async ({ pageParam = 1 }) => {
+			const response = await axios.get(
+				`${backendBaseUrl}/creator/${userId}/blocked`,
+				{
+					params: {
+						page: pageParam,
+						limit,
+					},
+				}
+			);
+
+			if (response.status === 200) {
+				return response.data;
+			} else {
+				throw new Error("Error fetching blocked clients");
+			}
+		},
+		getNextPageParam: (lastPage) => {
+			const totalPages = Math.ceil(lastPage.totalBlocked / limit);
+			return lastPage.page < totalPages ? lastPage.page + 1 : null;
+		},
+		initialPageParam: 1,
 	});
 };
 

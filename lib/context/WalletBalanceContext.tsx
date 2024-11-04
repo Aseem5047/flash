@@ -12,7 +12,8 @@ import { useCurrentUsersContext } from "./CurrentUsersContext";
 import * as Sentry from "@sentry/nextjs";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
-import { creatorUser } from "@/types";
+import axios from "axios";
+import { backendBaseUrl } from "../utils";
 
 interface WalletBalanceContextProps {
 	walletBalance: number;
@@ -50,13 +51,19 @@ export const WalletBalanceProvider = ({
 		if (currentUser?._id) {
 			try {
 				const response = isCreator
-					? await getCreatorById(currentUser._id)
-					: await getUserById(currentUser._id);
-				setWalletBalance(response.walletBalance ?? 0);
+					? await axios.get(
+							`${backendBaseUrl}/creator/getUser/${currentUser._id}`
+					  )
+					: await axios.get(
+							`${backendBaseUrl}/client/getUser/${currentUser._id}`
+					  );
+
+				const data = response.data;
+				setWalletBalance(data.walletBalance ?? NaN);
 			} catch (error) {
 				Sentry.captureException(error);
 				console.error("Error fetching current user:", error);
-				setWalletBalance(0);
+				setWalletBalance(NaN);
 			}
 		}
 	};
@@ -79,7 +86,6 @@ export const WalletBalanceProvider = ({
 				: currentUser._id;
 
 		if (!creatorId) {
-			console.warn("Creator ID not found");
 			return;
 		}
 

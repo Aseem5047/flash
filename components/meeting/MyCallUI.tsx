@@ -17,6 +17,7 @@ import {
 } from "@/lib/utils";
 import { useGetCallById } from "@/hooks/useGetCallById";
 import axios from "axios";
+import MyCallConnectingUI from "./MyCallConnectigUI";
 
 const MyCallUI = () => {
 	const router = useRouter();
@@ -29,7 +30,8 @@ const MyCallUI = () => {
 	const { call, isCallLoading } = useGetCallById(callId || "");
 	let hide = pathname.includes("/meeting") || pathname.includes("/feedback");
 	const [showCallUI, setShowCallUI] = useState(false);
-
+	const [connecting, setConnecting] = useState(false);
+	const [connectingCall, setConnectingCall] = useState<Call | null>(null);
 	const checkFirestoreSession = (userId: string) => {
 		const sessionDocRef = doc(db, "sessions", userId);
 		const unsubscribe = onSnapshot(sessionDocRef, (sessionDoc) => {
@@ -153,10 +155,16 @@ const MyCallUI = () => {
 			logEvent(analytics, "call_rejected", { callId: incomingCall.id });
 		};
 
+		const handleCallAccepted = async () => {
+			setShowCallUI(false);
+		};
+
+		incomingCall.on("call.accepted", handleCallAccepted);
 		incomingCall.on("call.ended", handleCallEnded);
 		incomingCall.on("call.rejected", () => handleCallRejected());
 
 		return () => {
+			incomingCall.off("call.accepted", handleCallAccepted);
 			incomingCall.off("call.ended", handleCallEnded);
 			incomingCall.off("call.rejected", () => handleCallRejected());
 		};
@@ -231,13 +239,10 @@ const MyCallUI = () => {
 
 		const handleCallAccepted = async () => {
 			setShowCallUI(false);
+			setConnecting(true);
+			setConnectingCall(outgoingCall);
 			clearTimeout(autoDeclineTimeout);
 			logEvent(analytics, "call_accepted", { callId: outgoingCall.id });
-			toast({
-				variant: "destructive",
-				title: `${"Call Accepted"}`,
-				description: `${"Redirecting ..."}`,
-			});
 			await updateExpertStatus(
 				outgoingCall.state.createdBy?.custom?.phone as string,
 				"Busy"
@@ -272,6 +277,8 @@ const MyCallUI = () => {
 			} else {
 				handleCallAccepted();
 			}
+
+			setConnecting(false);
 		};
 
 		const handleCallRejected = async () => {
@@ -376,6 +383,11 @@ const MyCallUI = () => {
 			setShowCallUI(true);
 		}
 	}, [incomingCalls, outgoingCalls]);
+
+	// Display loading UI when connecting
+	if (connecting) {
+		return <MyCallConnectingUI call={connectingCall} />;
+	}
 
 	// Display UI components based on call state
 	if (incomingCalls.length > 0 && showCallUI && !hide) {
