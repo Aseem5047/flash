@@ -53,7 +53,7 @@ const PreviousPage = () => {
 					{options.map((option) => (
 						<Button
 							key={option}
-							className={`text-sm font-medium px-4 py-2 rounded-lg border border-gray-300 transition-transform duration-300 hover:text-white hover:bg-green-1 hover:scale-105 ${
+							className={`text-sm font-medium px-4 py-2 rounded-lg border border-gray-300 hover:text-white hover:bg-green-1 hoverScaleDownEffect ${
 								historyType === option && "bg-green-1 text-white"
 							}`}
 							onClick={() => setHistoryType(option)}
@@ -68,7 +68,7 @@ const PreviousPage = () => {
 				{options.map((option) => (
 					<Button
 						key={option}
-						className={`text-sm font-medium px-4 py-2 rounded-lg border border-gray-300 transition-transform duration-300 hover:text-white hover:bg-green-1 hover:scale-105 ${
+						className={`text-sm font-medium px-[20px] py-[7px] rounded-3xl border border-gray-300 hoverScaleDownEffect hover:text-white hover:bg-green-1  ${
 							historyType === option && "bg-green-1 text-white"
 						}`}
 						onClick={() => setHistoryType(option)}
@@ -78,10 +78,21 @@ const PreviousPage = () => {
 				))}
 			</div>
 
-			{userType === "client" ? (
-				<CallListMobile callType={historyType} />
+			{currentUser ? (
+				userType === "client" ? (
+					<CallListMobile callType={historyType} />
+				) : (
+					<CallListMobileCreator callType={historyType} />
+				)
 			) : (
-				<CallListMobileCreator callType={historyType} />
+				<div className="flex flex-col w-full items-center justify-center h-full">
+					<h1 className="text-2xl font-semibold text-red-500">
+						No Calls Found
+					</h1>
+					<h2 className="text-xl font-semibold text-red-500">
+						Please sign in to continue.
+					</h2>
+				</div>
 			)}
 		</section>
 	);

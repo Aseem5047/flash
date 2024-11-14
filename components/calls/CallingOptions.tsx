@@ -319,7 +319,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 				Walletbalance_Available: clientUser?.walletBalance,
 			});
 
-			await call.create({
+			await call.getOrCreate({
 				members_limit: 2,
 				ring: true,
 				data: {
@@ -330,6 +330,8 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 					},
 				},
 			});
+
+			localStorage.removeItem("hasVisitedFeedbackPage");
 
 			trackCallEvents(callType, clientUser, creator);
 
@@ -574,7 +576,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 							{service.label}
 						</div>
 						<p
-							className={`font-medium tracking-widest rounded-[18px] px-4 h-[36px] text-black flex items-center justify-center ${
+							className={`font-medium tracking-widest rounded-[18px] w-[100px] h-[36px] text-[15px] text-black flex items-center justify-center ${
 								(isProcessing ||
 									!service.enabled ||
 									onlineStatus === "Busy" ||
@@ -588,7 +590,7 @@ const CallingOptions = ({ creator }: CallingOptions) => {
 										: themeColor,
 							}}
 						>
-							Rs.<span className="ml-1">{service.rate}</span>/min
+							Rs.<span>{service.rate}</span>/min
 						</p>
 					</button>
 				))}

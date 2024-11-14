@@ -36,6 +36,7 @@ const Sidebar = () => {
 
 	return (
 		<section
+			id="sidebar"
 			className={`sticky left-0 top-[76px] flex h-screen flex-col justify-between p-6  max-md:hidden lg:w-[264px] shadow-md ${
 				isExpertPath && "border-r border-white/20"
 			}`}
@@ -108,7 +109,7 @@ const Sidebar = () => {
 								alt="Profile"
 								width={1000}
 								height={1000}
-								className="rounded-full w-11 h-11 object-cover"
+								className="rounded-full w-11 h-11 object-cover bg-white"
 							/>
 							<div className="flex flex-col items-start justify-center max-lg:hidden ">
 								<span

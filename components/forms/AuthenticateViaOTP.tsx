@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import OTPVerification from "./OTPVerification";
 import jwt from "jsonwebtoken";
@@ -61,7 +61,7 @@ const AuthenticateViaOTP = ({
 	const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
 	const [verificationSuccess, setVerificationSuccess] = useState(false);
 
-	const [firstLogin, setFirstLogin] = useState(false);
+	const firstLoginRef = useRef(false);
 	const [error, setError] = useState({});
 	const { toast } = useToast();
 	const { getDevicePlatform } = usePlatform();
@@ -159,7 +159,7 @@ const AuthenticateViaOTP = ({
 			const user = decodedToken.user || {};
 			let resolvedUserType = userType;
 
-			if (user._id) {
+			if (user._id || !user.error) {
 				// Existing user found
 				resolvedUserType = user.userType || "client";
 				console.log("current usertype: ", resolvedUserType);
@@ -180,7 +180,7 @@ const AuthenticateViaOTP = ({
 			} else {
 				// No user found, proceed as new user
 				console.log("No user found. Proceeding as a new user.");
-				setFirstLogin(true);
+				firstLoginRef.current = true;
 				let newUser: CreateCreatorParams | CreateUserParams;
 
 				const formattedPhone = phoneNumber.startsWith("+91")
@@ -251,15 +251,11 @@ const AuthenticateViaOTP = ({
 			if (resolvedUserType === "client") {
 				localStorage.setItem("userType", resolvedUserType);
 				router.replace(creatorURL ? creatorURL : "/home");
-				setTimeout(() => {
-					refreshCurrentUser();
-				}, 1000);
+				refreshCurrentUser();
 			} else if (resolvedUserType === "creator") {
 				localStorage.setItem("userType", resolvedUserType);
-				router.replace(firstLogin ? "/updateDetails" : "/home");
-				setTimeout(() => {
-					refreshCurrentUser();
-				}, 1000);
+				router.replace(firstLoginRef.current ? "/updateDetails" : "/home");
+				refreshCurrentUser();
 			}
 		} catch (error: any) {
 			console.error("Error verifying OTP:", error);
@@ -297,7 +293,7 @@ const AuthenticateViaOTP = ({
 	};
 
 	return (
-		<section className="relative bg-[#F8F8F8] rounded-t-3xl sm:rounded-xl flex flex-col items-center justify-start gap-4 px-8 pt-4 shadow-lg w-screen h-fit sm:w-full sm:min-w-[24rem] sm:max-w-sm mx-auto">
+		<section className="relative bg-[#F8F8F8] rounded-t-3xl sm:rounded-xl flex flex-col items-center justify-start gap-4 px-8 pt-2 shadow-lg w-screen h-fit sm:w-full sm:min-w-[24rem] sm:max-w-sm mx-auto">
 			{!showOTP && !verificationSuccess ? (
 				// SignUp form
 				<>
@@ -307,11 +303,7 @@ const AuthenticateViaOTP = ({
 							width={1000}
 							height={1000}
 							alt="flashcall logo"
-							className={`${
-								pathname.includes("/authenticate") && isMobileView
-									? "hidden"
-									: "flex items-center justify-center w-40 h-16 -ml-2"
-							} `}
+							className={`flex items-center justify-center w-40 h-16 -ml-2 `}
 						/>
 
 						<h2 className="text-black text-lg font-semibold">
@@ -367,7 +359,7 @@ const AuthenticateViaOTP = ({
 												</div>
 											</FormControl>
 										</div>
-										<FormMessage />
+										<FormMessage className="text-center" />
 									</FormItem>
 								)}
 							/>

@@ -58,14 +58,14 @@ const ProfileDialog = ({
 						width={1000}
 						height={1000}
 						alt="avatar"
-						className="w-32 h-32 rounded-full object-cover"
+						className="bg-white w-32 h-32 rounded-full object-cover"
 					/>
 					<span className="absolute z-20 bottom-2 right-0 bg-black/50 rounded-full p-2 flex items-center justify-center">
 						{editIcons}
 					</span>
 				</div>
 			</DialogTrigger>
-			<DialogContent className="bg-white border-none w-full md:max-w-md">
+			<DialogContent className="bg-white border-none w-full max-w-[95%] md:max-w-md rounded-md">
 				{!isLoading ? (
 					<>
 						<FileUploaderHome

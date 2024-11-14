@@ -120,21 +120,26 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	const handleSignout = async () => {
 		localStorage.removeItem("currentUserID");
 		localStorage.removeItem("authToken");
-		const creatorURL = localStorage.getItem("creatorURL");
 
 		// Clear user data and local storage
 		await axios.post(`${backendBaseUrl}/user/endSession`);
 
-		if (pathname === "/home") {
-			localStorage.removeItem("creatorURL");
-		}
-
 		setClientUser(null);
 		setCreatorUser(null);
 
-		creatorURL
-			? router.replace(`${frontendBaseUrl}/${creatorURL}`)
-			: router.replace("/home");
+		// Redirect logic
+		// if (
+		// 	pathname !== "/" &&
+		// 	pathname !== "/home" &&
+		// 	!pathname.includes("/authenticate") &&
+		// 	pathname !== "support" &&
+		// 	pathname !== creatorURL
+		// ) {
+		// 	localStorage.removeItem("creatorURL");
+		// 	setCreatorURL("");
+		// 	router.replace("/home");
+		// 	return;
+		// }
 	};
 
 	// Function to fetch the current user
@@ -212,7 +217,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 				});
 			}, 1000);
 		}
-	}, [router, userType]);
+	}, [router, userType, currentUser]);
 
 	// real-time session monitoring
 	useEffect(() => {
