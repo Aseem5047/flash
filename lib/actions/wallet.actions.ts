@@ -69,7 +69,8 @@ export async function addMoney({
 			if (referrer) {
 				const referralBonus = Math.round((5 / 100) * numericAmount);
 				if (referralBonus > 0) {
-					referrer.walletBalance = Number(referrer.walletBalance) + referralBonus;
+					referrer.walletBalance =
+						Number(referrer.walletBalance) + referralBonus;
 					await referrer.save();
 					await Wallet.findOneAndUpdate(
 						{ userId: referrer._id, userType: "Creator" },

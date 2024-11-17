@@ -19,6 +19,7 @@ import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { Cursor, Typewriter } from "react-simple-typewriter";
 import ContentLoading from "@/components/shared/ContentLoading";
 import { trackEvent } from "@/lib/mixpanel";
+import { backendBaseIconUrl, backendBaseUrl } from "@/lib/utils";
 
 const Recharge: React.FC = () => {
 	const { updateWalletBalance } = useWalletBalanceContext();
@@ -107,8 +108,8 @@ const Recharge: React.FC = () => {
 				rechargeAmount,
 				currency,
 				name: "FlashCall.me",
-				description: "Test Transaction",
-				image: "https://example.com/your_logo",
+				description: "Wallet Recharge",
+				image: `${backendBaseIconUrl}/logo_icon.png`,
 				order_id: order.id,
 				handler: async (response: PaymentResponse): Promise<void> => {
 					const body: PaymentResponse = { ...response };
@@ -146,12 +147,13 @@ const Recharge: React.FC = () => {
 						const userId = currentUser?._id as string; // Replace with actual user ID
 						const userType = "Client"; // Replace with actual user type
 
-						await fetch("/api/v1/wallet/addMoney", {
+						await fetch(`${backendBaseUrl}/api/v1/wallet/addMoney`, {
 							method: "POST",
 							body: JSON.stringify({
 								userId,
 								userType,
 								amount: parseFloat(amountInt!.toFixed(2)),
+								category: "Recharge",
 							}),
 							headers: { "Content-Type": "application/json" },
 						});
@@ -221,6 +223,8 @@ const Recharge: React.FC = () => {
 		}
 	};
 
+	const creatorURL = localStorage.getItem("creatorURL");
+
 	return (
 		<>
 			{loading ? (
@@ -246,14 +250,30 @@ const Recharge: React.FC = () => {
 
 					{/* Payment Information */}
 					<section className="w-full py-5 sticky">
-						<div className="flex items-center gap-2 mb-2">
-							<Link href="/payment" className="text-xl font-bold">
-								&larr;
+						<section className="flex items-center gap-2 mb-2">
+							<Link
+								href={`${creatorURL ? creatorURL : "/home"}`}
+								className="text-xl font-bold hoverScaleDownEffect"
+							>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									viewBox="0 0 24 24"
+									strokeWidth={1.5}
+									stroke="currentColor"
+									className="size-6"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										d="M15.75 19.5 8.25 12l7.5-7.5"
+									/>
+								</svg>
 							</Link>
-							<span className="text-lg font-bold text-black">
-								Payment Information
-							</span>
-						</div>
+							<h1 className="text-xl md:text-3xl font-bold">
+								Payment Information{" "}
+							</h1>
+						</section>
 						{/* Payment Details */}
 						<div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
 							<h2 className="text-sm text-gray-500 mb-4">Payment Details</h2>
@@ -288,7 +308,11 @@ const Recharge: React.FC = () => {
 									<button
 										key={app.name}
 										onClick={() => setMethod(app.name.toLowerCase())}
-										className={`flex flex-col items-center bg-white dark:bg-gray-700 p-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600 ${method === app.name.toLowerCase() ? "bg-gray-300 dark:bg-gray-600 !important" : ""}`}
+										className={`flex flex-col items-center bg-white dark:bg-gray-700 p-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600 ${
+											method === app.name.toLowerCase()
+												? "bg-gray-300 dark:bg-gray-600 !important"
+												: ""
+										}`}
 									>
 										<Image
 											src={app.icon}

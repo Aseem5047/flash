@@ -100,6 +100,7 @@ const Payment: React.FC<PaymentProps> = ({ callType }) => {
 
 	// 1. Define your form.
 	const form = useForm<z.infer<typeof enterAmountSchema>>({
+		mode: "onChange",
 		resolver: zodResolver(enterAmountSchema),
 		defaultValues: {
 			rechargeAmount: "",
@@ -158,7 +159,7 @@ const Payment: React.FC<PaymentProps> = ({ callType }) => {
 						/>
 					</svg>
 				</Link>
-				<h1 className="text-3xl font-bold">User Wallet</h1>
+				<h1 className="text-xl md:text-3xl font-bold">User Wallet</h1>
 			</section>
 
 			{/* Balance Section */}
@@ -188,7 +189,7 @@ const Payment: React.FC<PaymentProps> = ({ callType }) => {
 			<section className="flex flex-col gap-5 items-start justify-center shadow border border-gray-100 p-5">
 				<h2 className="w-fit text-gray-500 font-normal leading-5">Add Money</h2>
 				<Form {...form}>
-					<form className="w-full flex items-center justify-center text-center text-green-1">
+					<form className="w-full flex items-center justify-center text-center text-3xl leading-7 font-bold text-green-1">
 						<span className="text-3xl">₹</span>
 
 						<FormField

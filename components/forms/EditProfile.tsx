@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
-import DatePicker from "react-datepicker";
 import {
 	Popover,
 	PopoverContent,
@@ -30,7 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { UpdateCreatorParams, UpdateUserParams } from "@/types";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
 	UpdateProfileFormSchema,
 	UpdateProfileFormSchemaClient,
@@ -42,7 +41,13 @@ import { updateCreatorUser } from "@/lib/actions/creator.actions";
 import { updateUser } from "@/lib/actions/client.actions";
 import { usePathname } from "next/navigation";
 import axios from "axios";
-import { backendBaseUrl, cn, debounce, placeholderImages } from "@/lib/utils";
+import {
+	backendBaseUrl,
+	cn,
+	debounce,
+	getProfileImagePlaceholder,
+	placeholderImages,
+} from "@/lib/utils";
 import * as Sentry from "@sentry/nextjs";
 import Image from "next/image";
 import GetRandomImage from "@/utils/GetRandomImage";
@@ -135,7 +140,6 @@ const EditProfile = ({
 
 	const [selectedProfession, setSelectedProfession] = useState("");
 	const [dialogOpen, setDialogOpen] = useState(false);
-	const bottomRef = useRef(null);
 
 	const [customProfession, setCustomProfession] = useState("");
 
@@ -440,7 +444,37 @@ const EditProfile = ({
 
 	return (
 		<Form {...form}>
-			<span className="text-2xl font-semibold">Edit User Details</span>
+			<section
+				className={`sticky top-0 md:top-[76px] bg-white z-30 p-4 flex flex-col items-start justify-start gap-4 w-full h-fit`}
+			>
+				<section className="flex items-center gap-4">
+					{pathname.includes("/profile") && (
+						<section
+							onClick={() => {
+								form.reset();
+								setEditData && setEditData((prev) => !prev);
+							}}
+							className="text-xl font-bold hoverScaleDownEffect cursor-pointer"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								fill="none"
+								viewBox="0 0 24 24"
+								strokeWidth={1.5}
+								stroke="currentColor"
+								className="size-6"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M15.75 19.5 8.25 12l7.5-7.5"
+								/>
+							</svg>
+						</section>
+					)}
+					<h1 className="text-xl md:text-3xl font-bold">Edit User Details</h1>
+				</section>
+			</section>
 
 			<form
 				onSubmit={form.handleSubmit(onSubmit)}
@@ -450,20 +484,26 @@ const EditProfile = ({
 				<FormField
 					control={form.control}
 					name="photo"
-					render={({ field }) => (
-						<FormItem className="w-full">
-							<FormControl>
-								<FileUploader
-									fieldChange={field.onChange}
-									mediaUrl={userData?.photo as string}
-									onFileSelect={setSelectedFile}
-								/>
-							</FormControl>
-							<FormMessage className="error-message">
-								{errors.photo?.message}
-							</FormMessage>
-						</FormItem>
-					)}
+					render={({ field }) => {
+						const gender = userData?.gender;
+						const mediaUrl =
+							userData?.photo || getProfileImagePlaceholder(gender);
+
+						return (
+							<FormItem className="w-full">
+								<FormControl>
+									<FileUploader
+										fieldChange={field.onChange}
+										mediaUrl={mediaUrl}
+										onFileSelect={setSelectedFile}
+									/>
+								</FormControl>
+								<FormMessage className="error-message">
+									{errors.photo?.message}
+								</FormMessage>
+							</FormItem>
+						);
+					}}
 				/>
 
 				{/* username */}
@@ -519,13 +559,15 @@ const EditProfile = ({
 							render={({ field }) => (
 								<FormItem className="flex-1">
 									<FormLabel className="font-medium text-sm text-gray-400 ml-1">
-										{field.name.charAt(0).toUpperCase() + field.name.slice(1)}
+										{field.name
+											.replace(/([a-z])([A-Z])/g, "$1 $2")
+											.replace(/^\w/, (c) => c.toUpperCase())}
 									</FormLabel>
 									<FormControl>
 										<Input
-											placeholder={`Enter ${
-												field.name.charAt(0).toUpperCase() + field.name.slice(1)
-											}`}
+											placeholder={`Enter ${field.name
+												.replace(/([a-z])([A-Z])/g, "$1 $2")
+												.replace(/^\w/, (c) => c.toUpperCase())}`}
 											{...field}
 											className="input-field"
 										/>
@@ -619,6 +661,12 @@ const EditProfile = ({
 													<div className="flex justify-center w-full">
 														<ContentLoading />
 													</div>
+												) : !loadingProfessions &&
+												  professions &&
+												  professions.length === 0 ? (
+													<p className="size-full flex items-center justify-center text-xl font-semibold text-center text-gray-500">
+														Error fetching the list
+													</p>
 												) : (
 													<div className="size-full mt-4 grid grid-cols-3 items-center gap-5 md:gap-2.5">
 														{professions?.map((profession: any) => (
@@ -829,6 +877,7 @@ const EditProfile = ({
 													"input-field text-left font-normal w-full",
 													!field.value && "text-muted-foreground"
 												)}
+												style={{ paddingBottom: "0px !important" }}
 											>
 												{field.value ? (
 													format(new Date(field.value), "PPP") // Format the stored string value back to a readable format
@@ -1022,11 +1071,11 @@ const EditProfile = ({
 				<section
 					className={`${
 						isChanged && isValid && !formError && !usernameError
-							? "grid-cols-2 w-full"
+							? "grid-cols-1 w-full"
 							: "grid-cols-1 w-3/4 lg:w-1/2"
 					} sticky bottom-2 right-0 grid  gap-4 items-center justify-center `}
 				>
-					{closeButton && (
+					{/* {closeButton && (
 						<Button
 							className="text-base rounded-lg border border-gray-300  hoverScaleDownEffect bg-gray-400 text-white"
 							onClick={() => {
@@ -1036,7 +1085,7 @@ const EditProfile = ({
 						>
 							Close
 						</Button>
-					)}
+					)} */}
 					{isChanged && isValid && !formError && !usernameError && (
 						<Button
 							className="text-base bg-green-1 hoverScaleDownEffect w-full mx-auto text-white"

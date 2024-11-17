@@ -138,7 +138,7 @@ export type UpdateCreatorParams = {
 	dob?: string;
 	bio?: string;
 	kycStatus?: string;
-	paymentSettingsStatus?: string; 
+	paymentSettingsStatus?: string;
 	walletBalance?: number;
 	referralId?: string;
 	referredBy?: string;
@@ -393,6 +393,8 @@ export type WalletParams = {
 	amount: number;
 	method?: string;
 	flag?: any;
+	category?: string;
+	callType?: string;
 };
 
 // Call Transactions

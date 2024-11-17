@@ -99,6 +99,7 @@ const useChatRequest = (onChatRequestUpdate?: any) => {
 		console.log("Trying to set the callID");
 		const callId = crypto.randomUUID();
 		console.log("CallId: ", callId);
+		localStorage.setItem("CallId", callId);
 
 		setSheetOpen(true);
 
@@ -265,6 +266,7 @@ const useChatRequest = (onChatRequestUpdate?: any) => {
 			if (!existingChatDoc.exists()) {
 				await setDoc(doc(db, "chats", chatId), {
 					callId: chatRequest.callId,
+					chatId: chatRequest.chatId,
 					clientId: chatRequest.clientId,
 					clientName: chatRequest.clientName,
 					clientPhone: response.phone,
@@ -310,6 +312,7 @@ const useChatRequest = (onChatRequestUpdate?: any) => {
 					callId: chatRequest.callId,
 					clientName: chatRequest.clientName,
 					maxChatDuration,
+					chatId: chatRequest.chatId,
 					clientBalance: response.walletBalance,
 					timerSet: false,
 				});
@@ -358,6 +361,7 @@ const useChatRequest = (onChatRequestUpdate?: any) => {
 			});
 
 			updateExpertStatus(currentUser?.phone as string, "Busy");
+			localStorage.setItem("CallId", chatRequest.callId);
 
 			router.replace(
 				`/chat/${chatRequest.chatId}?creatorId=${chatRequest.creatorId}&clientId=${chatRequest.clientId}`

@@ -366,6 +366,8 @@ const ChatInterface: React.FC = () => {
 		};
 	}, []);
 
+	// console.log(tipReceived);
+
 	return (
 		<div className={`flex flex-col h-screen justify-between w-screen bg-cover bg-center overflow-y-auto scrollbar-hide`} style={{ backgroundImage: 'url(/back.png)' }} >
 			<div className="fixed top-0 left-0 w-full flex justify-between items-center px-4 py-[2px] bg-gray-500 z-30">

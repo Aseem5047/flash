@@ -18,6 +18,9 @@ import { success } from "@/constants/icons";
 import ContentLoading from "../shared/ContentLoading";
 import { useChatTimerContext } from "@/lib/context/ChatTimerContext";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
+import { doc, getDoc, increment, setDoc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { backendBaseUrl } from "@/lib/utils";
 
 const TipModal = ({
 	walletBalance,
@@ -41,6 +44,8 @@ const TipModal = ({
 	const { toast } = useToast();
 	const { currentUser } = useCurrentUsersContext();
 	const { totalTimeUtilized, hasLowBalance } = useChatTimerContext();
+
+	const callId = localStorage.getItem("CallId");
 
 	useEffect(() => {
 		const storedCreator = localStorage.getItem("currentCreator");
@@ -84,7 +89,7 @@ const TipModal = ({
 			try {
 				setLoading(true);
 				await Promise.all([
-					fetch("/api/v1/wallet/payout", {
+					fetch(`${backendBaseUrl}/api/v1/payout/addMoney`, {
 						method: "POST",
 						body: JSON.stringify({
 							userId: clientId,
@@ -94,7 +99,7 @@ const TipModal = ({
 						}),
 						headers: { "Content-Type": "application/json" },
 					}),
-					fetch("/api/v1/wallet/addMoney", {
+					fetch(`${backendBaseUrl}/api/v1/wallet/addMoney`, {
 						method: "POST",
 						body: JSON.stringify({
 							userId: creatorId,
@@ -105,6 +110,29 @@ const TipModal = ({
 						headers: { "Content-Type": "application/json" },
 					}),
 				]);
+
+				// Firestore tip document update
+				const tipRef = doc(db, "userTips", creatorId as string);
+				const tipDoc = await getDoc(tipRef);
+
+				if (tipDoc.exists()) {
+					console.log("exists");
+					// If callId exists, increment amount; otherwise, add it
+					await updateDoc(tipRef, {
+						[`${callId}.totalAmount`]: increment(parseInt(tipAmount)),
+						[`${callId}.amount`]: parseInt(tipAmount),
+					});
+				} else {
+					console.log("not exists");
+					// Create document if it doesn't exist with initial callId and amount
+					await setDoc(tipRef, {
+						[callId as string]: {
+							amount: parseInt(tipAmount),
+							totalAmount: parseInt(tipAmount),
+						},
+					});
+				}
+
 				setWalletBalance((prev) => prev + parseInt(tipAmount));
 				setTipPaid(true);
 			} catch (error) {
@@ -142,6 +170,8 @@ const TipModal = ({
 			setErrorMessage("");
 		}
 	};
+
+	console.log("call: ", callId);
 
 	return (
 		<section>
