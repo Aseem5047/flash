@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { format } from "date-fns";
 
 import Razorpay from "razorpay";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
@@ -35,7 +36,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export const frontendBaseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 export const backendBaseUrl = process.env.NEXT_PUBLIC_BASE_URL_BACKEND;
-export const backendBaseIconUrl = `{process.env.NEXT_PUBLIC_BASE_URL_BACKEND_ICON}/icons`
+export const backendBaseIconUrl = `{process.env.NEXT_PUBLIC_BASE_URL_BACKEND_ICON}/icons`;
 // export const backendBaseUrl = "https://backend.flashcall.me/api/v1";
 
 // Function to handle interrupted calls and update the user's status
@@ -244,10 +245,12 @@ export const updateFirestoreCallServices = async (
 			if (creatorStatusDoc.exists()) {
 				await updateDoc(creatorStatusDocRef, {
 					status: status ? status : isOnline ? "Online" : "Offline",
+					loginStatus: isOnline ? true : false,
 				});
 			} else {
 				await setDoc(creatorStatusDocRef, {
 					status: status ? status : isOnline ? "Online" : "Offline",
+					loginStatus: isOnline ? true : false,
 				});
 			}
 		} catch (error) {
@@ -387,47 +390,15 @@ export const handleError = (error: unknown) => {
 };
 
 export const formatDateTime = (dateString: Date) => {
-	const dateTimeOptions: Intl.DateTimeFormatOptions = {
-		weekday: "short", // abbreviated weekday name (e.g., 'Mon')
-		month: "short", // abbreviated month name (e.g., 'Oct')
-		day: "numeric", // numeric day of the month (e.g., '25')
-		hour: "numeric", // numeric hour (e.g., '8')
-		minute: "numeric", // numeric minute (e.g., '30')
-		hour12: true, // use 12-hour clock (true) or 24-hour clock (false)
-	};
-
-	const dateOptions: Intl.DateTimeFormatOptions = {
-		weekday: "short", // abbreviated weekday name (e.g., 'Mon')
-		month: "short", // abbreviated month name (e.g., 'Oct')
-		year: "numeric", // numeric year (e.g., '2023')
-		day: "numeric", // numeric day of the month (e.g., '25')
-	};
-
-	const timeOptions: Intl.DateTimeFormatOptions = {
-		hour: "numeric", // numeric hour (e.g., '8')
-		minute: "numeric", // numeric minute (e.g., '30')
-		hour12: true, // use 12-hour clock (true) or 24-hour clock (false)
-	};
-
-	const formattedDateTime: string = new Date(dateString).toLocaleString(
-		"en-US",
-		dateTimeOptions
-	);
-
-	const formattedDate: string = new Date(dateString).toLocaleString(
-		"en-US",
-		dateOptions
-	);
-
-	const formattedTime: string = new Date(dateString).toLocaleString(
-		"en-US",
-		timeOptions
-	);
+	const date = new Date(dateString);
+	if (isNaN(date.getTime())) {
+		throw new Error("Invalid Date");
+	}
 
 	return {
-		dateTime: formattedDateTime,
-		dateOnly: formattedDate,
-		timeOnly: formattedTime,
+		dateTime: format(date, "EEE, MMM d, h:mm a"), // e.g., "Mon, Oct 25, 2023 8:30 AM"
+		dateOnly: format(date, "EEE, MMM d, yyyy"), // e.g., "Mon, Oct 25, 2023"
+		timeOnly: format(date, "h:mm a"), // e.g., "8:30 AM"
 	};
 };
 
@@ -592,7 +563,7 @@ export const updateFirestoreSessions = async (
 // Function to update expert's status
 export const updateExpertStatus = async (phone: string, status: string) => {
 	try {
-		const response = await fetch("/api/set-status", {
+		const response = await fetch(`${backendBaseUrl}/user/setStatus`, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",

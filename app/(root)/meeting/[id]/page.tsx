@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+	Call,
 	StreamCall,
 	StreamTheme,
 	useCallStateHooks,
@@ -18,6 +19,7 @@ import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import {
 	backendBaseUrl,
 	getDarkHexCode,
+	handleInterruptedCall,
 	stopMediaStreams,
 	updateExpertStatus,
 	updateFirestoreSessions,
@@ -103,8 +105,11 @@ const MeetingRoomWrapper = ({ toast, router, call }: any) => {
 const CallEnded = ({ toast, router, call }: any) => {
 	const [loading, setLoading] = useState(false);
 	const transactionHandled = useRef(false);
-	const { currentUser, currentTheme } = useCurrentUsersContext();
+	const { currentUser, currentTheme, userType } = useCurrentUsersContext();
 	const isMeetingOwner = currentUser?._id === call?.state?.createdBy?.id;
+	const expertPhone = call.state?.members?.find(
+		(member: any) => member.custom.type === "expert"
+	)?.custom?.phone;
 
 	useEffect(() => {
 		const handleCallEnd = async () => {
@@ -112,13 +117,27 @@ const CallEnded = ({ toast, router, call }: any) => {
 			transactionHandled.current = true;
 			try {
 				setLoading(true);
+
+				if (userType === "client") {
+					await updateExpertStatus(currentUser?.phone as string, "Idle");
+				}
+
+				await updateExpertStatus(expertPhone, "Online");
+
 				await updateFirestoreSessions(call?.state?.createdBy?.id as string, {
 					status: "payment pending",
 				});
-				await updateExpertStatus(
-					call.state.createdBy?.custom?.phone as string,
-					"Payment Pending"
-				);
+
+				// await handleInterruptedCall(
+				// 	currentUser?._id as string,
+				// 	call.id,
+				// 	call as Call,
+				// 	currentUser?.phone as string,
+				// 	userType as "client" | "expert",
+				// 	backendBaseUrl as string,
+				// 	expertPhone,
+				// 	currentUser?.phone as string
+				// );
 
 				const creatorURL = localStorage.getItem("creatorURL");
 				const hasVisitedFeedbackPage = localStorage.getItem(

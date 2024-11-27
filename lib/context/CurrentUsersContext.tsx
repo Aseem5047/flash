@@ -12,7 +12,7 @@ import {
 import { clientUser, creatorUser } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
 import axios from "axios";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { usePathname, useRouter } from "next/navigation";
 import * as Sentry from "@sentry/nextjs";
@@ -35,6 +35,8 @@ interface CurrentUsersContextValue {
 	fetchingUser: boolean;
 	creatorURL: string;
 	updateCreatorURL: (url: any) => void;
+	ongoingCallStatus: string;
+	setOngoingCallStatus: any;
 }
 
 // Create the context with a default value of null
@@ -66,8 +68,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	const [userType, setUserType] = useState<string | null>(null);
 	const [authToken, setAuthToken] = useState<string | null>(null);
 	const [creatorURL, setCreatorURL] = useState("");
-	const pathname = usePathname();
-
+	const [ongoingCallStatus, setOngoingCallStatus] = useState("");
 	const { toast } = useToast();
 	const router = useRouter();
 
@@ -82,6 +83,32 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		setCreatorURL(url);
 		localStorage.setItem("creatorURL", url);
 	};
+
+	const checkFirestoreSession = (userId: string) => {
+		const sessionDocRef = doc(db, "sessions", userId);
+		const unsubscribe = onSnapshot(sessionDocRef, (sessionDoc) => {
+			if (sessionDoc.exists()) {
+				const { ongoingCall } = sessionDoc.data();
+
+				if (ongoingCall && ongoingCall.status) {
+					setOngoingCallStatus(ongoingCall.status);
+				}
+			}
+		});
+
+		return unsubscribe;
+	};
+
+	useEffect(() => {
+		if (clientUser?._id) {
+			const unsubscribe = checkFirestoreSession(clientUser._id);
+			return () => {
+				unsubscribe();
+			};
+		}
+	}, [clientUser?._id]);
+
+	console.log(ongoingCallStatus);
 
 	useEffect(() => {
 		// Initialize the creatorURL from localStorage on component mount
@@ -118,28 +145,28 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 
 	// Function to handle user signout
 	const handleSignout = async () => {
+		if (!currentUser) return;
 		localStorage.removeItem("currentUserID");
 		localStorage.removeItem("authToken");
-
+		const creatorStatusDocRef = doc(
+			db,
+			"userStatus",
+			currentUser?.phone as string
+		);
+		const creatorStatusDoc = await getDoc(creatorStatusDocRef);
+		if (creatorStatusDoc.exists()) {
+			await updateDoc(creatorStatusDocRef, {
+				status: "Offline",
+				loginStatus: false,
+			});
+		}
 		// Clear user data and local storage
 		await axios.post(`${backendBaseUrl}/user/endSession`);
 
+		localStorage.setItem("userType", "client");
+
 		setClientUser(null);
 		setCreatorUser(null);
-
-		// Redirect logic
-		// if (
-		// 	pathname !== "/" &&
-		// 	pathname !== "/home" &&
-		// 	!pathname.includes("/authenticate") &&
-		// 	pathname !== "support" &&
-		// 	pathname !== creatorURL
-		// ) {
-		// 	localStorage.removeItem("creatorURL");
-		// 	setCreatorURL("");
-		// 	router.replace("/home");
-		// 	return;
-		// }
 	};
 
 	// Function to fetch the current user
@@ -279,6 +306,8 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 				fetchingUser,
 				creatorURL,
 				updateCreatorURL,
+				ongoingCallStatus,
+				setOngoingCallStatus,
 			}}
 		>
 			{children}

@@ -87,7 +87,6 @@ const EditProfile = ({
 	const [loading, setLoading] = useState(false);
 	const [usernameError, setUsernameError] = useState<string | null>(null);
 	const [formError, setFormError] = useState<string | null>(null);
-	const [loadingProfessions, setLoadingProfessions] = useState(true);
 	const [loadingThemes, setLoadingThemes] = useState(true);
 	const [selectedColor, setSelectedColor] = useState(
 		userData.themeSelected ?? "#88D8C0"
@@ -137,6 +136,7 @@ const EditProfile = ({
 	const [predefinedColors, setPredefinedColors] = useState([]);
 	const [professions, setProfessions] = useState([]);
 	const [errorMessage, setErrorMessage] = useState("");
+	const [loadingProfessions, setLoadingProfessions] = useState(true);
 
 	const [selectedProfession, setSelectedProfession] = useState("");
 	const [dialogOpen, setDialogOpen] = useState(false);
@@ -274,7 +274,7 @@ const EditProfile = ({
 	const checkUsernameAvailability = async (username: string) => {
 		try {
 			const response = await axios.get(
-				`/api/v1/user/getAllUsernames?username=${username}`
+				`${backendBaseUrl}/user/getAllUsernames?username=${username}`
 			);
 
 			// Check the response status directly
@@ -296,7 +296,7 @@ const EditProfile = ({
 
 	const debouncedCheckUsernameAvailability = debounce(
 		checkUsernameAvailability,
-		500
+		300
 	);
 
 	// Utility function to get updated value or fallback to existing value

@@ -1,5 +1,6 @@
 "use client";
 
+import InvoiceModal from "@/components/client/invoiceModal";
 import ContentLoading from "@/components/shared/ContentLoading";
 import { useToast } from "@/components/ui/use-toast";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
@@ -8,6 +9,7 @@ import { formatDateTime } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
+import { parseISO, isValid, format } from "date-fns";
 import { useInView } from "react-intersection-observer";
 interface Transaction {
 	_id: string;
@@ -20,6 +22,9 @@ interface Transaction {
 
 const Transactions = () => {
 	const [btn, setBtn] = useState<"all" | "credit" | "debit">("all");
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+
 	const { currentUser } = useCurrentUsersContext();
 	const { toast } = useToast();
 	const { ref, inView } = useInView({
@@ -41,14 +46,31 @@ const Transactions = () => {
 		}
 	}, [inView, hasNextPage, isFetching]);
 
+	const openModal = (transaction: any) => {
+		setSelectedTransaction(transaction);
+		setIsModalOpen(true);
+	};
+
+	const closeModal = () => {
+		setSelectedTransaction(null);
+		setIsModalOpen(false);
+	};
+
 	// Group transactions by date
 	const groupTransactionsByDate = (transactionsList: Transaction[]) => {
 		return transactionsList.reduce((acc, transaction) => {
-			const date = new Date(transaction.createdAt).toLocaleDateString();
-			if (!acc[date]) {
-				acc[date] = [];
+			// Use parseISO to handle the date correctly, assuming 'createdAt' is in ISO format
+			const date = parseISO(transaction.createdAt);
+
+			if (!isValid(date)) {
+				throw new Error("Invalid Date");
 			}
-			acc[date].push(transaction);
+
+			const dateString = format(date, "yyyy-MM-dd"); // This format is consistent and works across browsers
+			if (!acc[dateString]) {
+				acc[dateString] = [];
+			}
+			acc[dateString].push(transaction);
 			return acc;
 		}, {} as Record<string, Transaction[]>);
 	};
@@ -80,6 +102,11 @@ const Transactions = () => {
 			<section
 				className={`sticky top-0 md:top-[76px] bg-white z-30 p-4 flex flex-col items-start justify-start gap-4 w-full h-fit`}
 			>
+				<InvoiceModal
+					isOpen={isModalOpen}
+					onClose={closeModal}
+					transaction={selectedTransaction}
+				/>
 				<section className="flex items-center gap-4">
 					<Link
 						href={`${creatorURL ? creatorURL : "/home"}`}
@@ -126,7 +153,9 @@ const Transactions = () => {
 							<span className="text-lg">Please try again later.</span>
 						</div>
 					) : Object.keys(groupedTransactions).length === 0 ? (
-						<section className="size-full h-[60vh] flex flex-col gap-4 items-center justify-center text-xl font-semibold text-center text-gray-500">
+						<section
+							className={`size-full h-[60vh] flex flex-col gap-4 items-center justify-center text-xl font-semibold text-center text-gray-500`}
+						>
 							<Image
 								src={"/images/noTransaction.png"}
 								alt="no transaction"
@@ -134,7 +163,7 @@ const Transactions = () => {
 								height={1000}
 								className="size-[200px] object-contain"
 							/>
-							<span>No transaction yet</span>
+							<span className="text-center w-full">No transaction yet</span>
 						</section>
 					) : (
 						Object.entries(groupedTransactions).map(([date, transactions]) => {
@@ -254,7 +283,7 @@ const Transactions = () => {
 													</p>
 												</section>
 											</div>
-											<section className="flex flex-col justify-between items-center">
+											<section className="flex flex-col gap-2 justify-between items-center">
 												<span
 													className={`size-full flex items-center font-bold text-sm leading-4 w-fit whitespace-nowrap ${
 														transaction?.type === "credit"
@@ -267,7 +296,14 @@ const Transactions = () => {
 														: `- ₹${transaction?.amount?.toFixed(2)}`}
 												</span>
 
-												<span className="size-full opacity-0">.</span>
+												{transaction.type === "credit" && (
+													<span
+														className="text-[13px] hover:cursor-pointer"
+														onClick={() => openModal(transaction)}
+													>
+														View Invoice
+													</span>
+												)}
 											</section>
 										</li>
 									))}
@@ -296,7 +332,8 @@ const Transactions = () => {
 				!hasNextPage &&
 				!isFetching &&
 				currentUser &&
-				transactions?.pages[0]?.totalTransactions !== 0 && (
+				transactions?.pages.flatMap((page: any) => page.totalTransactions)[0] >
+					6 && (
 					<div className="text-center text-gray-500 py-4">
 						You have reached the end of the list.
 					</div>

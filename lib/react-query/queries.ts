@@ -49,11 +49,13 @@ export const useGetPreviousCalls = (
 // FAVORITES QUERIES
 // ============================================================
 
-export const useGetUserFavorites = (userId: string) => {
-	const limit = 10; // Define the limit per page
-
+export const useGetUserFavorites = (
+	userId: string,
+	selectedProfession: string,
+	limit = 10
+) => {
 	return useInfiniteQuery({
-		queryKey: [QUERY_KEYS.GET_USER_CALLS, userId],
+		queryKey: [QUERY_KEYS.GET_USER_CALLS, userId, selectedProfession],
 		queryFn: async ({ pageParam = 1 }) => {
 			const response = await axios.get(
 				`${backendBaseUrl}/favorites/${userId}`,
@@ -61,6 +63,7 @@ export const useGetUserFavorites = (userId: string) => {
 					params: {
 						page: pageParam,
 						limit,
+						selectedProfession,
 					},
 				}
 			);
@@ -114,9 +117,9 @@ export const useGetClients = () => {
 // CREATOR QUERIES
 // ============================================================
 
-export const useGetCreators = (limit: number) => {
+export const useGetCreators = (limit: number, profession: string) => {
 	return useInfiniteQuery({
-		queryKey: [QUERY_KEYS.GET_CREATORS, limit],
+		queryKey: [QUERY_KEYS.GET_CREATORS, limit, profession],
 		queryFn: async ({ pageParam = 1 }) => {
 			const response = await axios.get(
 				`${backendBaseUrl}/creator/getUsersFiltered`,
@@ -124,6 +127,7 @@ export const useGetCreators = (limit: number) => {
 					params: {
 						page: pageParam,
 						limit,
+						profession,
 					},
 				}
 			);

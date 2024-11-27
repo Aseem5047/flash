@@ -12,6 +12,8 @@ const CreatorsGrid = ({ creator }: { creator: creatorUser }) => {
 	const imageSrc = getImageSource(creator);
 
 	useEffect(() => {
+		if (!creator || !creator._id || !creator.phone) return;
+
 		const creatorRef = doc(db, "services", creator._id);
 		const statusDocRef = doc(db, "userStatus", creator.phone);
 
@@ -22,23 +24,31 @@ const CreatorsGrid = ({ creator }: { creator: creatorUser }) => {
 				const services = data.services;
 
 				// Check if any of the services are enabled
-				const isOnline =
+				const hasActiveService =
 					services?.videoCall || services?.audioCall || services?.chat;
-
-				// Set initial status to Online or Offline based on services
-				setStatus(isOnline ? "Online" : "Offline");
 
 				// Now listen for the user's status
 				const unsubscribeStatus = onSnapshot(statusDocRef, (statusDoc) => {
 					const statusData = statusDoc.data();
 
 					if (statusData) {
-						// Check if status is "Busy"
-						if (statusData.status === "Busy") {
-							setStatus("Busy");
+						if (statusData.loginStatus === true) {
+							if (statusData.status === "Busy") {
+								setStatus("Busy");
+							} else {
+								setStatus(
+									statusData.status === "Online" ? "Online" : "Offline"
+								);
+							}
+						} else if (statusData.loginStatus === false) {
+							setStatus("Offline");
 						} else {
-							// Update status based on services
-							setStatus(isOnline ? "Online" : "Offline");
+							// Fallback to services and status
+							if (statusData.status === "Busy") {
+								setStatus("Busy");
+							} else {
+								setStatus(hasActiveService ? "Online" : "Offline");
+							}
 						}
 					}
 				});
@@ -55,53 +65,51 @@ const CreatorsGrid = ({ creator }: { creator: creatorUser }) => {
 	}, [creator._id, creator.phone]);
 
 	return (
-		<>
-			<div className="relative flex flex-col items-center justify-center rounded-xl w-full h-[202px] xl:h-80 transition-all duration-300 hover:scale-95">
-				<Image
-					src={imageSrc}
-					alt={creator.firstName || creator.username}
-					width={500}
-					height={500}
-					className="w-full h-full absolute top-0 object-cover rounded-xl"
-					placeholder="blur"
-					blurDataURL="/icons/blurryPlaceholder.png"
-					priority
-				/>
-				<div className="text-white flex flex-col items-start w-full creatorsGirdHighlight">
-					{/* Username */}
-					<p className="font-semibold text-base sm:text-2xl max-w-[90%] text-ellipsis whitespace-nowrap overflow-hidden">
-						{fullName}
-					</p>
-					{/* Profession and Status */}
-					<div className="flex items-center justify-between w-full mt-2 gap-2">
-						<span className="text-sm sm:text-lg h-full max-w-[90%] text-ellipsis whitespace-nowrap overflow-hidden">
-							{creator.profession ? creator.profession : "Expert"}
+		<div className="relative flex flex-col items-center justify-center rounded-xl w-full h-[202px] xl:h-80 transition-all duration-300 hover:scale-95">
+			<Image
+				src={imageSrc}
+				alt={creator.firstName || creator.username}
+				width={500}
+				height={500}
+				className="w-full h-full absolute top-0 object-cover rounded-xl"
+				placeholder="blur"
+				blurDataURL="/icons/blurryPlaceholder.png"
+				priority
+			/>
+			<div className="text-white flex flex-col items-start w-full creatorsGirdHighlight">
+				{/* Username */}
+				<p className="font-semibold text-base sm:text-2xl max-w-[90%] text-ellipsis whitespace-nowrap overflow-hidden">
+					{fullName}
+				</p>
+				{/* Profession and Status */}
+				<div className="flex items-center justify-between w-full mt-2 gap-2">
+					<span className="text-sm sm:text-lg h-full max-w-[90%] text-ellipsis whitespace-nowrap overflow-hidden">
+						{creator.profession ? creator.profession : "Expert"}
+					</span>
+					<div
+						className={`${
+							status === "Online"
+								? "bg-green-500"
+								: status === "Offline"
+								? "bg-red-500"
+								: status === "Busy"
+								? "bg-orange-400"
+								: ""
+						} text-xs rounded-full sm:rounded-xl px-1.5 py-1.5 sm:px-4 sm:py-2`}
+					>
+						<span className="hidden sm:flex">
+							{status === "Online"
+								? "Online"
+								: status === "Offline"
+								? "Offline"
+								: status === "Busy"
+								? "Busy"
+								: "Offline"}
 						</span>
-						<div
-							className={`${
-								status === "Online"
-									? "bg-green-500"
-									: status === "Offline"
-									? "bg-red-500"
-									: status === "Busy"
-									? "bg-orange-400"
-									: ""
-							} text-xs rounded-full sm:rounded-xl px-1.5 py-1.5 sm:px-4 sm:py-2`}
-						>
-							<span className="hidden sm:flex">
-								{status === "Online"
-									? "Online"
-									: status === "Offline"
-									? "Offline"
-									: status === "Busy"
-									? "Busy"
-									: "Offline"}
-							</span>
-						</div>
 					</div>
 				</div>
 			</div>
-		</>
+		</div>
 	);
 };
 

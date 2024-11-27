@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
-import { updateFirestoreCallServices } from "@/lib/utils";
+import { backendBaseUrl, updateFirestoreCallServices } from "@/lib/utils";
 import * as Sentry from "@sentry/nextjs";
+import axios from "axios";
 
 export const useServices = () => {
 	const { creatorUser } = useCurrentUsersContext();
@@ -20,7 +21,7 @@ export const useServices = () => {
 			creatorUser && !creatorUser.restricted ? creatorUser.audioAllowed : false,
 		chat:
 			creatorUser && !creatorUser.restricted ? creatorUser.chatAllowed : false,
-		isRestricted: creatorUser ? creatorUser.restricted : false, // Track restriction state
+		isRestricted: creatorUser ? creatorUser.restricted : false,
 	}));
 
 	// Initialize services based on creatorUser
@@ -51,37 +52,61 @@ export const useServices = () => {
 		}
 	}, [creatorUser]);
 
-	// Real-time updates from Firebase session trigger and restricted status
 	useEffect(() => {
-		if (creatorUser) {
-			const sessionTriggeredRef = doc(db, "sessionTriggered", creatorUser._id);
-			const unsubscribe = onSnapshot(
-				sessionTriggeredRef,
-				(docSnapshot) => {
-					if (docSnapshot.exists()) {
-						const currentCount = docSnapshot.data().count || 0;
-						if (currentCount >= 3 || creatorUser.restricted) {
-							setServices({
-								myServices: false,
-								videoCall: false,
-								audioCall: false,
-								chat: false,
-								isRestricted: true,
-							});
-						}
+		const updateServices = async () => {
+			try {
+				await axios.put(
+					`${backendBaseUrl}/creator/updateUser/${creatorUser?._id}`,
+					{
+						videoAllowed: services.videoCall,
+						audioAllowed: services.audioCall,
+						chatAllowed: services.chat,
 					}
-				},
-				(error) => {
-					console.error("Error fetching session triggered snapshot: ", error);
-					Sentry.captureException(error);
-				}
-			);
+				);
+			} catch (error) {
+				Sentry.captureException(error);
+				console.error("Error updating services:", error);
+			}
+		};
 
-			return () => unsubscribe();
+		if (creatorUser) {
+			updateServices();
 		}
-	}, [creatorUser]);
+	}, [creatorUser, services]);
+
+	// Real-time updates from Firebase session trigger and restricted status
+
+	// useEffect(() => {
+	// 	if (creatorUser) {
+	// 		const sessionTriggeredRef = doc(db, "sessionTriggered", creatorUser._id);
+	// 		const unsubscribe = onSnapshot(
+	// 			sessionTriggeredRef,
+	// 			(docSnapshot) => {
+	// 				if (docSnapshot.exists()) {
+	// 					const currentCount = docSnapshot.data().count || 0;
+	// 					if (currentCount >= 3 || creatorUser.restricted) {
+	// 						setServices({
+	// 							myServices: false,
+	// 							videoCall: false,
+	// 							audioCall: false,
+	// 							chat: false,
+	// 							isRestricted: false,
+	// 						});
+	// 					}
+	// 				}
+	// 			},
+	// 			(error) => {
+	// 				console.error("Error fetching session triggered snapshot: ", error);
+	// 				Sentry.captureException(error);
+	// 			}
+	// 		);
+
+	// 		return () => unsubscribe();
+	// 	}
+	// }, [creatorUser]);
 
 	// Toggle handler with restricted check
+
 	const handleToggle = (
 		service: "myServices" | "videoCall" | "audioCall" | "chat"
 	) => {

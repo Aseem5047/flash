@@ -24,13 +24,8 @@ import { creatorUser } from "@/types";
 import { useRouter } from "next/navigation";
 
 const SignoutAlert = () => {
-	const {
-		currentUser,
-		userType,
-		handleSignout,
-		setAuthenticationSheetOpen,
-		clientUser,
-	} = useCurrentUsersContext();
+	const { currentUser, handleSignout, setAuthenticationSheetOpen, clientUser } =
+		useCurrentUsersContext();
 	const [showSignoutDialog, setShowSignoutDialog] = useState(false);
 	const [loading, setLoading] = useState(false);
 
@@ -76,11 +71,11 @@ const SignoutAlert = () => {
 				Creator_ID: creator?._id,
 				Walletbalace_Available: clientUser?.walletBalance,
 			});
-			setAuthenticationSheetOpen(false);
-			router.replace(storedURL ? `${storedURL}` : "/home");
-			localStorage.setItem("userType", "client");
 
+			setAuthenticationSheetOpen(false);
 			handleSignout();
+
+			router.replace(storedURL ? `${storedURL}` : "/home");
 		} catch (error) {
 			console.error("Error deleting user:", error);
 		} finally {
@@ -129,16 +124,16 @@ const SignoutAlert = () => {
 								variant="outline"
 								onClick={() => setShowSignoutDialog(false)}
 								disabled={loading}
-								className="hoverScaleDownEffect text-[#A7A8A1] hover:border border-gray-300 hover:bg-gray-50"
+								className="hoverScaleDownEffect hover:border border-gray-300 hover:bg-gray-50"
 							>
 								Cancel
 							</Button>
 							<Button
 								onClick={handleSignoutUser}
 								disabled={loading}
-								className="border border-gray-300 hover:bg-gray-50 hoverScaleDownEffect"
+								className="border border-gray-300 bg-black text-white hoverScaleDownEffect"
 							>
-								{loading ? "Deleting..." : "Confirm Signout"}
+								{loading ? "Loading..." : "Proceed"}
 							</Button>
 						</div>
 					</SheetContent>
@@ -161,14 +156,14 @@ const SignoutAlert = () => {
 								variant="outline"
 								onClick={() => setShowSignoutDialog(false)}
 								disabled={loading}
-								className="hoverScaleDownEffect text-[#A7A8A1] hover:border border-gray-300 hover:bg-gray-50"
+								className="hoverScaleDownEffect hover:border border-gray-300 hover:bg-gray-50"
 							>
 								Cancel
 							</Button>
 							<Button
 								onClick={handleSignoutUser}
 								disabled={loading}
-								className="border border-gray-300 hover:bg-gray-50 bg-black text-white hoverScaleDownEffect"
+								className="border border-gray-300 bg-black text-white hoverScaleDownEffect"
 							>
 								{loading ? "Loading..." : "Proceed"}
 							</Button>
