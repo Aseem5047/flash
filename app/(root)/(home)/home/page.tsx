@@ -168,16 +168,17 @@ const HomePage = () => {
 						</div>
 					) : (
 						<section className="grid grid-cols-1 px-4 lg:px-0">
-							<section className="sticky top-0 md:top-[76px] bg-white z-50">
+							<section className="sticky top-0 md:top-[76px] bg-white z-30">
 								<HomepageFilter
 									selectedProfession={selectedProfession}
 									handleProfessionChange={handleProfessionChange}
 								/>
 							</section>
 							<section
-								className={`grid xs:grid-cols-2 2xl:grid-cols-3 h-auto gap-3.5 lg:gap-5 2xl:gap-7  items-center overflow-hidden`}
+								className={`grid xs:grid-cols-2 2xl:grid-cols-3 h-auto gap-3.5 lg:gap-5 2xl:gap-7 items-center overflow-hidden`}
 								style={{
 									WebkitTransform: "translateZ(0)",
+									transform: "translate3d(0, 0, 0)",
 								}}
 							>
 								{creators?.pages?.map((page: any, pageIndex: any) =>

@@ -109,7 +109,7 @@ export const handlePendingTransaction = async (
 	}
 
 	const callEndedAt = call?.state?.endedAt;
-	const callStartsAt = call?.state?.startsAt;
+	const callStartsAt = call?.state?.startedAt || call?.state?.startsAt;
 	const isVideoCall = call?.type === "default";
 
 	const expert = call?.state?.members?.find(
@@ -604,46 +604,22 @@ export const fetchFCMToken = async (phone: string) => {
 	return fcmTokenDoc.exists() ? fcmTokenDoc.data().token : null;
 };
 
-// Function to track events
-export const trackCallEvents = (
-	callType: string,
-	clientUser: any,
-	creator: any
-) => {
-	const createdAtDate = clientUser?.createdAt
-		? new Date(clientUser.createdAt)
-		: new Date();
-	const formattedDate = createdAtDate.toISOString().split("T")[0];
-
-	if (callType === "audio") {
-		trackEvent("BookCall_Audio_Clicked", {
-			Client_ID: clientUser._id,
-			User_First_Seen: formattedDate,
-			Creator_ID: creator._id,
-		});
-	} else {
-		trackEvent("BookCall_Video_initiated", {
-			Client_ID: clientUser._id,
-			User_First_Seen: formattedDate,
-			Creator_ID: creator._id,
-		});
-	}
-
-	logEvent(analytics, "call_initiated", {
-		clientId: clientUser?._id,
-		creatorId: creator._id,
-	});
-};
-
 // Function to send notification
 export const sendNotification = async (
 	token: string,
 	title: string,
 	body: string,
-	data: any,
+	data?: any,
 	link?: string
 ) => {
 	try {
+		// Convert all data values to strings
+		const stringifiedData = data
+			? Object.fromEntries(
+					Object.entries(data).map(([key, value]) => [key, String(value)])
+			  )
+			: {};
+
 		const response = await fetch("/api/send-notification", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
@@ -651,7 +627,7 @@ export const sendNotification = async (
 				token,
 				title,
 				message: body,
-				data: data,
+				data: stringifiedData, // Use the stringified data
 				link,
 			}),
 		});
