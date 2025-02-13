@@ -1,0 +1,111 @@
+name: Build and Push Docker Images
+
+# Triggers the workflow on push or pull request to the master branch
+on:
+  push:
+    branches:
+      - deploy
+  pull_request:
+    branches:
+      - deploy
+
+# Define environment variables and permissions
+env:
+  DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+  NEXT_PUBLIC_STREAM_API_KEY: ${{ secrets.NEXT_PUBLIC_STREAM_API_KEY }}
+  STREAM_SECRET_KEY: ${{ secrets.STREAM_SECRET_KEY }}
+  NEXT_PUBLIC_STREAM_SECRET_KEY: ${{ secrets.NEXT_PUBLIC_STREAM_SECRET_KEY }}
+  NEXT_PUBLIC_STREAM_APP_ID: ${{ secrets.NEXT_PUBLIC_STREAM_APP_ID }}
+  TWOFACTOR_API_KEY: ${{ secrets.TWOFACTOR_API_KEY }}
+  JWT_KEY: ${{ secrets.JWT_KEY }}
+  NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
+  NEXT_PUBLIC_BASE_URL_BACKEND: ${{ secrets.NEXT_PUBLIC_BASE_URL_BACKEND }}
+  NEXT_PUBLIC_URL_BACKEND: ${{ secrets.NEXT_PUBLIC_URL_BACKEND }}
+  MONGODB_URI: ${{ secrets.MONGODB_URI }}
+  NEXT_PUBLIC_MIXPANEL_TOKEN: ${{ secrets.NEXT_PUBLIC_MIXPANEL_TOKEN }}
+  NEXT_PUBLIC_RAZORPAY_KEY_ID: ${{ secrets.NEXT_PUBLIC_RAZORPAY_KEY_ID }}
+  NEXT_PUBLIC_RAZORPAY_SECRET: ${{ secrets.NEXT_PUBLIC_RAZORPAY_SECRET }}
+  NEXT_PUBLIC_CASHFREE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_CASHFREE_CLIENT_ID }}
+  NEXT_PUBLIC_CASHFREE_CLIENT_SECRET: ${{ secrets.NEXT_PUBLIC_CASHFREE_CLIENT_SECRET }}
+  NEXT_PUBLIC_PAYPAL_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_PAYPAL_CLIENT_ID }}
+  NEXT_PUBLIC_MEASUREMENT_ID: ${{ secrets.NEXT_PUBLIC_MEASUREMENT_ID }}
+  NODE_ENV: ${{ secrets.NODE_ENV }}
+  NEXT_PUBLIC_FIREBASE_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_KEY }}
+  FIREBASE_SERVICE_ACCOUNT_BASE64: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_BASE64 }}
+  NEXT_PUBLIC_AWS_ACCESS_KEY_ID: ${{secrets.NEXT_PUBLIC_AWS_ACCESS_KEY_ID}}
+  NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY: ${{secrets.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY}}
+  NEXT_PUBLIC_AWS_REGION: ${{secrets.NEXT_PUBLIC_AWS_REGION}}
+  NEXT_PUBLIC_CASHFREE_CLIENT_ID_PG: ${{secrets.NEXT_PUBLIC_CASHFREE_CLIENT_ID_PG}}
+  NEXT_PUBLIC_CASHFREE_CLIENT_SECRET_PG: ${{secrets.NEXT_PUBLIC_CASHFREE_CLIENT_SECRET_PG}}
+  NEXT_PUBLIC_CASHFREE_CLIENT_ID_Verification_Suite: ${{secrets.NEXT_PUBLIC_CASHFREE_CLIENT_ID_Verification_Suite}}
+  NEXT_PUBLIC_CASHFREE_CLIENT_SECRET_Verification_Suite: ${{secrets.NEXT_PUBLIC_CASHFREE_CLIENT_SECRET_Verification_Suite}}
+  NEXT_PUBLIC_CASHFREE_CLIENT_ID_Payout: ${{secrets.NEXT_PUBLIC_CASHFREE_CLIENT_ID_Payout}}
+  NEXT_PUBLIC_CASHFREE_CLIENT_SECRET_Payout: ${{secrets.NEXT_PUBLIC_CASHFREE_CLIENT_SECRET_Payout}}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the repo
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Log in to Docker Hub
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+
+      # Build the development image
+      - name: Build dev image
+        run: docker build --no-cache -f Dockerfile.dev -t flashcallme/flashcall:dev .
+
+      # Build the production image
+      - name: Build prod image
+        id: build_prod
+        run: |
+          IMAGE_TAG=$(git rev-parse --short HEAD)
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+          docker build --no-cache \
+          --build-arg NEXT_PUBLIC_STREAM_API_KEY='${{ env.NEXT_PUBLIC_STREAM_API_KEY }}' \
+          --build-arg STREAM_SECRET_KEY='${{ env.STREAM_SECRET_KEY }}' \
+          --build-arg NEXT_PUBLIC_STREAM_SECRET_KEY='${{ env.NEXT_PUBLIC_STREAM_SECRET_KEY }}' \
+          --build-arg NEXT_PUBLIC_STREAM_APP_ID='${{ env.NEXT_PUBLIC_STREAM_APP_ID }}' \
+          --build-arg TWOFACTOR_API_KEY='${{ env.TWOFACTOR_API_KEY }}' \
+          --build-arg JWT_KEY='${{ env.JWT_KEY }}' \
+          --build-arg NEXT_PUBLIC_BASE_URL='${{ env.NEXT_PUBLIC_BASE_URL }}' \
+          --build-arg NEXT_PUBLIC_BASE_URL_BACKEND='${{ env.NEXT_PUBLIC_BASE_URL_BACKEND }}' \
+          --build-arg NEXT_PUBLIC_URL_BACKEND='${{ env.NEXT_PUBLIC_URL_BACKEND }}' \
+          --build-arg MONGODB_URI='${{ env.MONGODB_URI }}' \
+          --build-arg NEXT_PUBLIC_MIXPANEL_TOKEN='${{ env.NEXT_PUBLIC_MIXPANEL_TOKEN }}' \
+          --build-arg NEXT_PUBLIC_RAZORPAY_KEY_ID='${{ env.NEXT_PUBLIC_RAZORPAY_KEY_ID }}' \
+          --build-arg NEXT_PUBLIC_RAZORPAY_SECRET='${{ env.NEXT_PUBLIC_RAZORPAY_SECRET }}' \
+          --build-arg NEXT_PUBLIC_CASHFREE_CLIENT_ID='${{ env.NEXT_PUBLIC_CASHFREE_CLIENT_ID }}' \
+          --build-arg NEXT_PUBLIC_CASHFREE_CLIENT_SECRET='${{ env.NEXT_PUBLIC_CASHFREE_CLIENT_SECRET }}' \
+          --build-arg NEXT_PUBLIC_PAYPAL_CLIENT_ID='${{ env.NEXT_PUBLIC_PAYPAL_CLIENT_ID }}' \
+          --build-arg NEXT_PUBLIC_MEASUREMENT_ID='${{ env.NEXT_PUBLIC_MEASUREMENT_ID }}' \
+          --build-arg NODE_ENV='${{ env.NODE_ENV }}' \
+          --build-arg NEXT_PUBLIC_FIREBASE_KEY='${{ env.NEXT_PUBLIC_FIREBASE_KEY }}' \
+          --build-arg FIREBASE_SERVICE_ACCOUNT_BASE64='${{ env.FIREBASE_SERVICE_ACCOUNT_BASE64 }}' \
+          --build-arg NEXT_PUBLIC_AWS_ACCESS_KEY_ID='${{ env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID }}' \
+          --build-arg NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY='${{ env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY }}' \
+          --build-arg NEXT_PUBLIC_AWS_REGION='${{ env.NEXT_PUBLIC_AWS_REGION }}' \
+          --build-arg NEXT_PUBLIC_CASHFREE_CLIENT_ID_PG='${{ env.NEXT_PUBLIC_CASHFREE_CLIENT_ID_PG }}' \
+          --build-arg NEXT_PUBLIC_CASHFREE_CLIENT_SECRET_PG='${{ env.NEXT_PUBLIC_CASHFREE_CLIENT_SECRET_PG }}' \
+          --build-arg NEXT_PUBLIC_CASHFREE_CLIENT_ID_Verification_Suite='${{ env.NEXT_PUBLIC_CASHFREE_CLIENT_ID_Verification_Suite }}' \
+          --build-arg NEXT_PUBLIC_CASHFREE_CLIENT_SECRET_Verification_Suite='${{ env.NEXT_PUBLIC_CASHFREE_CLIENT_SECRET_Verification_Suite }}' \
+          --build-arg NEXT_PUBLIC_CASHFREE_CLIENT_ID_Payout='${{ env.NEXT_PUBLIC_CASHFREE_CLIENT_ID_Payout }}' \
+          --build-arg NEXT_PUBLIC_CASHFREE_CLIENT_SECRET_Payout='${{ env.NEXT_PUBLIC_CASHFREE_CLIENT_SECRET_Payout }}' \
+          -t flashcallme/flashcall:${IMAGE_TAG} -f Dockerfile.prod .
+
+      # Push development image to Docker Hub
+      - name: Push dev image
+        run: docker push flashcallme/flashcall:dev
+
+      # Push production image to Docker Hub
+      - name: Push prod image
+        run: |
+          IMAGE_TAG=$(git rev-parse --short HEAD)
+          docker push flashcallme/flashcall:${IMAGE_TAG}
+
+      # Prune dangling images to free up space
+      - name: Prune dangling images
+        run: docker image prune -f

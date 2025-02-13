@@ -38,7 +38,7 @@ const TermsOfServices = () => {
 	return (
 		<section className="w-full h-fit py-7 pb-24 bg-white flex flex-col gap-4 items-center justify-start md:px-12 lg:px-24 max-md:px-4">
 			{/* page title */}
-			<h1 className="text-3xl font-medium mt-4">Terms of Services</h1>
+			<h1 className="lg:hidden text-3xl font-medium mt-4">Terms of Services</h1>
 			{/* subheading */}
 			<h2 className="text-lg">BHHI Technologies Pvt. Ltd.</h2>
 			<h2 className="text-lg mb-7">Last Updated: 21st August 2024</h2>
@@ -63,14 +63,14 @@ const TermsOfServices = () => {
 				</span>
 				<Link
 					href="/privacy-policy"
-					className="mx-1 text-[#50a65c] hover:underline underline-offset-2"
+					className="mx-1 text-[#50A65C] hover:underline underline-offset-2"
 				>
 					Privacy Policy
 				</Link>
 				{","}
 				<Link
 					href="/platform-guidelines"
-					className="mx-1 text-[#50a65c] hover:underline underline-offset-2"
+					className="mx-1 text-[#50A65C] hover:underline underline-offset-2"
 				>
 					Platform Guidelines
 				</Link>
@@ -121,7 +121,7 @@ const TermsOfServices = () => {
 					{tableOfContents.contents.map((content, index) => (
 						<li
 							key={index}
-							className="text-[#50a65c] hover:underline underline-offset-2"
+							className="text-[#50A65C] hover:underline underline-offset-2"
 						>
 							<Link href={`#${content.split(". ")[0]}`}>{content}</Link>
 						</li>
@@ -152,7 +152,7 @@ const TermsOfServices = () => {
 					{A.para4}{" "}
 					<Link
 						href="/privacy-policy"
-						className="mx-1 text-[#50a65c] hover:underline underline-offset-2"
+						className="mx-1 text-[#50A65C] hover:underline underline-offset-2"
 					>
 						Privacy Policy
 					</Link>
@@ -583,7 +583,7 @@ const TermsOfServices = () => {
 
 				<a
 					href="mailto:support@Flashcall.me"
-					className="text-[#50a65c] hoverScaleDownEffect"
+					className="text-[#50A65C] hoverScaleDownEffect"
 				>
 					support@Flashcall.me
 				</a>

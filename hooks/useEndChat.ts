@@ -1,185 +1,102 @@
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { db } from "@/lib/firebase";
-import { creatorUser } from "@/types";
 import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import * as Sentry from "@sentry/nextjs";
 import { trackEvent } from "@/lib/mixpanel";
 
-interface User2 {
-	_id: string;
-	clientId: string;
-	creatorId: string;
-	request: string;
-	fullName: string;
-	photo: string;
-	User_First_Seen: string;
-	phone: string;
-}
-
-interface Chat {
-	startedAt: number;
-	callId?: string;
-	endedAt?: number;
-	messages: {
-		senderId: string;
-		text: string;
-		createdAt: number;
-		tip: string;
-		img: string;
-		audio: string;
-		seen: boolean;
-	}[];
-}
-
 const useEndChat = () => {
-	const router = useRouter();
-	const { currentUser, userType } = useCurrentUsersContext();
-	const { chatId } = useParams();
-	const [user2, setUser2] = useState<User2>();
-	const [chat, setChat] = useState<Chat | undefined>();
+	const [chat, setChat] = useState<any>();
 	const [chatEnded, setChatEnded] = useState(false);
-	const [chatRatePerMinute, setChatRatePerMinute] = useState(0);
-	const [endedAt, setEndedAt] = useState<number>();
-	const [startedAt, setStartedAt] = useState<number>();
+	const [startedAt, setStartedAt] = useState<number>(0);
 	const [loading, setLoading] = useState(false);
+	const { userType } = useCurrentUsersContext();
+	const { chatId } = useParams();
+	const router = useRouter();
 	const hasChatEnded = useRef(false);
-	const [creatorPhone, setCreatorPhone] = useState("");
 
-	// Function to update expert's status
-	// const updateExpertStatus = async (phone: string, status: string) => {
+	// useEffect(() => {
+	// 	if (chatId) {
+	// 		const officialChatDocRef = doc(db, "chats", chatId as string);
+	// 		const unSub = onSnapshot(officialChatDocRef, (doc) => {
+	// 			if (doc.exists()) {
+	// 				const data = doc.data();
+	// 				setChat(data);
+	// 				setStartedAt(data.startedAt);
+	// 				if (data?.status === "ended") {
+	// 					setChatEnded(true);
+	// 					unSub(); // Unsubscribe the listener
+	// 				}
+	// 			}
+	// 		}
+	// 		);
+
+	// 		return () => {
+	// 			unSub();
+	// 		};
+	// 	}
+	// }, [chatId]); // Dependency array to trigger only on chatId changes
+
+
+	// useEffect(() => {
+	// 	if (chatEnded && !hasChatEnded.current) {
+	// 		hasChatEnded.current = true;
+	// 		if (userType === "creator") router.replace(`/home`);
+	// 		else {
+	// 			const endedBy = localStorage.getItem("EndedBy");
+	// 			localStorage.removeItem("chatRequestId");
+	// 			localStorage.removeItem("chatId");
+	// 			localStorage.removeItem("user2");
+	// 			localStorage.removeItem("EndedBy");
+	// 			router.replace(`/chat-ended/${chatId}/${chat?.callId}/${chat?.clientId}`);
+
+	// 		}
+	// 	}
+	// }, [chatEnded]);
+
+	// const handleEnd = async (
+	// 	chatId: string | string[],
+	// 	endedBy: string
+	// ) => {
 	// 	try {
-	// 		const response = await fetch("/api/set-status", {
-	// 			method: "POST",
-	// 			headers: {
-	// 				"Content-Type": "application/json",
-	// 			},
-	// 			body: JSON.stringify({ phone, status }),
+	// 		setLoading(true);
+	// 		const now = Date.now();
+
+	// 		await updateDoc(doc(db, "chats", chatId as string), {
+	// 			endedAt: now,
+	// 			status: "ended",
 	// 		});
 
-	// 		const data = await response.json();
-	// 		if (!response.ok) {
-	// 			throw new Error(data.message || "Failed to update status");
-	// 		}
+	// 		await updateDoc(doc(db, "userchats", chat?.clientId as string), {
+	// 			online: false,
+	// 		});
+	// 		await updateDoc(doc(db, "userchats", chat?.creatorId as string), {
+	// 			online: false,
+	// 		});
 
-	// 		console.log("Expert status updated to:", status);
+	// 		trackEvent("BookCall_Chat_Ended", {
+	// 			Client_ID: chat?.clientId,
+	// 			Creator_ID: chat?.creatorId,
+	// 			Time_Duration_Consumed: chat?.startedAt ? (now - chat?.startedAt) / 1000 : null,
+	// 			EndedBy: endedBy,
+	// 		});
+
+	// 		localStorage.removeItem("chatRequestId");
+	// 		localStorage.removeItem("chatId");
+	// 		localStorage.removeItem("user2");
 	// 	} catch (error) {
 	// 		Sentry.captureException(error);
-	// 		console.error("Error updating expert status:", error);
+	// 		console.error("Error ending chat:", error);
 	// 	}
 	// };
-
-	useEffect(() => {
-		const getCreator = () => {
-			const storedCreator = localStorage.getItem("currentCreator");
-			if (storedCreator) {
-				const parsedCreator: creatorUser = JSON.parse(storedCreator);
-				if (parsedCreator.chatRate) {
-					setChatRatePerMinute(parseInt(parsedCreator.chatRate, 10));
-					setCreatorPhone(parsedCreator?.phone);
-				}
-			}
-		};
-
-		if (chatId) getCreator();
-	}, []);
-
-	useEffect(() => {
-		if (chatId) {
-			const unSub = onSnapshot(
-				doc(db, "chats", chatId as string),
-				(res: any) => {
-					setChat(res.data());
-					setStartedAt(res.data().startedAt as number);
-					setChatEnded(res.data()?.status === "ended");
-					if (res.data()?.status === "ended") {
-						setEndedAt(res.data().endedAt); // Update endedAt using useState
-					}
-				}
-			);
-			return () => unSub();
-		}
-	}, [chatId]);
-
-	useEffect(() => {
-		if (hasChatEnded.current === true) return;
-
-		if (chatEnded) {
-			hasChatEnded.current = true;
-			// if (userType === 'client')
-			// updateExpertStatus(creatorPhone, "Online");
-			if (userType === "creator") router.replace(`/home`);
-			else {
-				localStorage.removeItem("chatRequestId");
-				localStorage.removeItem("chatId");
-				localStorage.removeItem("user2");
-				router.replace(`/chat-ended/${chatId}/${chat?.callId}/${user2?.clientId}`);
-			}
-		}
-	}, [chatEnded]);
-
-	useEffect(() => {
-		const storedUser = localStorage.getItem("user2");
-		if (storedUser) {
-			setUser2(JSON.parse(storedUser));
-		}
-	}, [chatId]);
-
-	const handleEnd = async (
-		chatId: string | string[],
-		user2: User2 | undefined,
-		endedBy: string
-	) => {
-		try {
-			setLoading(true);
-			const now = Date.now();
-
-			await updateDoc(doc(db, "chats", chatId as string), {
-				endedAt: now,
-				status: "ended",
-			});
-			setEndedAt(now); // Update endedAt state
-
-			await updateDoc(doc(db, "userchats", user2?.clientId as string), {
-				online: false,
-			});
-			await updateDoc(doc(db, "userchats", user2?.creatorId as string), {
-				online: false,
-			});
-
-			localStorage.removeItem("chatRequestId");
-			localStorage.removeItem("chatId");
-			localStorage.removeItem("user2");
-
-			trackEvent("BookCall_Chat_Ended", {
-				Client_ID: user2?.clientId,
-				User_First_Seen: user2?.User_First_Seen,
-				Creator_ID: user2?.creatorId,
-				Time_Duration_Available: (endedAt! - startedAt!).toString(),
-				Walletbalace_Available: currentUser?.walletBalance,
-				Endedby: endedBy,
-			});
-
-			// logEvent(analytics, "call_ended", {
-			// 	userId: currentUser?._id,
-			// 	// creatorId: creator._id,
-			// });
-		} catch (error) {
-			Sentry.captureException(error);
-			console.error("Error ending chat:", error);
-		}
-	};
 
 	return {
 		chatId,
 		chatEnded,
-		handleEnd,
-		user2,
 		startedAt,
-		endedAt,
+		// handleEnd,
 		chat,
-		chatRatePerMinute,
 		loading,
 	};
 };

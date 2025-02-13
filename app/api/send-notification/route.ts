@@ -35,7 +35,6 @@ if (!admin.apps.length) {
 
 export async function POST(request: NextRequest) {
 	const { token, title, message, link, data } = await request.json();
-	console.log(data);
 	try {
 		const payload: Message = {
 			token,
@@ -48,15 +47,31 @@ export async function POST(request: NextRequest) {
 			android: {
 				priority: "high",
 			},
+			apns: {
+				headers: {
+					"apns-priority": "10",
+				},
+				payload: {
+					aps: {
+						alert: {
+							title: title,
+							body: message,
+						},
+						sound: "default",
+					},
+				},
+			},
 		};
 
-		await admin.messaging().send(payload);
-		return NextResponse.json({ success: true, message: "Data message sent!" });
-	} catch (error: any) {
-		console.error("Error sending data message:", error);
-		return NextResponse.json({
-			success: false,
-			error: error.message || "Unknown error",
-		});
-	}
+    await admin.messaging().send(payload);
+
+    return NextResponse.json({ success: true, message: "Notification sent!" });
+  } catch (error: any) {
+    console.error("Error sending notification:", error);
+    return NextResponse.json({
+      success: false,
+      error: error.message || "Unknown error",
+    });
+  }
 }
+

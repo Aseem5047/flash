@@ -19,21 +19,27 @@ import Image from "next/image";
 import { success } from "@/constants/icons";
 import { usePathname, useRouter } from "next/navigation";
 import { useToast } from "../ui/use-toast";
-import { CreateCreatorParams, CreateUserParams } from "@/types";
+import {
+	CreateCreatorParams,
+	CreateForeignUserParams,
+	CreateUserParams,
+} from "@/types";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import * as Sentry from "@sentry/nextjs";
 import { trackEvent } from "@/lib/mixpanel";
 import usePlatform from "@/hooks/usePlatform";
 import { backendBaseUrl } from "@/lib/utils";
 import GetRandomImage from "@/utils/GetRandomImage";
-import { getFCMToken } from "@/lib/firebase";
+import { auth, getFCMToken, provider } from "@/lib/firebase";
+import { signInWithPopup, signOut } from "firebase/auth";
+import { headers } from "next/headers";
 
 const formSchema = z.object({
 	phone: z
 		.string()
 		.min(10, { message: "Must be exactly 10 digits." })
 		.max(10, { message: "Must be exactly 10 digits." })
-		.regex(/^\d{10}$/, { message: "Must contain only digits." }),
+		.regex(/^[6-9][0-9]{9}$/, { message: "Invalid phone number." }),
 });
 
 const FormSchemaOTP = z.object({
@@ -52,7 +58,7 @@ const AuthenticateViaOTP = ({
 	onOpenChange?: (isOpen: boolean) => void;
 }) => {
 	const router = useRouter();
-	const { refreshCurrentUser, setAuthenticationSheetOpen } =
+	const { refreshCurrentUser, setAuthenticationSheetOpen, region } =
 		useCurrentUsersContext();
 
 	const [showOTP, setShowOTP] = useState(false);
@@ -151,8 +157,6 @@ const AuthenticateViaOTP = ({
 
 			const decodedToken = jwt.decode(sessionToken) as { user?: any };
 
-			console.log("OTP verified and token saved:");
-
 			setVerificationSuccess(true);
 
 			// Use the user data from the decoded session token
@@ -162,7 +166,6 @@ const AuthenticateViaOTP = ({
 			if (user._id || !user.error) {
 				// Existing user found
 				resolvedUserType = user.userType || "client";
-				console.log("current usertype: ", resolvedUserType);
 				localStorage.setItem("currentUserID", user._id);
 				if (resolvedUserType === "client") {
 					trackEvent("Login_Success", {
@@ -176,10 +179,7 @@ const AuthenticateViaOTP = ({
 						Platform: getDevicePlatform(),
 					});
 				}
-				console.log("Existing user found. Proceeding as an existing user.");
 			} else {
-				// No user found, proceed as new user
-				console.log("No user found. Proceeding as a new user.");
 				firstLoginRef.current = true;
 				let newUser: CreateCreatorParams | CreateUserParams;
 
@@ -197,7 +197,7 @@ const AuthenticateViaOTP = ({
 						photo: "",
 						phone: formattedPhone,
 						profession: "Astrologer",
-						themeSelected: "#50A65C",
+						themeSelected: "#88D8C0",
 						videoRate: "10",
 						audioRate: "10",
 						chatRate: "10",
@@ -235,7 +235,8 @@ const AuthenticateViaOTP = ({
 					toast({
 						variant: "destructive",
 						title: "Error Registering User",
-						description: `${error.response.data.error}`,
+						description: `${error.response.data.error} || "Something went wrong`,
+						toastStatus: "negative",
 					});
 					resetState();
 					return;
@@ -260,7 +261,7 @@ const AuthenticateViaOTP = ({
 		} catch (error: any) {
 			console.error("Error verifying OTP:", error);
 			let newErrors = { ...error };
-			newErrors.otpVerificationError = error.message;
+			newErrors.otpVerificationError = "Error verifying OTP";
 			setError(newErrors);
 			otpForm.reset(); // Reset OTP form
 			setIsVerifyingOTP(false);
@@ -292,6 +293,115 @@ const AuthenticateViaOTP = ({
 		otpForm.reset(); // Reset OTP form
 	};
 
+	const handleGoogleSignIn = async () => {
+		try {
+			console.log("Inside the google sign in function");
+			let result: any;
+			let email: string = "";
+
+			// Google Sign-In
+			try {
+				result = await signInWithPopup(auth, provider);
+				email = result.user.email as string;
+			} catch (error) {
+				console.log(error);
+				throw new Error("Google Sign-In failed");
+			} finally {
+				setAuthenticationSheetOpen(false);
+				onOpenChange && onOpenChange(false);
+			}
+
+			if (!email) {
+				throw new Error("Email is not available after sign-in.");
+			}
+
+			// Fetch FCM Token
+			const fcmToken: any = await getFCMToken();
+			const payload = { fcmToken };
+
+			// Check if the user exists or create a new user
+			await handleUserExistenceAndCreation(email, result, payload);
+		} catch (error) {
+			console.error("Error during sign-in:", error);
+			await signOut(auth); // Sign out if an error occurs
+			throw new Error(error as string);
+		}
+	};
+
+	// Helper function to check if the user exists and create if necessary
+	const handleUserExistenceAndCreation = async (
+		email: string,
+		result: any,
+		payload: any
+	) => {
+		console.log("Inside user existence function");
+		let userExists = true;
+
+		try {
+			const response = await axios.post(
+				`${backendBaseUrl}/client/getGlobalUserByEmail/${email}`,
+				payload,
+				{
+					headers: { "Content-Type": "application/json" },
+				}
+			);
+			localStorage.setItem("currentUserID", response.data._id);
+			userExists = response.status !== 404;
+		} catch (error: any) {
+			if (error.response?.status === 404) {
+				userExists = false;
+			} else {
+				throw error;
+			}
+		}
+
+		// If user does not exist, create a new one
+		if (!userExists) {
+			await createNewUser(result, email, payload);
+		}
+	};
+
+	// Helper function to create a new user
+	const createNewUser = async (result: any, email: string, payload: any) => {
+		console.log("Inside createNewUser function");
+		const newUser: CreateForeignUserParams = {
+			username: result.user.uid,
+			photo: GetRandomImage() || "",
+			phone: result.user.phoneNumber ?? "",
+			fullName: result.user.displayName ?? "",
+			email,
+			role: "client",
+			bio: "",
+			walletBalance: 0,
+			global: true,
+			fcmToken: payload.fcmToken,
+		};
+
+		try {
+			const createUserResponse = await axios.post(
+				`${backendBaseUrl}/client/createGlobalUser`,
+				newUser,
+				{
+					headers: { "Content-Type": "application/json" },
+				}
+			);
+
+			if (createUserResponse.status === 201) {
+				localStorage.setItem(
+					"currentUserID",
+					createUserResponse.data.client_id
+				);
+				console.log("New user created successfully.");
+				refreshCurrentUser();
+			} else {
+				throw new Error("Failed to create user.");
+			}
+		} catch (error) {
+			console.error("Error during user creation:", error);
+			throw error; // Propagate the error to be handled in the main function
+		}
+	};
+
 	return (
 		<section className="relative bg-[#F8F8F8] rounded-t-3xl sm:rounded-xl flex flex-col items-center justify-start gap-4 px-8 pt-2 shadow-lg w-screen h-fit sm:w-full sm:min-w-[24rem] sm:max-w-sm mx-auto">
 			{!showOTP && !verificationSuccess ? (
@@ -310,61 +420,77 @@ const AuthenticateViaOTP = ({
 							Login or Signup
 						</h2>
 						<p className="text-sm text-[#707070] mb-2.5">
-							Get start with your first consultation <br /> and start earning
+							Get started with your first consultation <br /> and start earning
 						</p>
 					</div>
-					<Form {...signUpForm}>
-						<form
-							onSubmit={signUpForm.handleSubmit(handleSignUpSubmit)}
-							className="space-y-4 w-full"
-						>
-							<FormField
-								control={signUpForm.control}
-								name="phone"
-								render={({ field }) => (
-									<FormItem>
-										<div className="flex items-center border-none pl-2 pr-1 py-1 rounded bg-gray-100">
-											<FormControl>
-												<div className="w-full flex justify-between items-center">
-													<div className="flex w-full items-center jusitfy-center">
-														<span className="text-gray-400">+91</span>
-														<span className="px-2 pr-0 text-lg text-gray-300 text-center self-center flex items-center">
-															│
-														</span>
-														<Input
-															placeholder="Enter a Valid Number"
-															{...field}
-															className="w-full font-semibold bg-transparent border-none text-black focus-visible:ring-offset-0 placeholder:text-gray-400 placeholder:font-normal rounded-xl pr-4 pl-2 mx-1 py-3 focus-visible:ring-transparent hover:bg-transparent !important"
-														/>
-													</div>
-
-													<Button
-														type="submit"
-														disabled={phone.length !== 10 || isSendingOTP}
-														className="w-fit text-[12px] font-semibold !px-2 bg-green-1 text-white hover:bg-green-1/80"
-													>
-														{isSendingOTP ? (
-															<Image
-																src="/icons/loading-circle.svg"
-																alt="Loading..."
-																width={24}
-																height={24}
-																className=""
-																priority
+					{region === "India" ? (
+						<Form {...signUpForm}>
+							<form
+								onSubmit={signUpForm.handleSubmit(handleSignUpSubmit)}
+								className="space-y-4 w-full"
+							>
+								<FormField
+									control={signUpForm.control}
+									name="phone"
+									render={({ field }) => (
+										<FormItem>
+											<div className="flex items-center border-none pl-2 pr-1 py-1 rounded bg-gray-100">
+												<FormControl>
+													<div className="w-full flex justify-between items-center">
+														<div className="flex w-full items-center justify-center">
+															<span className="text-gray-400">+91</span>
+															<span className="px-2 pr-0 text-lg text-gray-300 text-center self-center flex items-center">
+																│
+															</span>
+															<Input
+																placeholder="Enter a Valid Number"
+																{...field}
+																className="w-full font-semibold bg-transparent border-none text-black focus-visible:ring-offset-0 placeholder:text-gray-400 placeholder:font-normal rounded-xl pr-4 pl-2 mx-1 py-3 focus-visible:ring-transparent hover:bg-transparent !important"
 															/>
-														) : (
-															"Get OTP"
-														)}
-													</Button>
-												</div>
-											</FormControl>
-										</div>
-										<FormMessage className="text-center" />
-									</FormItem>
-								)}
+														</div>
+
+														<Button
+															type="submit"
+															disabled={phone.length !== 10 || isSendingOTP}
+															className="w-fit text-[12px] font-semibold !px-2 bg-green-1 text-white hover:bg-green-1/80"
+														>
+															{isSendingOTP ? (
+																<Image
+																	src="/icons/loading-circle.svg"
+																	alt="Loading..."
+																	width={24}
+																	height={24}
+																	className=""
+																	priority
+																/>
+															) : (
+																"Get OTP"
+															)}
+														</Button>
+													</div>
+												</FormControl>
+											</div>
+											<FormMessage className="text-center" />
+										</FormItem>
+									)}
+								/>
+							</form>
+						</Form>
+					) : (
+						<Button
+							className="w-[80%] p-2 text-black text-sm bg-white rounded-md flex items-center justify-center gap-2 border shadow-sm"
+							onClick={handleGoogleSignIn}
+						>
+							<Image
+								src="/google.svg" // Replace with your Google logo image path
+								alt="Google Logo"
+								width={1000}
+								height={1000}
+								className="size-5"
 							/>
-						</form>
-					</Form>
+							Continue with Google
+						</Button>
+					)}
 				</>
 			) : verificationSuccess ? (
 				<div className="flex flex-col items-center justify-center w-full sm:min-w-[24rem] sm:max-w-[24rem]  gap-4 pt-7 pb-14">

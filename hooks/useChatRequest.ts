@@ -4,13 +4,12 @@ import { analytics, db } from "@/lib/firebase";
 import {
 	arrayUnion,
 	collection,
+	deleteField,
 	doc,
 	getDoc,
 	onSnapshot,
-	query,
 	setDoc,
 	updateDoc,
-	where,
 } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -20,15 +19,23 @@ import * as Sentry from "@sentry/nextjs";
 import { trackEvent } from "@/lib/mixpanel";
 import usePlatform from "./usePlatform";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
-import { backendBaseUrl, fetchFCMToken, sendNotification } from "@/lib/utils";
+import {
+	backendBaseUrl,
+	backendUrl,
+	fetchFCMToken,
+	sendChatNotification,
+	sendNotification,
+} from "@/lib/utils";
 import axios from "axios";
+import { clientUser, creatorUser, Service } from "@/types";
 
 const useChatRequest = (onChatRequestUpdate?: any) => {
 	const [loading, setLoading] = useState(false);
 	const { currentUser } = useCurrentUsersContext();
-	const [SheetOpen, setSheetOpen] = useState(false); // State to manage sheet visibility
+	const [isSheetOpen, setSheetOpen] = useState(false); // State to manage sheet visibility
 	const chatRequestsRef = collection(db, "chatRequests");
 	const chatRef = collection(db, "chats");
+	const messagesRef = collection(db, "messages");
 	const router = useRouter();
 	const { walletBalance } = useWalletBalanceContext();
 	const { getDevicePlatform } = usePlatform();
@@ -41,22 +48,20 @@ const useChatRequest = (onChatRequestUpdate?: any) => {
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ phone, status }),
+				body: JSON.stringify({ phone, status, global: currentUser?.global ?? false }),
 			});
 
 			const data = await response.json();
 			if (!response.ok) {
 				throw new Error(data.message || "Failed to update status");
 			}
-
-			console.log("Expert status updated to:", status);
 		} catch (error) {
 			Sentry.captureException(error);
 			console.error("Error updating expert status:", error);
 		}
 	};
 
-	function maskPhoneNumber(phoneNumber: string) {
+	const maskPhoneNumber = (phoneNumber: string) => {
 		// Remove the '+91' prefix
 		if (phoneNumber) {
 			let cleanedNumber = phoneNumber.replace("+91", "");
@@ -69,44 +74,60 @@ const useChatRequest = (onChatRequestUpdate?: any) => {
 		}
 	}
 
-	const getUserData = async (userId: string) => {
+	const getUserData = async (userId: string, global: boolean) => {
 		try {
 			const response = await axios.get(
 				`${backendBaseUrl}/creator/getUser/${userId}`
 			);
-			console.log("User data:", response.data.chatRate);
-			return response.data.chatRate;
+			return global
+				? Number(response.data.globalChatRate)
+				: parseInt(response.data.chatRate, 10);
 		} catch (error) {
 			console.error("Error fetching user data:", error);
 			throw error;
 		}
 	};
 
-	const handleChat = async (creator: any, clientUser: any) => {
+	const handleChat = async (creator: creatorUser, clientUser: clientUser, setChatState: any, discounts?: Service) => {
 		if (!clientUser) router.push("sign-in");
 
-		let maxCallDuration = (walletBalance / parseInt(creator.chatRate, 10)) * 60;
+		const chatRate = await getUserData(creator._id, clientUser.global ?? false);
+
+		let maxCallDuration = (walletBalance / chatRate) * 60;
 		maxCallDuration =
 			maxCallDuration > 3600 ? 3600 : Math.floor(maxCallDuration);
 
 		if (maxCallDuration < 300) {
+			trackEvent("MinimumBalance_NotAvailable", {
+				Client_ID: clientUser?._id,
+				User_First_Seen: clientUser?.createdAt?.toString().split("T")[0],
+				Creator_ID: creator._id,
+				Time_Duration_Available: maxCallDuration,
+				Walletbalance_Available: clientUser?.walletBalance,
+			});
 			toast({
 				variant: "destructive",
 				title: "Insufficient Balance",
 				description: "Your balance is below the minimum amount.",
+				toastStatus: "negative",
 			});
 			router.push("/payment?callType=chat");
 			return;
 		}
 
-		console.log("Trying to set the callID");
+		trackEvent("MinimumBalance_Available", {
+			Client_ID: clientUser?._id,
+			User_First_Seen: clientUser?.createdAt?.toString().split("T")[0],
+			Creator_ID: creator._id,
+			Time_Duration_Available: maxCallDuration,
+			Walletbalance_Available: clientUser?.walletBalance,
+		});
+
 		const callId = crypto.randomUUID();
-		console.log("CallId: ", callId);
 		localStorage.setItem("CallId", callId);
 
-		setSheetOpen(true);
-
 		try {
+			setSheetOpen(true);
 			const userChatsDocRef = doc(db, "userchats", clientUser?._id);
 			const creatorChatsDocRef = doc(db, "userchats", creator?._id);
 
@@ -130,9 +151,60 @@ const useChatRequest = (onChatRequestUpdate?: any) => {
 				if (existingChat) {
 					existingChatId = existingChat.chatId;
 				}
+			} else {
+				try {
+					await setDoc(
+						userChatsDocSnapshot.ref,
+						{
+							isTyping: false,
+						},
+						{ merge: true }
+					);
+
+					await setDoc(
+						creatorChatsDocSnapshot.ref,
+						{
+							isTyping: false,
+						},
+						{ merge: true }
+					);
+				} catch (error) {
+					console.error("Error updating isTyping field: ", error);
+				}
 			}
 
 			const chatId = existingChatId || doc(chatRef).id;
+
+			const messagesDocRef = doc(messagesRef, chatId);
+			const messagesDocSnapshot = await getDoc(messagesDocRef);
+			if (!messagesDocSnapshot.exists()) {
+				await setDoc(messagesDocSnapshot.ref, {
+					messages: []
+				})
+			}
+
+			const chatDocRef = doc(db, "callTimer", chatId as string);
+			const callDoc = await getDoc(chatDocRef);
+			if (callDoc.exists()) {
+				await updateDoc(chatDocRef, {
+					timeLeft: maxCallDuration,
+					timeUtilized: 0,
+				});
+			} else {
+				await setDoc(chatDocRef, {
+					timeLeft: maxCallDuration,
+					timeUtilized: 0,
+				});
+			}
+			await setDoc(
+				doc(db, "chats", chatId),
+				{
+					clientId: clientUser?._id,
+					creatorId: creator?._id,
+					discounts: null,
+				},
+				{ merge: true }
+			);
 			localStorage.setItem("chatId", chatId);
 			const newChatRequestRef = doc(chatRequestsRef);
 			const createdAtDate = clientUser?.createdAt
@@ -140,63 +212,72 @@ const useChatRequest = (onChatRequestUpdate?: any) => {
 				: new Date();
 			const formattedDate = createdAtDate.toISOString().split("T")[0];
 
-			const chatRate = await getUserData(creator._id);
-
-			await setDoc(newChatRequestRef, {
+			const chatRequestData: any = {
 				id: newChatRequestRef.id,
 				callId,
 				creatorId: creator?._id,
-				creatorName: creator.fullName
-					? creator.fullName
-					: maskPhoneNumber(creator.phone),
-				creatorPhone: creator.phone,
 				creatorImg: creator.photo,
 				clientId: clientUser?._id,
-				clientPhone: clientUser?.phone,
-				clientName: clientUser?.fullName
-					? clientUser.fullName
-					: maskPhoneNumber(clientUser.phone),
 				clientImg: clientUser?.photo,
 				client_first_seen: formattedDate,
-				creator_first_seen: creator.createdAt.toString().split("T")[0],
+				creator_first_seen: creator.createdAt ? creator.createdAt.toString().split("T")[0] : "",
 				client_balance: clientUser.walletBalance,
 				status: "pending",
 				chatId: chatId,
-				chatRate,
+				chatRate: String(chatRate),
+				maxCallDuration,
+				global: currentUser?.global ?? false,
 				createdAt: Date.now(),
-			});
+				discounts: discounts ?? null,
+			};
+
+			console.log("discount...", discounts);
+
+			// Conditionally add fields if they exist
+			if (creator.fullName) {
+				chatRequestData.creatorName = creator.fullName;
+			} else if (creator.phone) {
+				chatRequestData.creatorName = maskPhoneNumber(creator.phone as string);
+			}
+
+			if (creator.phone) {
+				chatRequestData.creatorPhone = creator.phone;
+			}
+
+			if (clientUser?.phone) {
+				chatRequestData.clientPhone = clientUser.phone;
+			}
+
+			if (clientUser?.email) {
+				chatRequestData.clientEmail = clientUser.email;
+			}
+
+			if (clientUser?.fullName) {
+				chatRequestData.clientName = clientUser.fullName;
+			} else if (clientUser?.phone) {
+				chatRequestData.clientName = maskPhoneNumber(clientUser.phone as string);
+			}
+
+			await setDoc(newChatRequestRef, chatRequestData);
+
 
 			const docSnap = await getDoc(newChatRequestRef);
 
 			if (docSnap.exists()) {
 				const chatRequestData = docSnap.data();
-				const fcmToken = await fetchFCMToken(creator.phone);
+				const fcmToken = await fetchFCMToken(creator.phone as string);
 				if (fcmToken) {
-					sendNotification(
-						fcmToken,
-						`Incoming Chat Request`,
-						`Chat Request from ${clientUser.username}`,
-						{
-							clientId: chatRequestData.clientId,
-							clientName: chatRequestData.clientName,
-							clientPhone: chatRequestData.clientPhone,
-							clientImg: chatRequestData.clientImg,
-							creatorId: chatRequestData.creatorId,
-							creatorName: chatRequestData.creatorName,
-							creatorPhone: chatRequestData.creatorPhone,
-							creatorImg: chatRequestData.creatorImg,
-							chatId: chatRequestData.chatId,
-							chatRequestId: chatRequestData.id,
-							callId: chatRequestData.callId,
-							chatRate: chatRequestData.chatRate,
-							client_first_seen: chatRequestData.client_first_seen,
-							creator_first_seen: chatRequestData.creator_first_seen,
-							createdAt: String(chatRequestData.createdAt)
-						},
-						`https:flashcall.me/`
+					await sendChatNotification(
+						creator.phone as string,
+						"chat",
+						clientUser.username,
+						"chat.ring",
+						chatRequestData,
+						fetchFCMToken,
+						sendNotification,
+						backendUrl as string
 					);
 				}
-				console.log("Document data:", chatRequestData);
 			} else {
 				console.log("No such document!");
 			}
@@ -210,13 +291,10 @@ const useChatRequest = (onChatRequestUpdate?: any) => {
 					if (data?.status === "pending") {
 						// If the status is still "pending", update it to "ended"
 						await setDoc(chatRequestDoc, { status: "ended" }, { merge: true });
-						console.log(
-							"Chat request status updated to 'ended' due to timeout"
-						);
 					}
 					// localStorage.removeItem("chatRequestId");
 				}
-			}, 30000); // 60 seconds
+			}, 60000); // 60 seconds
 
 			// Save chatRequest document ID in local storage
 			localStorage.setItem("chatRequestId", newChatRequestRef.id);
@@ -238,23 +316,86 @@ const useChatRequest = (onChatRequestUpdate?: any) => {
 			const chatRequestDoc = doc(chatRequestsRef, newChatRequestRef.id);
 			const unsubscribe = onSnapshot(chatRequestDoc, (doc) => {
 				const data = doc.data();
-				if (data && data.status === "accepted") {
-					clearTimeout(timer);
-					unsubscribe();
-					localStorage.setItem(
-						"user2",
-						JSON.stringify({
-							clientId: data.clientId,
-							creatorId: data.creatorId,
-							User_First_Seen: formattedDate,
-							chatId: chatId,
-							requestId: doc.id,
-							fullName: creator.firstName + " " + creator?.lastName,
-							photo: creator.photo,
-						})
-					);
+				if (data) {
+					if (
+						data.status === "ended" ||
+						data.status === "rejected" ||
+						data.status === "cancelled"
+					) {
+						updateExpertStatus(
+							clientUser?.global
+								? (clientUser?.email as string)
+								: (clientUser?.phone as string),
+							"Online"
+						);
+						setSheetOpen(false);
+						setChatState(data.status);
+						if (data.status === "rejected") {
+							toast({
+								variant: "destructive",
+								title: "The user is busy, please try again later",
+								toastStatus: "negative",
+							});
+						}
+						if (data.status === "ended") {
+							toast({
+								variant: "destructive",
+								title: "User is not answering please try again later",
+								toastStatus: "negative",
+							});
+						}
+						if (data.status === "cancelled") {
+							toast({
+								variant: "destructive",
+								title: "You cancelled the request",
+								toastStatus: "negative",
+							});
+						}
+						localStorage.removeItem("user2");
+						localStorage.removeItem("chatRequestId");
+						localStorage.removeItem("chatId");
+						localStorage.removeItem("CallId");
+						unsubscribe();
+					} else if (
+						data.status === "accepted" &&
+						clientUser?._id === data.clientId
+					) {
+						setSheetOpen(false);
+						setChatState(data.status);
+						updateExpertStatus(creator.phone as string, "Busy");
+						unsubscribe();
+						trackEvent("BookCall_Chat_Connected", {
+							Client_ID: data.clientId,
+							User_First_Seen: data.client_first_seen,
+							Creator_ID: data.creatorId,
+							Time_Duration_Available: data.maxCallDuration,
+							Walletbalance_Available: clientUser?.walletBalance,
+						});
+						updateExpertStatus(data.creatorPhone as string, "Busy");
+						router.replace(`/chat/${data.callId}/${data.chatId}/${data.clientId}`);
+					} else if (data.status === "accepted") {
+						clearTimeout(timer);
+						unsubscribe();
+						localStorage.setItem(
+							"user2",
+							JSON.stringify({
+								clientId: data.clientId,
+								creatorId: data.creatorId,
+								User_First_Seen: formattedDate,
+								chatId: chatId,
+								requestId: doc.id,
+								fullName: creator.firstName + " " + creator?.lastName,
+								photo: creator.photo,
+							})
+						);
+					} else {
+						setChatState(data.status);
+					}
 				}
 			});
+
+			updateExpertStatus(currentUser?.global ? currentUser?.email as string : currentUser?.phone as string, "Busy");
+
 			trackEvent("BookCall_Chat_initiated", {
 				Client_ID: clientUser._id,
 				User_First_Seen: formattedDate,
@@ -263,14 +404,21 @@ const useChatRequest = (onChatRequestUpdate?: any) => {
 				Walletbalace_Available: clientUser.walletBalance,
 			});
 		} catch (error) {
+			setSheetOpen(false);
 			Sentry.captureException(error);
 			console.error(error);
-			toast({ variant: "destructive", title: "Failed to send chat request" });
+			toast({
+				variant: "destructive",
+				title: "Failed to send chat request",
+				toastStatus: "negative",
+			});
+		} finally {
+			setLoading(false);
 		}
 	};
 
 	const handleAcceptChat = async (chatRequest: any) => {
-		console.log("Trying to accept the chat");
+		console.log("Inside Accept Function: ", chatRequest);
 		const userChatsRef = collection(db, "userchats");
 		const chatId = chatRequest.chatId;
 		const response = await getUserById(chatRequest.clientId as string);
@@ -281,23 +429,36 @@ const useChatRequest = (onChatRequestUpdate?: any) => {
 
 		try {
 			const existingChatDoc = await getDoc(doc(db, "chats", chatId));
-			if (!existingChatDoc.exists()) {
-				await setDoc(doc(db, "chats", chatId), {
+			if (!existingChatDoc.data()?.status) {
+				const chatData: any = {
 					callId: chatRequest.callId,
 					chatId: chatRequest.chatId,
 					clientId: chatRequest.clientId,
 					clientName: chatRequest.clientName,
-					clientPhone: response.phone,
-					clientImg: response.photo,
+					clientImg: chatRequest.clientImg,
 					creatorId: chatRequest.creatorId,
 					creatorName: chatRequest.creatorName,
 					creatorPhone: chatRequest.creatorPhone,
 					creatorImg: chatRequest.creatorImg,
 					status: "active",
-					messages: [],
 					timerSet: false,
-					chatRate: chatRequest.rate,
-				});
+					global: chatRequest.global ?? false,
+					chatRate: chatRequest.chatRate,
+					discounts: chatRequest.discounts ?? null
+				};
+
+				// Only add `clientPhone` if it exists
+				if (chatRequest.clientPhone) {
+					chatData.clientPhone = chatRequest.clientPhone;
+				}
+
+				// Only add `clientEmail` if it exists
+				if (chatRequest.clientEmail) {
+					chatData.clientEmail = chatRequest.clientEmail;
+				}
+
+				await setDoc(doc(db, "chats", chatId), chatData);
+
 
 				const creatorChatUpdate = updateDoc(
 					doc(userChatsRef, chatRequest.creatorId),
@@ -326,19 +487,36 @@ const useChatRequest = (onChatRequestUpdate?: any) => {
 				);
 				await Promise.all([creatorChatUpdate, clientChatUpdate]);
 			} else {
-				await updateDoc(doc(db, "chats", chatId), {
+				const chatData: any = {
 					callId: chatRequest.callId,
-					clientName: chatRequest.clientName,
-					maxChatDuration,
 					chatId: chatRequest.chatId,
-					clientBalance: response.walletBalance,
+					clientId: chatRequest.clientId,
+					clientName: chatRequest.clientName,
+					clientImg: chatRequest.clientImg,
+					creatorId: chatRequest.creatorId,
+					creatorName: chatRequest.creatorName,
+					creatorPhone: chatRequest.creatorPhone,
+					creatorImg: chatRequest.creatorImg,
+					status: "active",
 					timerSet: false,
-				});
-			}
+					global: chatRequest.global ?? false,
+					chatRate: chatRequest.chatRate,
+					discounts: chatRequest.discounts ?? null,
+				};
 
-			await updateDoc(doc(chatRef, chatId), {
-				status: "active",
-			});
+				// Only add `clientPhone` if it exists
+				if (chatRequest.clientPhone) {
+					chatData.clientPhone = chatRequest.clientPhone;
+				}
+
+				// Only add `clientEmail` if it exists
+				if (chatRequest.clientEmail) {
+					chatData.clientEmail = chatRequest.clientEmail;
+				}
+
+				await updateDoc(doc(db, "chats", chatId), chatData);
+
+			}
 
 			await updateDoc(doc(chatRequestsRef, chatRequest.id), {
 				status: "accepted",
@@ -355,7 +533,7 @@ const useChatRequest = (onChatRequestUpdate?: any) => {
 					fullName: response.firstName
 						? response.firstName + " " + response.lastname
 						: undefined,
-					phone: response.phone,
+					phone: response.phone ?? "",
 					photo: response.photo,
 				})
 			);
@@ -389,7 +567,11 @@ const useChatRequest = (onChatRequestUpdate?: any) => {
 		} catch (error) {
 			Sentry.captureException(error);
 			console.error(error);
-			toast({ variant: "destructive", title: "Failed to accept chat request" });
+			toast({
+				variant: "destructive",
+				title: "Failed to accept chat request",
+				toastStatus: "negative",
+			});
 		}
 	};
 
@@ -452,7 +634,11 @@ const useChatRequest = (onChatRequestUpdate?: any) => {
 		} catch (error) {
 			Sentry.captureException(error);
 			console.error(error);
-			toast({ variant: "destructive", title: "Failed to reject chat request" });
+			toast({
+				variant: "destructive",
+				title: "Failed to reject chat request",
+				toastStatus: "negative",
+			});
 		}
 	};
 
@@ -461,7 +647,10 @@ const useChatRequest = (onChatRequestUpdate?: any) => {
 		handleRejectChat,
 		handleChat,
 		chatRequestsRef,
-		SheetOpen,
+		isSheetOpen,
+		setSheetOpen,
+		loading,
+		setLoading,
 	};
 };
 

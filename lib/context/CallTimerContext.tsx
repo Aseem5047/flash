@@ -1,73 +1,45 @@
-import React, {
-	createContext,
-	useContext,
-	useState,
-	useEffect,
-	ReactNode,
-} from "react";
+import { useEffect, useState } from "react";
 import { useWalletBalanceContext } from "./WalletBalanceContext";
-import { useToast } from "@/components/ui/use-toast";
-import { Call, useCallStateHooks } from "@stream-io/video-react-sdk";
+import { Call } from "@stream-io/video-react-sdk";
 import { creatorUser } from "@/types";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import {
+	doc,
+	getDoc,
+	setDoc,
+	updateDoc,
+	serverTimestamp,
+} from "firebase/firestore";
 import { db } from "../firebase";
 import * as Sentry from "@sentry/nextjs";
+import {
+	updateFirestoreSessions,
+	updatePastFirestoreSessionsPPM,
+} from "../utils";
 
-interface CallTimerContextProps {
-	timeLeft: string;
-	setTimeLeft: React.Dispatch<React.SetStateAction<number>>;
-	maxCallDuration: number;
-	setMaxCallDuration: React.Dispatch<React.SetStateAction<number>>;
-	hasLowBalance: boolean;
-	pauseTimer: () => void;
-	resumeTimer: () => void;
-	anyModalOpen: boolean;
-	setAnyModalOpen: (isOpen: boolean) => void;
-	totalTimeUtilized: number;
-	callRatePerMinute: number;
-}
-
-interface CallTimerProviderProps {
-	children: ReactNode;
+interface CallTimerParams {
 	isVideoCall: boolean;
 	isMeetingOwner: boolean;
 	call?: Call;
 }
 
-const CallTimerContext = createContext<CallTimerContextProps | null>(null);
-
-export const useCallTimerContext = () => {
-	const context = useContext(CallTimerContext);
-	if (!context) {
-		throw new Error(
-			"useCallTimerContext must be used within a CallTimerProvider"
-		);
-	}
-	return context;
-};
-
-export const CallTimerProvider = ({
-	children,
+const useCallTimer = ({
 	isVideoCall,
 	isMeetingOwner,
 	call,
-}: CallTimerProviderProps) => {
-	const { toast } = useToast();
+}: CallTimerParams) => {
 	const [audioRatePerMinute, setAudioRatePerMinute] = useState(0);
 	const [videoRatePerMinute, setVideoRatePerMinute] = useState(0);
 	const [callRatePerMinute, setCallRatePerMinute] = useState(0);
 	const [anyModalOpen, setAnyModalOpen] = useState(false);
 	const [maxCallDuration, setMaxCallDuration] = useState(NaN);
-	const { useCallStartsAt } = useCallStateHooks();
 	const [timeLeft, setTimeLeft] = useState(NaN);
-	const [lowBalanceNotified, setLowBalanceNotified] = useState(false);
 	const [hasLowBalance, setHasLowBalance] = useState(false);
 	const [isTimerRunning, setIsTimerRunning] = useState(true);
 	const [totalTimeUtilized, setTotalTimeUtilized] = useState(0);
 	const { walletBalance } = useWalletBalanceContext();
 	const lowBalanceThreshold = 300;
+	const [callStartedAt, setCallStartedAt] = useState<Date | null>(null);
 
-	const callStartedAt = useCallStartsAt();
 	const callId = call?.id.toString();
 
 	const pauseTimer = () => setIsTimerRunning(false);
@@ -77,127 +49,149 @@ export const CallTimerProvider = ({
 		const storedCreator = localStorage.getItem("currentCreator");
 		if (storedCreator) {
 			const parsedCreator: creatorUser = JSON.parse(storedCreator);
-			if (parsedCreator.audioRate) {
-				setAudioRatePerMinute(parseInt(parsedCreator.audioRate, 10));
-			}
-			if (parsedCreator.videoRate) {
-				setVideoRatePerMinute(parseInt(parsedCreator.videoRate, 10));
+			if (call?.state.custom.global) {
+				setAudioRatePerMinute(
+					parsedCreator.globalAudioRate
+						? parseInt(parsedCreator.globalAudioRate, 10)
+						: 0.5
+				);
+				setVideoRatePerMinute(
+					parsedCreator.globalVideoRate
+						? parseInt(parsedCreator.globalVideoRate, 10)
+						: 0.5
+				);
+			} else {
+				setAudioRatePerMinute(
+					parsedCreator.audioRate ? parseInt(parsedCreator.audioRate, 10) : 10
+				);
+				setVideoRatePerMinute(
+					parsedCreator.videoRate ? parseInt(parsedCreator.videoRate, 10) : 10
+				);
 			}
 		}
 	}, []);
 
 	useEffect(() => {
-		if (!isMeetingOwner || !callId) {
-			return;
-		}
-		const ratePerMinute = isVideoCall ? videoRatePerMinute : audioRatePerMinute;
-		setCallRatePerMinute(ratePerMinute);
+		const initializeCallData = async () => {
+			if (!isMeetingOwner || !callId) return;
 
-		// Calculate the initial max call duration based on wallet balance
-		let initialMaxCallDuration = (walletBalance / ratePerMinute) * 60;
-		initialMaxCallDuration =
-			initialMaxCallDuration > 3600 ? 3600 : initialMaxCallDuration;
+			const ratePerMinute = isVideoCall
+				? videoRatePerMinute
+				: audioRatePerMinute;
+			setCallRatePerMinute(ratePerMinute);
 
-		// Update maxCallDuration state
-		setMaxCallDuration(initialMaxCallDuration);
+			let initialMaxCallDuration = (walletBalance / ratePerMinute) * 60;
+			initialMaxCallDuration = Math.min(initialMaxCallDuration, 3600);
 
-		if (!callStartedAt) {
-			setTimeLeft(initialMaxCallDuration);
-			return;
-		}
+			if (maxCallDuration !== initialMaxCallDuration) {
+				setMaxCallDuration(initialMaxCallDuration);
+			}
 
-		const updateFirestoreTimer = async (
-			timeLeft: number,
-			timeUtilized: number
-		) => {
 			try {
 				const callDocRef = doc(db, "calls", callId);
 				const callDoc = await getDoc(callDocRef);
+
+				await updateFirestoreSessions(call?.state?.createdBy?.id as string, {
+					status: "active",
+				});
+
+				updatePastFirestoreSessionsPPM(callId, { status: "active" });
+
 				if (callDoc.exists()) {
-					await updateDoc(callDocRef, {
-						timeLeft,
-						timeUtilized,
-					});
+					const data = callDoc.data();
+					const storedStartTime = data?.startTime;
+					const storedTimeLeft = data?.timeLeft;
+
+					if (storedStartTime) {
+						const startTime = new Date(storedStartTime);
+						setCallStartedAt(startTime);
+						if (storedTimeLeft !== undefined) {
+							setTimeLeft(storedTimeLeft);
+						}
+					}
 				} else {
+					const currentTime = new Date();
+
 					await setDoc(callDocRef, {
-						timeLeft,
-						timeUtilized,
+						callType: "instant",
+						callId: callId,
+						startTime: currentTime.toISOString(),
+						timeLeft: initialMaxCallDuration,
+						timeUtilized: 0,
+						lastUpdatedAt: serverTimestamp(),
 					});
+
+					setCallStartedAt(currentTime);
+					setTimeLeft(initialMaxCallDuration);
 				}
 			} catch (error) {
 				Sentry.captureException(error);
-				console.error("Error updating Firestore timer: ", error);
+				console.error("Error initializing call data:", error);
 			}
 		};
 
+		initializeCallData();
+	}, [
+		isMeetingOwner,
+		callId,
+		maxCallDuration,
+		walletBalance,
+		audioRatePerMinute,
+		videoRatePerMinute,
+	]);
+
+	useEffect(() => {
+		if (!callStartedAt || !callId || !isTimerRunning) return;
+
+		const calculateTimeLeft = () => {
+			const now = new Date();
+			const elapsedTime = (now.getTime() - callStartedAt.getTime()) / 1000;
+			const updatedTimeLeft = Math.max(maxCallDuration - elapsedTime, 0);
+
+			setTimeLeft(updatedTimeLeft);
+			setTotalTimeUtilized(elapsedTime);
+			setHasLowBalance(updatedTimeLeft <= lowBalanceThreshold);
+
+			try {
+				const callDocRef = doc(db, "calls", callId);
+				updateDoc(callDocRef, {
+					timeLeft: updatedTimeLeft,
+					timeUtilized: elapsedTime,
+					lastUpdatedAt: serverTimestamp(),
+				});
+			} catch (error) {
+				Sentry.captureException(error);
+				console.error("Error updating call data in Firestore:", error);
+			}
+
+			if (updatedTimeLeft <= 0) {
+				setIsTimerRunning(false);
+			}
+		};
+
+		calculateTimeLeft();
 		const intervalId = setInterval(() => {
 			if (isTimerRunning) {
-				const now = new Date();
-				const timeUtilized = (now.getTime() - callStartedAt.getTime()) / 1000;
-
-				const newTimeLeft = maxCallDuration - timeUtilized;
-				const clampedTimeLeft = newTimeLeft > 0 ? newTimeLeft : 0;
-
-				setTimeLeft(clampedTimeLeft);
-				setTotalTimeUtilized(timeUtilized);
-				updateFirestoreTimer(clampedTimeLeft, timeUtilized);
-
-				if (clampedTimeLeft <= 0) {
-					clearInterval(intervalId);
-				}
-
-				if (
-					isMeetingOwner &&
-					clampedTimeLeft <= lowBalanceThreshold &&
-					clampedTimeLeft > 0
-				) {
-					setHasLowBalance(true);
-					if (!lowBalanceNotified) {
-						setLowBalanceNotified(true);
-						toast({
-							variant: "destructive",
-							title: "Call Will End Soon",
-							description: "Client's wallet balance is low.",
-						});
-					}
-				} else if (clampedTimeLeft > lowBalanceThreshold) {
-					setHasLowBalance(false);
-					setLowBalanceNotified(false);
-				}
+				calculateTimeLeft();
 			}
 		}, 1000);
 
 		return () => clearInterval(intervalId);
-	}, [
-		isTimerRunning,
-		isMeetingOwner,
-		audioRatePerMinute,
-		videoRatePerMinute,
-		lowBalanceNotified,
-		lowBalanceThreshold,
-		toast,
-		callStartedAt,
-		walletBalance,
-		callId,
-	]);
+	}, [callStartedAt, callId, isTimerRunning, maxCallDuration]);
 
-	return (
-		<CallTimerContext.Provider
-			value={{
-				timeLeft: String(timeLeft),
-				setTimeLeft,
-				maxCallDuration,
-				setMaxCallDuration,
-				hasLowBalance,
-				pauseTimer,
-				resumeTimer,
-				anyModalOpen,
-				setAnyModalOpen,
-				totalTimeUtilized,
-				callRatePerMinute,
-			}}
-		>
-			{children}
-		</CallTimerContext.Provider>
-	);
+	return {
+		timeLeft,
+		setTimeLeft,
+		maxCallDuration,
+		setMaxCallDuration,
+		hasLowBalance,
+		pauseTimer,
+		resumeTimer,
+		anyModalOpen,
+		setAnyModalOpen,
+		totalTimeUtilized,
+		callRatePerMinute,
+	};
 };
+
+export default useCallTimer;

@@ -1,10 +1,10 @@
-// WalletBalanceContext.tsx
 import React, {
 	createContext,
 	useContext,
 	useState,
 	ReactNode,
 	useEffect,
+	useRef,
 } from "react";
 
 import { useCurrentUsersContext } from "./CurrentUsersContext";
@@ -16,6 +16,7 @@ import { backendBaseUrl } from "../utils";
 
 interface WalletBalanceContextProps {
 	walletBalance: number;
+	isInitialized: boolean;
 	setWalletBalance: React.Dispatch<React.SetStateAction<number>>;
 	updateWalletBalance: () => Promise<void>;
 }
@@ -39,84 +40,104 @@ export const WalletBalanceProvider = ({
 }: {
 	children: ReactNode;
 }) => {
-	const { currentUser, userType, authenticationSheetOpen } =
-		useCurrentUsersContext();
-	const [walletBalance, setWalletBalance] = useState<number>(
-		currentUser?.walletBalance ?? -1
-	);
+	const { currentUser, userType, fetchingUser } = useCurrentUsersContext();
+	const [walletBalance, setWalletBalance] = useState<number>(0);
+	const [isInitialized, setIsInitialized] = useState(false);
+
 	const isCreator = userType === "creator";
 
+	const isFirstRender = useRef(true);
+
 	const updateAndSetWalletBalance = async () => {
+		setIsInitialized(false);
 		if (currentUser?._id) {
 			try {
-				const response = isCreator
-					? await axios.get(
-							`${backendBaseUrl}/creator/getUser/${currentUser._id}`
-					  )
-					: await axios.get(
-							`${backendBaseUrl}/client/getUser/${currentUser._id}`
-					  );
+				const userType = isCreator ? "creator" : "client";
+				const endpoint = currentUser.global
+					? `getGlobalUserByEmail/${currentUser.email}`
+					: `getUser/${currentUser._id}`;
 
+				const method = currentUser.global ? "post" : "get";
+
+				const response = await axios[method](
+					`${backendBaseUrl}/${userType}/${endpoint}`
+				);
 				const data = response.data;
-				setWalletBalance(data.walletBalance ?? NaN);
+
+				setWalletBalance((prev) =>
+					prev === data.walletBalance ? prev : data.walletBalance
+				);
 			} catch (error) {
 				Sentry.captureException(error);
-				console.error("Error fetching current user:", error);
+				console.error("Error fetching wallet balance:", error);
 				setWalletBalance(NaN);
+			} finally {
+				setIsInitialized(true);
 			}
+		} else {
+			setWalletBalance(0);
+			setIsInitialized(true);
 		}
 	};
 
-	const fetchAndSetWalletBalance = async () => {
-		if (currentUser) {
-			setWalletBalance(currentUser.walletBalance ?? 0);
-		}
-	};
-
+	// Handle initial render logic
 	useEffect(() => {
-		fetchAndSetWalletBalance();
-	}, [userType, authenticationSheetOpen, isCreator]);
+		if (isFirstRender.current) {
+			isFirstRender.current = false;
+			setWalletBalance(currentUser?.walletBalance ?? 0);
+			setIsInitialized(true);
+		} else {
+			updateAndSetWalletBalance();
+		}
+	}, [fetchingUser]);
 
+	// Listen for real-time updates using Firebase
 	useEffect(() => {
 		if (!currentUser) return;
+
 		const creatorId =
 			userType === "client"
-				? JSON.parse(localStorage.getItem("currentCreator") || "{}")?._id
-				: currentUser._id;
+				? (() => {
+						const storedValue = localStorage.getItem("currentCreator");
+						return storedValue ? JSON.parse(storedValue)?._id : null;
+				  })()
+				: currentUser?._id;
 
-		if (!creatorId) {
-			return;
-		}
+		if (!creatorId) return;
 
 		const creatorRef = doc(db, "transactions", creatorId);
 		const unsubscribe = onSnapshot(
 			creatorRef,
 			(snapshot) => {
 				if (snapshot.exists()) {
-					console.log("Updating Wallet");
-					updateWalletBalance();
+					updateAndSetWalletBalance();
 				} else {
 					console.warn("Document does not exist");
 				}
 			},
 			(error) => {
 				console.error("Error fetching transactions: ", error);
-				updateWalletBalance();
+				updateAndSetWalletBalance();
 			}
 		);
 
-		return () => unsubscribe();
-	}, [currentUser]);
-
-	const updateWalletBalance = async () => {
-		await updateAndSetWalletBalance();
-	};
+		return () => {
+			unsubscribe();
+		};
+	}, [fetchingUser, userType]);
 
 	return (
 		<WalletBalanceContext.Provider
-			value={{ walletBalance, setWalletBalance, updateWalletBalance }}
+			value={{
+				walletBalance,
+				isInitialized,
+				setWalletBalance,
+				updateWalletBalance: updateAndSetWalletBalance,
+			}}
 		>
 			{children}
 		</WalletBalanceContext.Provider>
 	);
 };
+
+export default WalletBalanceProvider;

@@ -11,12 +11,15 @@ const config = {
 	prefix: "",
 	theme: {
 		extend: {
+			letterSpacing: {
+				'3px': '3px',
+			  },
 			padding: {
-        'safe-top': 'env(safe-area-inset-top)',
-        'safe-bottom': 'env(safe-area-inset-bottom)',
-        'safe-left': 'env(safe-area-inset-left)',
-        'safe-right': 'env(safe-area-inset-right)',
-      },
+				"safe-top": "env(safe-area-inset-top)",
+				"safe-bottom": "env(safe-area-inset-bottom)",
+				"safe-left": "env(safe-area-inset-left)",
+				"safe-right": "env(safe-area-inset-right)",
+			},
 			screens: {
 				xs: "320px",
 				xm: "400px",
@@ -62,6 +65,7 @@ const config = {
 			},
 			boxShadow: {
 				"bottom-right": "10px 10px 0px rgba(0, 0, 0, 0.1)",
+				custom: "0px 8px 10px -6px rgba(0, 0, 0, 0.1), 0px 20px 25px -5px rgba(0, 0, 0, 0.1)",
 			},
 			keyframes: {
 				"accordion-down": {
@@ -110,10 +114,15 @@ const config = {
 			backgroundImage: {
 				hero: "url('/web/images/grid.png')",
 				pattern: "url('/web/images/pattern.png')",
+				'referral-gradient': 'linear-gradient(90deg, #3B82F6 0%, #60A5FA 100%)',
+				'custom-gradient': 'linear-gradient(0deg, rgba(0, 0, 0, 0.001), rgba(0, 0, 0, 0.001)), rgba(255, 255, 255, 0.25)',
 			},
 		},
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [
+		require("tailwindcss-animate"), // For animations
+		require("tailwindcss-filters"), // For filters like blur, brightness, etc.
+	  ],
 } satisfies Config;
 
 export default config;

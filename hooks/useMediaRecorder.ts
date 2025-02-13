@@ -38,37 +38,45 @@ const useMediaRecorder = () => {
 		}
 	};
 
-
 	const startRecording = () => {
 		if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 			navigator.mediaDevices
 				.getUserMedia({ audio: true })
 				.then((stream: MediaStream) => {
 					setAudioStream(stream);
-					mediaRecorderRef.current = new MediaRecorder(stream, {
-						mimeType: "audio/webm", // Change mimeType here
-					});
+	
+					// Check for MIME type support
+					const mimeType = MediaRecorder.isTypeSupported("audio/webm")
+						? "audio/webm"
+						: "audio/mp4"; // Fallback to a supported format
+	
+					try {
+						mediaRecorderRef.current = new MediaRecorder(stream, { mimeType });
+					} catch (error) {
+						console.error("MediaRecorder initialization failed:", error);
+						return;
+					}
+	
 					mediaRecorderRef.current.ondataavailable = (e: BlobEvent) => {
 						audioChunksRef.current.push(e.data);
 					};
-					mediaRecorderRef.current.onstop = async() => {
-						const AudioBlob = new Blob(audioChunksRef.current, {
-							type: "audio/webm", // Ensure consistent type here
-						});
+	
+					mediaRecorderRef.current.onstop = async () => {
+						const AudioBlob = new Blob(audioChunksRef.current, { type: mimeType });
 						if (AudioBlob) {
 							try {
 								const result: Blob = await uploadAudioBlob(AudioBlob);
 								setMp3Blob(result);
-								console.log("Conversion result:", result); // Handle the conversion result as needed
 							} catch (error) {
 								console.error("Error during upload:", error);
 							}
 						}
-						setAudioBlob(audioBlob);
+						setAudioBlob(AudioBlob);
 						audioChunksRef.current = [];
 						stream.getTracks().forEach((track) => track.stop());
 						setAudioStream(null);
 					};
+	
 					mediaRecorderRef.current.start();
 					setIsRecording(true);
 				})
@@ -80,6 +88,7 @@ const useMediaRecorder = () => {
 			console.error("getUserMedia not supported on your browser!");
 		}
 	};
+	
 
 	const stopRecording = () => {
 		if (mediaRecorderRef.current) {

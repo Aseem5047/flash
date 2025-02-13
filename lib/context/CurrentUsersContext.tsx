@@ -7,18 +7,19 @@ import {
 	useEffect,
 	useState,
 	useMemo,
+	useRef,
 } from "react";
 
 import { clientUser, creatorUser } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
 import axios from "axios";
 import { doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
-import { db } from "../firebase";
-import { usePathname, useRouter } from "next/navigation";
+import { auth, db } from "../firebase";
+import { useRouter } from "next/navigation";
 import * as Sentry from "@sentry/nextjs";
-import { backendBaseUrl, frontendBaseUrl } from "../utils";
+import { backendBaseUrl } from "../utils";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 
-// Define the shape of the context value
 interface CurrentUsersContextValue {
 	clientUser: clientUser | null;
 	creatorUser: creatorUser | null;
@@ -37,6 +38,12 @@ interface CurrentUsersContextValue {
 	updateCreatorURL: (url: any) => void;
 	ongoingCallStatus: string;
 	setOngoingCallStatus: any;
+	region: string;
+	userFetched: boolean;
+	pendingNotifications: number;
+	setPendingNotifications: any;
+	setPreviousPendingNotifications: any;
+	fetchNotificationsOnce: any;
 }
 
 // Create the context with a default value of null
@@ -55,11 +62,15 @@ export const useCurrentUsersContext = () => {
 	return context;
 };
 
-// Utility function to check if we're in the browser
 const isBrowser = () => typeof window !== "undefined";
 
-// Provider component to hold the state and provide it to its children
-export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
+export const CurrentUsersProvider = ({
+	children,
+	region,
+}: {
+	children: ReactNode;
+	region: string;
+}) => {
 	const [clientUser, setClientUser] = useState<clientUser | null>(null);
 	const [creatorUser, setCreatorUser] = useState<creatorUser | null>(null);
 	const [currentTheme, setCurrentTheme] = useState("");
@@ -69,16 +80,19 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 	const [authToken, setAuthToken] = useState<string | null>(null);
 	const [creatorURL, setCreatorURL] = useState("");
 	const [ongoingCallStatus, setOngoingCallStatus] = useState("");
+	const [userFetched, setUserFetched] = useState(false);
+	const [pendingNotifications, setPendingNotifications] = useState(0);
+	const [previousPendingNotifications, setPreviousPendingNotifications] =
+		useState<number | null>(null);
+
 	const { toast } = useToast();
 	const router = useRouter();
 
-	// Define the unified currentUser state
 	const currentUser = useMemo(
 		() => creatorUser || clientUser,
 		[creatorUser, clientUser]
 	);
 
-	// Function to update both localStorage and context
 	const updateCreatorURL = (url: any) => {
 		setCreatorURL(url);
 		localStorage.setItem("creatorURL", url);
@@ -141,30 +155,108 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 		}
 	}, [currentUser?._id]);
 
+	const listenerRef = useRef<(() => void) | null>(null);
+
+	const initializeNotificationsListener = (creatorId: string) => {
+		if (!creatorId) return;
+
+		if (listenerRef.current) {
+			listenerRef.current();
+		}
+
+		let lastNotificationCount = previousPendingNotifications ?? 0;
+
+		const docRef = doc(db, "notifications", `notifications_${creatorId}`);
+		listenerRef.current = onSnapshot(docRef, (docSnap) => {
+			if (docSnap.exists()) {
+				const data = docSnap.data();
+				const totalNotifications = data.notifications.length;
+
+				// Play notification sound if the count has increased
+				if (totalNotifications > lastNotificationCount) {
+					const notificationSound = new Audio(
+						"/sounds/pendingNotification.wav"
+					);
+					notificationSound.play();
+				}
+
+				// Update local and state variables
+				lastNotificationCount = totalNotifications;
+				setPendingNotifications(totalNotifications);
+				setPreviousPendingNotifications(totalNotifications);
+			} else {
+				// Reset states if the document doesn't exist
+				setPendingNotifications(0);
+				setPreviousPendingNotifications(0);
+			}
+		});
+	};
+
+	const fetchNotificationsOnce = async (creatorId: string) => {
+		try {
+			const response = await axios.get(
+				`${backendBaseUrl}/user/notification/getNotifications`,
+				{
+					params: { page: 1, limit: 10, creatorId },
+				}
+			);
+
+			if (response.status === 200) {
+				const totalNotifications = response.data.totalNotifications || 0;
+				setPendingNotifications(totalNotifications);
+				setPreviousPendingNotifications(totalNotifications);
+			}
+		} catch (error) {
+			Sentry.captureException(error);
+			console.error("Error fetching notifications:", error);
+		}
+	};
+
+	useEffect(() => {
+		if (!creatorUser?._id) return;
+
+		initializeNotificationsListener(creatorUser._id);
+
+		return () => {
+			if (listenerRef.current) {
+				listenerRef.current();
+				listenerRef.current = null;
+			}
+		};
+	}, [creatorUser?._id]);
+
 	// Function to handle user signout
 	const handleSignout = async () => {
-		if (!currentUser) return;
-		localStorage.removeItem("currentUserID");
-		localStorage.removeItem("authToken");
-		const creatorStatusDocRef = doc(
-			db,
-			"userStatus",
-			currentUser?.phone as string
-		);
-		const creatorStatusDoc = await getDoc(creatorStatusDocRef);
-		if (creatorStatusDoc.exists()) {
-			await updateDoc(creatorStatusDocRef, {
-				status: "Offline",
-				loginStatus: false,
-			});
+		if (!currentUser || !region) return;
+
+		if (region !== "India") {
+			await signOut(auth);
+			localStorage.removeItem("currentUserID");
+			setClientUser(null);
+			setCreatorUser(null);
+		} else {
+			localStorage.removeItem("currentUserID");
+			localStorage.removeItem("authToken");
+			const creatorStatusDocRef = doc(
+				db,
+				"userStatus",
+				currentUser?.phone as string
+			);
+			const creatorStatusDoc = await getDoc(creatorStatusDocRef);
+			if (creatorStatusDoc.exists()) {
+				await updateDoc(creatorStatusDocRef, {
+					status: "Offline",
+					loginStatus: false,
+				});
+			}
+			// Clear user data and local storage
+			await axios.post(`${backendBaseUrl}/user/endSession`);
+
+			localStorage.setItem("userType", "client");
+
+			setClientUser(null);
+			setCreatorUser(null);
 		}
-		// Clear user data and local storage
-		await axios.post(`${backendBaseUrl}/user/endSession`);
-
-		localStorage.setItem("userType", "client");
-
-		setClientUser(null);
-		setCreatorUser(null);
 	};
 
 	// Function to fetch the current user
@@ -196,6 +288,7 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 					variant: "destructive",
 					title: "Sign-out",
 					description: "You have been signed out. Please log in again.",
+					toastStatus: "positive",
 				});
 			}
 		} catch (error: any) {
@@ -209,28 +302,82 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 					handleSignout();
 				}
 			} else {
-				console.error("Error fetching current user:", error);
 				toast({
 					variant: "destructive",
 					title: "Network Error",
 					description: "A network error occurred. Please try again later.",
+					toastStatus: "negative",
 				});
 			}
 		} finally {
 			setFetchingUser(false);
+			setUserFetched(true);
+		}
+	};
+
+	const fetchGlobalCurrentUser = async (email: string) => {
+		try {
+			console.log("Fetching global client");
+			setFetchingUser(true);
+
+			if (email) {
+				const response = await axios.post(
+					`${backendBaseUrl}/client/getGlobalUserByEmail/${email}`
+				);
+
+				const data = response.data;
+
+				if (data.role === "client") {
+					setClientUser(data);
+					setCreatorUser(null);
+					setUserType("client");
+				}
+				localStorage.setItem("userType", data.role);
+			} else console.error("Email not provided");
+		} catch (error) {
+			console.error(error);
+		} finally {
+			setFetchingUser(false);
+			setUserFetched(true);
 		}
 	};
 
 	useEffect(() => {
-		fetchCurrentUser();
-	}, []);
+		if (!region) return;
 
-	// Function to refresh the current user data
+		// Return early if region is not set or not "India"
+		if (region === "India") {
+			fetchCurrentUser();
+			return;
+		}
+
+		// Initialize listener only if region is "Global"
+		const unsubscribe = onAuthStateChanged(auth, (user) => {
+			if (user && user.email) {
+				fetchGlobalCurrentUser(user.email);
+			} else {
+				console.error("Unauthorized");
+				localStorage.removeItem("currentUserID");
+				setClientUser(null);
+				setCreatorUser(null);
+				setUserFetched(true);
+			}
+		});
+
+		return () => {
+			unsubscribe();
+		};
+	}, [region]);
+
 	const refreshCurrentUser = async () => {
-		await fetchCurrentUser();
+		if (region === "India") await fetchCurrentUser();
+		else {
+			const email = auth.currentUser?.email;
+			console.log("Email: ", email);
+			if (email) await fetchGlobalCurrentUser(email);
+		}
 	};
 
-	// Redirect to /updateDetails if username is missing
 	useEffect(() => {
 		if (currentUser && userType === "creator" && !currentUser.firstName) {
 			router.replace("/updateDetails");
@@ -239,53 +386,54 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 					variant: "destructive",
 					title: "Greetings Friend",
 					description: "Complete Your Profile Details...",
+					toastStatus: "positive",
 				});
 			}, 1000);
 		}
 	}, [router, userType, currentUser]);
 
-	// real-time session monitoring
 	useEffect(() => {
-		if (!currentUser) {
+		if (!currentUser || !region) {
 			return;
 		}
 
-		const userAuthRef = doc(db, "authToken", currentUser.phone);
+		if (region === "India") {
+			const userAuthRef = doc(db, "authToken", currentUser.phone as string);
 
-		const unsubscribe = onSnapshot(
-			userAuthRef,
-			(doc) => {
-				try {
-					if (doc.exists()) {
-						const data = doc.data();
-						if (isBrowser()) {
-							if (data?.token && data.token !== authToken) {
-								handleSignout();
-								toast({
-									variant: "destructive",
-									title: "Another Session Detected",
-									description: "Logging Out...",
-								});
+			const unsubscribe = onSnapshot(
+				userAuthRef,
+				(doc) => {
+					try {
+						if (doc.exists()) {
+							const data = doc.data();
+							if (isBrowser()) {
+								if (data?.token && data.token !== authToken) {
+									handleSignout();
+									toast({
+										variant: "destructive",
+										title: "Another Session Detected",
+										description: "Logging Out...",
+										toastStatus: "positive",
+									});
+								}
 							}
 						}
+					} catch (error) {
+						Sentry.captureException(error);
+						console.error("Error processing the document: ", error);
 					}
-				} catch (error) {
-					Sentry.captureException(error);
-					console.error("Error processing the document: ", error);
+				},
+				(error) => {
+					console.error("Error fetching document: ", error);
 				}
-			},
-			(error) => {
-				console.error("Error fetching document: ", error);
-			}
-		);
+			);
 
-		// Cleanup function to clear heartbeat and update status to "Offline"
-		return () => {
-			unsubscribe();
-		};
+			return () => {
+				unsubscribe();
+			};
+		}
 	}, [currentUser?._id, authToken]);
 
-	// Provide the context value to children
 	return (
 		<CurrentUsersContext.Provider
 			value={{
@@ -306,9 +454,17 @@ export const CurrentUsersProvider = ({ children }: { children: ReactNode }) => {
 				updateCreatorURL,
 				ongoingCallStatus,
 				setOngoingCallStatus,
+				region,
+				userFetched,
+				pendingNotifications,
+				setPendingNotifications,
+				setPreviousPendingNotifications,
+				fetchNotificationsOnce,
 			}}
 		>
 			{children}
 		</CurrentUsersContext.Provider>
 	);
 };
+
+export default CurrentUsersProvider;

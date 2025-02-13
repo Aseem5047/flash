@@ -8,7 +8,13 @@ import { logEvent } from "firebase/analytics";
 import { analytics, db } from "@/lib/firebase";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { increment, doc, setDoc, getDoc, onSnapshot } from "firebase/firestore";
-import { updateFirestoreCallServices } from "@/lib/utils";
+import {
+	backendUrl,
+	fetchFCMToken,
+	sendCallNotification,
+	sendNotification,
+	updateFirestoreCallServices,
+} from "@/lib/utils";
 import {
 	backendBaseUrl,
 	handleInterruptedCall,
@@ -18,6 +24,9 @@ import {
 import { useGetCallById } from "@/hooks/useGetCallById";
 import axios from "axios";
 import MyCallConnectingUI from "./MyCallConnectigUI";
+import { trackEvent } from "@/lib/mixpanel";
+import { useSelectedServiceContext } from "@/lib/context/SelectedServiceContext";
+import { Service } from "@/types";
 
 const MyCallUI = () => {
 	const calls = useCalls();
@@ -32,7 +41,7 @@ const MyCallUI = () => {
 	const [connecting, setConnecting] = useState(false);
 	const [connectingCall, setConnectingCall] = useState<Call | null>(null);
 	const [redirecting, setRedirecting] = useState(false);
-
+	const { getFinalServices, resetServices } = useSelectedServiceContext();
 	let autoDeclineTimeout: NodeJS.Timeout;
 	const router = useRouter();
 	const checkFirestoreSession = (userId: string) => {
@@ -67,21 +76,37 @@ const MyCallUI = () => {
 			)?.custom?.phone;
 
 			if (userType === "client") {
-				await updateExpertStatus(currentUser?.phone as string, "Idle");
+				await updateExpertStatus(
+					currentUser?.global
+						? (currentUser?.email as string)
+						: (currentUser?.phone as string),
+					"Idle"
+				);
 			} else {
 				await updateExpertStatus(expertPhone, "Online");
 			}
 
+			let discounts =
+				updatedCall.state.custom.type !== "scheduled" && getFinalServices();
+
 			await handleInterruptedCall(
 				currentUser?._id as string,
+				currentUser?.global ?? false,
 				updatedCall.id,
 				updatedCall as Call,
-				currentUser?.phone as string,
+				currentUser?.global
+					? (currentUser.email as string)
+					: (currentUser?.phone as string),
 				userType as "client" | "expert",
 				backendBaseUrl as string,
 				expertPhone,
-				currentUser?.phone as string
+				currentUser?.global
+					? (currentUser.email as string)
+					: (currentUser?.phone as string),
+				discounts as Service[]
 			);
+
+			resetServices();
 		} catch (error) {
 			console.error("Error handling interrupted call:", error);
 		}
@@ -151,6 +176,7 @@ const MyCallUI = () => {
 				variant: "destructive",
 				title: message.title,
 				description: message.description,
+				toastStatus: "negative",
 			});
 
 			setShowCallUI(false);
@@ -162,12 +188,12 @@ const MyCallUI = () => {
 			setShowCallUI(false);
 		};
 
-		incomingCall.on("call.accepted", handleCallAccepted);
+		incomingCall.on("call.session_participant_joined", handleCallAccepted);
 		incomingCall.on("call.ended", handleCallEnded);
 		incomingCall.on("call.rejected", () => handleCallRejected());
 
 		return () => {
-			incomingCall.off("call.accepted", handleCallAccepted);
+			incomingCall.off("call.session_participant_joined", handleCallAccepted);
 			incomingCall.off("call.ended", handleCallEnded);
 			incomingCall.off("call.rejected", () => handleCallRejected());
 		};
@@ -181,6 +207,18 @@ const MyCallUI = () => {
 		const expert = outgoingCall.state?.members?.find(
 			(member) => member.custom.type === "expert"
 		);
+
+		const callType = outgoingCall.type === "default" ? "video" : "audio";
+
+		const maskNumbers = (input: string): string => {
+			if (input.startsWith("+91")) {
+				return input.replace(
+					/(\+91)(\d{10})/,
+					(match, p1, p2) => `${p1} ${p2.slice(0, 5)}xxxxx`
+				);
+			}
+			return input ?? "";
+		};
 
 		const sessionTriggeredRef = doc(
 			db,
@@ -235,10 +273,9 @@ const MyCallUI = () => {
 				}
 
 				if (outgoingCall?.state?.callingState === CallingState.RINGING) {
-					console.log("Auto-declining call due to timeout...");
 					await handleCallIgnored();
 				}
-			}, 30000);
+			}, 60000);
 		};
 
 		const handleCallAccepted = async () => {
@@ -249,10 +286,24 @@ const MyCallUI = () => {
 
 			outgoingCall?.state.setCallingState(CallingState.IDLE);
 
-			logEvent(analytics, "call_accepted", { callId: outgoingCall.id });
+			outgoingCall.type === "default"
+				? trackEvent("BookCall_Video_Connected", {
+						Client_ID: currentUser?._id,
+						User_First_Seen: currentUser?.createdAt?.toString().split("T")[0],
+						Walletbalace_Available: currentUser?.walletBalance,
+						Creator_ID: outgoingCall.state.members[0].user_id,
+				  })
+				: trackEvent("BookCall_Audio_Connected", {
+						Client_ID: currentUser?._id,
+						User_First_Seen: currentUser?.createdAt?.toString().split("T")[0],
+						Walletbalace_Available: currentUser?.walletBalance,
+						Creator_ID: outgoingCall.state.members[0].user_id,
+				  });
 
 			await updateExpertStatus(
-				outgoingCall.state.createdBy?.custom?.phone as string,
+				currentUser?.global
+					? (currentUser?.email as string)
+					: (currentUser?.phone as string),
 				"Busy"
 			);
 
@@ -270,6 +321,7 @@ const MyCallUI = () => {
 			});
 
 			router.replace(`/meeting/${outgoingCall.id}`);
+
 			setShowCallUI(false);
 			setConnecting(false);
 			setRedirecting(false);
@@ -280,6 +332,18 @@ const MyCallUI = () => {
 			setConnecting(false);
 			setRedirecting(false);
 			clearTimeout(autoDeclineTimeout);
+
+			await sendCallNotification(
+				expert?.custom?.phone as string,
+				callType,
+				currentUser?.username as string,
+				currentUser?._id as string,
+				call!,
+				"call.missed",
+				fetchFCMToken,
+				sendNotification,
+				backendUrl as string
+			);
 
 			if (sessionStorage.getItem(`callRejected-${outgoingCall.id}`)) return;
 
@@ -317,6 +381,7 @@ const MyCallUI = () => {
 					variant: "destructive",
 					title: message.title,
 					description: message.description,
+					toastStatus: "negative",
 				});
 
 				await axios.post(`${backendBaseUrl}/calls/updateCall`, {
@@ -335,6 +400,18 @@ const MyCallUI = () => {
 			setConnecting(false);
 			setRedirecting(false);
 
+			await sendCallNotification(
+				expert?.custom?.phone as string,
+				callType,
+				currentUser?.username as string,
+				currentUser?._id as string,
+				call!,
+				"call.missed",
+				fetchFCMToken,
+				sendNotification,
+				backendUrl as string
+			);
+
 			const defaultMessage = {
 				title: `${expert?.custom?.name || "User"} is not answering`,
 				description: "Please try again later",
@@ -346,6 +423,7 @@ const MyCallUI = () => {
 				variant: "destructive",
 				title: message.title,
 				description: message.description,
+				toastStatus: "negative",
 			});
 
 			await axios.post(`${backendBaseUrl}/calls/updateCall`, {
@@ -362,6 +440,18 @@ const MyCallUI = () => {
 			await updateExpertStatus(
 				outgoingCall.state.createdBy?.custom?.phone as string,
 				"Idle"
+			);
+
+			await sendCallNotification(
+				expert?.custom?.phone as string,
+				callType,
+				currentUser?.username as string,
+				currentUser?._id as string,
+				call!,
+				"call.missed",
+				fetchFCMToken,
+				sendNotification,
+				backendUrl as string
 			);
 		};
 
@@ -401,7 +491,7 @@ const MyCallUI = () => {
 		return <MyCallConnectingUI call={connectingCall} />;
 	}
 
-	if (incomingCalls.length > 0 && showCallUI && !hide) {
+	if (incomingCalls.length > 0 && showCallUI) {
 		return <MyIncomingCallUI call={incomingCalls[0]} />;
 	}
 

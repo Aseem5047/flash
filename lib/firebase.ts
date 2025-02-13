@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import {
 	doc,
 	getDoc,
@@ -29,10 +29,11 @@ const firebaseConfig = {
 	measurementId: "G-DV1570MFZK",
 };
 
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+export const provider = new GoogleAuthProvider();
 export let messaging: any;
 if (typeof window !== "undefined") {
 	isMessagingSupported().then((supported) => {
@@ -97,7 +98,7 @@ export const getFirebaseToken = async () => {
 			);
 		}
 	} catch (error) {
-		console.log("An error occurred while retrieving token. ", error);
+		console.warn("An error occurred while retrieving token. ", error);
 	}
 };
 

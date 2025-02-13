@@ -20,14 +20,15 @@ import { useChatTimerContext } from "@/lib/context/ChatTimerContext";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { doc, getDoc, increment, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { backendBaseUrl } from "@/lib/utils";
+import { backendBaseUrl, fetchExchangeRate } from "@/lib/utils";
+import axios from "axios";
 
 interface Props {
-	walletBalance: number,
-	setWalletBalance: React.Dispatch<React.SetStateAction<number>>,
-	updateWalletBalance: () => Promise<void>,
+	walletBalance: number;
+	setWalletBalance: React.Dispatch<React.SetStateAction<number>>;
+	updateWalletBalance: () => Promise<void>;
 	handleSendTip: (tipAmt: string) => Promise<void>;
-	setText: React.Dispatch<React.SetStateAction<string>>,
+	setText: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const TipModal: React.FC<Props> = ({
@@ -58,8 +59,12 @@ const TipModal: React.FC<Props> = ({
 		if (storedCreator) {
 			const parsedCreator: creatorUser = JSON.parse(storedCreator);
 			setCreator(parsedCreator);
-			if (parsedCreator.chatRate) {
-				setChatRatePerMinute(parseInt(parsedCreator.chatRate, 10));
+			if (currentUser?.global) {
+				if (parsedCreator.globalChatRate) setChatRatePerMinute(parseInt(parsedCreator.globalChatRate, 10));
+				else setChatRatePerMinute(0.5);
+			} else {
+				if (parsedCreator.chatRate) setChatRatePerMinute(parseInt(parsedCreator.chatRate, 10));
+				else setChatRatePerMinute(10);
 			}
 		}
 	}, []);
@@ -71,7 +76,8 @@ const TipModal: React.FC<Props> = ({
 		const ratePerMinute = chatRatePerMinute;
 		const costOfTimeUtilized = (totalTimeUtilized / 60) * ratePerMinute;
 		const adjustedWalletBalance = walletBalance - costOfTimeUtilized;
-		setAdjustedWalletBalance(adjustedWalletBalance);
+		if (adjustedWalletBalance >= 0) setAdjustedWalletBalance(adjustedWalletBalance);
+		else setAdjustedWalletBalance(0);
 
 		const options = [10, 49, 99, 149, 199, 249, 299, 499, 999, 2999]
 			.filter((amount) => amount <= adjustedWalletBalance)
@@ -84,24 +90,98 @@ const TipModal: React.FC<Props> = ({
 		setTipAmount(amount);
 	};
 
+	const fetchActivePg = async (global: boolean) => {
+		try {
+			if (global) return "paypal";
+
+			const pgDocRef = doc(db, "pg", "paymentGatways");
+			const pgDoc = await getDoc(pgDocRef);
+
+			if (pgDoc.exists()) {
+				const { activePg } = pgDoc.data();
+				return activePg;
+			}
+
+			return "razorpay";
+		} catch (error) {
+			return error;
+		}
+	};
+
+	const fetchPgCharges = async (pg: string) => {
+		try {
+			const response = await axios.get(
+				`https://backend.flashcall.me/api/v1/pgCharges/fetch`
+			); // Replace with your API endpoint
+			const data = response.data;
+			return data[pg];
+		} catch (error) {
+			console.error("Error fetching PG Charges", error);
+		}
+	};
+
 	const handleTransaction = async () => {
 		if (parseInt(tipAmount) > adjustedWalletBalance) {
 			toast({
 				variant: "destructive",
 				title: "Insufficient Wallet Balance",
 				description: "Try considering Lower Value.",
+				toastStatus: "negative",
 			});
 		} else {
+			let amountINR: number;
 			try {
 				setLoading(true);
+				const response = await axios.get(
+					`${backendBaseUrl}/creator/getUser/${creatorId}`
+				);
+				const exchangeRate = await fetchExchangeRate();
+				const global = currentUser?.global ?? false;
+				const data = response.data;
+				const activePg: string = await fetchActivePg(global);
+				const pgChargesRate: number = await fetchPgCharges(activePg);
+				const commissionRate = Number(data?.commission ?? 20);
+				const commissionAmt = Number(
+					global
+						? (
+							((Number(tipAmount) * commissionRate) / 100) *
+							exchangeRate
+						).toFixed(2)
+						: ((Number(tipAmount) * commissionRate) / 100).toFixed(2)
+				);
+				const pgChargesAmt = Number(
+					global
+						? (
+							((Number(tipAmount) * pgChargesRate) / 100) *
+							exchangeRate
+						).toFixed(2)
+						: ((Number(tipAmount) * pgChargesRate) / 100).toFixed(2)
+				);
+				const gstAmt = Number((commissionAmt * 0.18).toFixed(2));
+				const totalDeduction = Number(
+					(commissionAmt + gstAmt + pgChargesAmt).toFixed(2)
+				);
+				const amountAdded = Number(
+					global
+						? (Number(tipAmount) * exchangeRate - totalDeduction).toFixed(2)
+						: (Number(tipAmount) - totalDeduction).toFixed(2)
+				);
+				amountINR = currentUser?.global ? (Number(tipAmount) * exchangeRate) : (Number(tipAmount));
+
+				const tipId = crypto.randomUUID();
 				await Promise.all([
-					fetch(`${backendBaseUrl}/payout/addMoney`, {
+					fetch(`${backendBaseUrl}/wallet/payout`, {
 						method: "POST",
 						body: JSON.stringify({
 							userId: clientId,
+							user2Id: creatorId,
+							fcCommission: commissionAmt,
+							PGCharge: pgChargesRate,
 							userType: "Client",
 							amount: tipAmount,
 							category: "Tip",
+							global: currentUser?.global ?? false,
+							tipId,
 						}),
 						headers: { "Content-Type": "application/json" },
 					}),
@@ -109,13 +189,23 @@ const TipModal: React.FC<Props> = ({
 						method: "POST",
 						body: JSON.stringify({
 							userId: creatorId,
+							user2Id: clientId,
+							fcCommission: commissionAmt,
+							PGCharge: pgChargesRate,
 							userType: "Creator",
-							amount: (parseInt(tipAmount, 10) * 0.8).toFixed(1),
+							amount: amountAdded.toFixed(2),
 							category: "Tip",
+							tipId,
 						}),
 						headers: { "Content-Type": "application/json" },
 					}),
 				]);
+
+				await axios.post(`${backendBaseUrl}/tip`, {
+					tipId,
+					amountAdded,
+					amountPaid: tipAmount,
+				})
 
 				// Firestore tip document update
 				const tipRef = doc(db, "userTips", creatorId as string);
@@ -124,8 +214,10 @@ const TipModal: React.FC<Props> = ({
 				if (tipDoc.exists()) {
 					// If callId exists, increment amount; otherwise, add it
 					await updateDoc(tipRef, {
+						[`${callId}.totalAmountINR`]: increment(amountINR ?? parseInt(tipAmount)),
 						[`${callId}.totalAmount`]: increment(parseInt(tipAmount)),
 						[`${callId}.amount`]: parseInt(tipAmount),
+						[`${callId}.amountINR`]: (amountINR ?? parseInt(tipAmount)),
 					});
 				} else {
 					console.log("not exists");
@@ -133,14 +225,15 @@ const TipModal: React.FC<Props> = ({
 					await setDoc(tipRef, {
 						[callId as string]: {
 							amount: parseInt(tipAmount),
+							amountINR: amountINR ?? parseInt(tipAmount),
 							totalAmount: parseInt(tipAmount),
+							totalAmountINR: amountINR ?? parseInt(tipAmount)
 						},
 					});
 				}
 
 				setWalletBalance((prev) => prev + parseInt(tipAmount));
 				setTipPaid(true);
-
 			} catch (error) {
 				Sentry.captureException(error);
 				console.error("Error handling wallet changes:", error);
@@ -148,6 +241,7 @@ const TipModal: React.FC<Props> = ({
 					variant: "destructive",
 					title: "Error",
 					description: "An error occurred while processing the Transactions",
+					toastStatus: "negative",
 				});
 			} finally {
 				// Update wallet balance after transaction
@@ -191,7 +285,7 @@ const TipModal: React.FC<Props> = ({
 			>
 				<SheetTrigger asChild>
 					<button
-						className="bg-black/40 text-white p-2 rounded-lg text-[10px] md:text-lg hoverScaleDownEffect"
+						className="bg-black text-white p-2 text-[10px] md:text-sm rounded-lg hoverScaleDownEffect"
 						onClick={() => setIsSheetOpen(true)}
 					>
 						Give Tip
@@ -200,9 +294,8 @@ const TipModal: React.FC<Props> = ({
 				<SheetContent
 					onOpenAutoFocus={(e) => e.preventDefault()}
 					side="bottom"
-					className={`flex flex-col items-center justify-center ${
-						!loading ? "px-10 py-7" : "px-4"
-					} border-none rounded-t-xl bg-white min-h-[350px] max-h-fit w-full sm:max-w-[444px] mx-auto`}
+					className={`flex flex-col items-center justify-center ${!loading ? "px-10 py-7" : "px-4"
+						} border-none rounded-t-xl bg-white min-h-[350px] max-h-fit w-full sm:max-w-[444px] mx-auto`}
 				>
 					{loading ? (
 						<ContentLoading />
@@ -211,20 +304,19 @@ const TipModal: React.FC<Props> = ({
 							<SheetHeader className="flex flex-col items-center justify-center">
 								<SheetTitle>Provide Tip to Expert</SheetTitle>
 								<SheetDescription>
-									<p>
+									<div>
 										Balance Left
 										<span
-											className={`ml-2 ${
-												hasLowBalance ? "text-red-500" : "text-green-1"
-											}`}
+											className={`ml-2 ${hasLowBalance ? "text-red-500" : "text-green-1"
+												}`}
 										>
-											₹ {adjustedWalletBalance.toFixed(2)}
+											{`${currentUser?.global ? "$" : "₹"}${adjustedWalletBalance.toFixed(2)}`}
 										</span>
-									</p>
+									</div>
 								</SheetDescription>
 							</SheetHeader>
 							<div className="grid gap-4 py-4 w-full">
-								<span>Enter Desired amount in INR</span>
+								<span>{`Enter Desired amount in ${currentUser?.global ? "Dollars" : "INR"}`}</span>
 								<div className="flex flex-row justify-between rounded-lg border p-1">
 									<Input
 										id="tipAmount"
@@ -243,7 +335,7 @@ const TipModal: React.FC<Props> = ({
 									</Button>
 								</div>
 								{errorMessage && (
-									<p className="text-red-500 text-sm">{errorMessage}</p>
+									<span className="text-red-500 text-sm">{errorMessage}</span>
 								)}
 							</div>
 							<div className="flex flex-col items-start justify-center">
@@ -253,12 +345,11 @@ const TipModal: React.FC<Props> = ({
 										<Button
 											key={amount}
 											onClick={() => handlePredefinedAmountClick(amount)}
-											className={`w-full bg-gray-200 hover:bg-gray-300 hoverScaleDownEffect ${
-												tipAmount === amount &&
+											className={`w-full bg-gray-200 hover:bg-gray-300 hoverScaleDownEffect ${tipAmount === amount &&
 												"bg-green-1 text-white hover:bg-green-1"
-											}`}
+												}`}
 										>
-											₹{amount}
+											{`${currentUser?.global ? "$" : "₹"}${amount}`}
 										</Button>
 									))}
 								</div>

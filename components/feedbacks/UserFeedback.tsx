@@ -81,9 +81,7 @@ const UserFeedback = ({
 	);
 
 	const handleSubmitFeedback = async () => {
-		console.log("trying to submit feedback");
 		if (!currentUser || !call) {
-			console.log("Something got wrong");
 			return;
 		}
 
@@ -106,6 +104,7 @@ const UserFeedback = ({
 			toast({
 				variant: "destructive",
 				title: "Failed to Submit Feedback",
+				toastStatus: "negative",
 			});
 			console.error("Error submitting feedback:", error);
 		} finally {

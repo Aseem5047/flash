@@ -47,7 +47,6 @@ export const handleTransaction = async ({
 		const activeCallId = localStorage.getItem("activeCallId");
 		if (activeCallId) {
 			localStorage.removeItem("activeCallId");
-			console.log("activeCallId removed successfully");
 		} else {
 			console.warn("activeCallId was not found in localStorage");
 		}
@@ -71,6 +70,7 @@ export const handleTransaction = async ({
 				variant: "destructive",
 				title: "Transaction Already Done",
 				description: "Redirecting ...",
+				toastStatus: "positive",
 			});
 
 			removeActiveCallId();
@@ -146,6 +146,7 @@ export const handleTransaction = async ({
 			variant: "destructive",
 			title: "Error",
 			description: "An error occurred while processing the Transactions",
+			toastStatus: "negative",
 		});
 		router.push(`${creatorURL ? creatorURL : "/home"}`);
 	} finally {

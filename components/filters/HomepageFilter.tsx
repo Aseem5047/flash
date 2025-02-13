@@ -2,7 +2,6 @@ import { backendBaseUrl } from "@/lib/utils";
 import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 
-import { Button } from "../ui/button";
 const HomepageFilter = ({
 	selectedProfession,
 	handleProfessionChange,
@@ -15,7 +14,6 @@ const HomepageFilter = ({
 	const [toggleFilter, setToggleFilter] = useState(false);
 	const professionRefs = useRef<(HTMLDivElement | null)[]>([]);
 	const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-
 	const dropdownRef = useRef<HTMLDivElement | null>(null);
 
 	useEffect(() => {
@@ -50,6 +48,8 @@ const HomepageFilter = ({
 				block: "center",
 				inline: "center",
 			});
+		} else {
+			scrollContainerRef.current?.scrollTo({ left: 0, behavior: "smooth" });
 		}
 	}, [selectedProfession, professions]);
 
@@ -85,7 +85,7 @@ const HomepageFilter = ({
 		>
 			<button
 				className={` text-sm font-medium px-[16px] py-[7px] rounded-[24px] border border-gray-300 hoverScaleDownEffect cursor-pointer outline-none ${
-					toggleFilter && "bg-green-1 text-white"
+					toggleFilter && "bg-black text-white"
 				}`}
 				onClick={() => setToggleFilter((prev) => !prev)}
 			>
@@ -126,8 +126,8 @@ const HomepageFilter = ({
 					<span className="text-xl">Filter by Profession</span>
 					<section className="mt-4 flex items-center justify-start flex-wrap gap-2.5">
 						<section
-							className={`text-sm font-medium px-[20px] py-[7px] rounded-[24px] border border-gray-300 hover:text-white hover:bg-green-1 hoverScaleDownEffect cursor-pointer ${
-								selectedProfession === "All" && "bg-green-1 text-white"
+							className={`text-sm font-medium px-[20px] py-[7px] rounded-[24px] border border-gray-300 hover:text-white hover:bg-black hoverScaleDownEffect cursor-pointer ${
+								selectedProfession === "All" && "bg-black text-white"
 							}`}
 							onClick={handleClickAll}
 						>
@@ -143,9 +143,9 @@ const HomepageFilter = ({
 							: professions.map((profession: any) => (
 									<section
 										key={profession.id}
-										className={`text-sm font-medium px-[20px] py-[7px] rounded-[24px] border border-gray-300 hover:text-white hover:bg-green-1 cursor-pointer ${
+										className={`text-sm font-medium px-[20px] py-[7px] rounded-[24px] border border-gray-300 hover:text-white hover:bg-black cursor-pointer ${
 											profession.name === selectedProfession &&
-											"bg-green-1 text-white"
+											"bg-black text-white"
 										}`}
 										onClick={() => {
 											handleProfessionChange(profession?.name);
@@ -175,8 +175,8 @@ const HomepageFilter = ({
 				) : (
 					<>
 						<section
-							className={`text-sm font-medium px-[20px] py-[7px] rounded-full border border-gray-300 hover:text-white hover:bg-green-1 hoverScaleDownEffect cursor-pointer ${
-								selectedProfession === "All" && "bg-green-1 text-white"
+							className={`text-sm font-medium px-[20px] py-[7px] rounded-full border border-gray-300 hover:text-white hover:bg-black hoverScaleDownEffect cursor-pointer ${
+								selectedProfession === "All" && "bg-black text-white"
 							}`}
 							onClick={() => handleProfessionChange("All")}
 						>
@@ -184,9 +184,9 @@ const HomepageFilter = ({
 						</section>
 						{professions.map((profession: any, index: any) => (
 							<section
-								className={`text-sm font-medium px-[20px] py-[7px] rounded-full border border-gray-300 hover:text-white hover:bg-green-1 hoverScaleDownEffect cursor-pointer ${
+								className={`text-sm font-medium px-[20px] py-[7px] rounded-full border border-gray-300 hover:text-white hover:bg-black hoverScaleDownEffect cursor-pointer ${
 									profession.name === selectedProfession &&
-									"bg-green-1 text-white"
+									"bg-black text-white"
 								}`}
 								key={profession.id}
 								ref={(el: any) => (professionRefs.current[index] = el)}

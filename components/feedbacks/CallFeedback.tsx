@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "../ui/sheet";
 import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
@@ -10,8 +10,10 @@ import { useGetCallById } from "@/hooks/useGetCallById";
 import { usePathname } from "next/navigation";
 import SinglePostLoader from "../shared/SinglePostLoader";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
-import { backendBaseUrl } from "@/lib/utils";
+import { backendBaseUrl, fetchCallDuration } from "@/lib/utils";
 import axios from "axios";
+import { trackEvent } from "@/lib/mixpanel";
+import { creatorUser } from "@/types";
 
 const CallFeedback = ({
 	callId,
@@ -25,12 +27,23 @@ const CallFeedback = ({
 	const [rating, setRating] = useState(5);
 	const [feedbackMessage, setFeedbackMessage] = useState("");
 	const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+	const [creator, setCreator] = useState<creatorUser>();
 	const { toast } = useToast();
 	const pathname = usePathname();
 	const { call, isCallLoading } = useGetCallById(String(callId));
 
 	const ratingItems = ["😒", "😞", "😑", "🙂", "😄"];
-	const { currentUser } = useCurrentUsersContext();
+	const { clientUser } = useCurrentUsersContext();
+
+	useEffect(() => {
+		const storedCreator = localStorage.getItem("currentCreator");
+		if (storedCreator) {
+			const parsedCreator: creatorUser = JSON.parse(storedCreator);
+			if (parsedCreator) {
+				setCreator(parsedCreator);
+			}
+		}
+	}, []);
 
 	const marks: { [key: number]: JSX.Element } = {
 		1: (
@@ -52,28 +65,31 @@ const CallFeedback = ({
 		),
 	};
 
-	// Calculate duration in seconds and format as MM:SS
-	const formatDuration = (durationInSeconds: number) => {
-		const minutes = Math.floor(durationInSeconds / 60)
-			.toString()
-			.padStart(2, "0");
-		const seconds = (durationInSeconds % 60).toString().padStart(2, "0");
-		return `${minutes}:${seconds}`;
-	};
+	const [callDuration, setCallDuration] = useState("");
 
-	// Get duration and format it
-	const callEndedAt = call?.state?.endedAt;
-	const callStartsAt = call?.state?.startsAt;
+	useEffect(() => {
+		if (
+			clientUser?._id &&
+			clientUser?.createdAt?.toString().split("T")[0] &&
+			creator?._id &&
+			clientUser?.walletBalance
+		)
+			trackEvent("Feedback_bottomsheet_impression", {
+				Client_ID: clientUser?._id,
+				User_First_Seen: clientUser?.createdAt?.toString().split("T")[0],
+				Creator_ID: creator?._id,
+				Walletbalace_Available: clientUser?.walletBalance,
+			});
+	}, [clientUser, creator]);
 
-	let callDuration = "00:00";
-	if (callEndedAt && callStartsAt) {
-		const callEndedTime = new Date(callEndedAt);
-		const callStartsAtTime = new Date(callStartsAt);
-		const durationInSeconds = Math.floor(
-			(callEndedTime.getTime() - callStartsAtTime.getTime()) / 1000
-		);
-		callDuration = formatDuration(durationInSeconds);
-	}
+	useEffect(() => {
+		const fetchDuration = async () => {
+			const duration = await fetchCallDuration(callId);
+			setCallDuration(duration);
+		};
+
+		fetchDuration();
+	}, [callId]);
 
 	const handleSliderChange = (value: any) => {
 		setRating(value);
@@ -90,11 +106,12 @@ const CallFeedback = ({
 	);
 
 	const handleSubmitFeedback = async () => {
-		if (!currentUser || !call) {
+		if (!clientUser || !call) {
 			toast({
 				variant: "destructive",
 				title: "Give it another try",
 				description: "Something went wrong",
+				toastStatus: "negative",
 			});
 			return;
 		}
@@ -102,11 +119,12 @@ const CallFeedback = ({
 			toast({
 				variant: "destructive",
 				title: "Feedback Rating is Required",
+				toastStatus: "negative",
 			});
 			return;
 		}
 		try {
-			const userId = currentUser?._id as string;
+			const userId = clientUser?._id as string;
 
 			await axios.post(`${backendBaseUrl}/feedback/call/create`, {
 				creatorId: expert?.user_id as string,
@@ -116,6 +134,14 @@ const CallFeedback = ({
 				callId: callId,
 				createdAt: new Date(),
 			});
+			trackEvent("Feedback_bottomsheet_submitted", {
+				Client_ID: clientUser?._id,
+				User_First_Seen: clientUser?.createdAt?.toString().split("T")[0],
+				Creator_ID: creator?._id,
+				Feedback_Value: rating,
+				Walletbalace_Available: clientUser?.walletBalance,
+				Text: feedbackMessage,
+			});
 			setFeedbackSubmitted(true);
 			setTimeout(() => {
 				onOpenChange(false);
@@ -124,12 +150,14 @@ const CallFeedback = ({
 				variant: "destructive",
 				title: "Feedback Submitted Successfully",
 				description: "Edit or Review at Order History",
+				toastStatus: "positive",
 			});
 		} catch (error: any) {
 			toast({
 				variant: "destructive",
 				title: "Failed to Submit Feedback",
 				description: "Add new at Order History",
+				toastStatus: "negative",
 			});
 			console.error("Error submitting feedback:", error);
 		} finally {
@@ -148,7 +176,7 @@ const CallFeedback = ({
 	// Disable submit button if feedback message is less than 3 characters
 	const isSubmitDisabled = !rating;
 
-	if (!currentUser?._id || isCallLoading)
+	if (!clientUser?._id || isCallLoading)
 		return (
 			<>
 				{pathname.includes("meeting") ? (
@@ -169,14 +197,18 @@ const CallFeedback = ({
 			</>
 		);
 
-	console.log(callDuration);
-
 	return (
 		<Sheet
 			open={isOpen}
 			onOpenChange={(open) => {
 				if (!open) {
-					onOpenChange(false);
+					trackEvent("Feedback_bottomsheet_closed", {
+						Client_ID: clientUser?._id,
+						User_First_Seen: clientUser?.createdAt?.toString().split("T")[0],
+						Creator_ID: creator?._id,
+						Walletbalace_Available: clientUser?.walletBalance,
+					});
+					onOpenChange(false); // Trigger the closing function only when the sheet is closed
 				}
 			}}
 		>
@@ -242,10 +274,9 @@ const CallFeedback = ({
 
 						<button
 							onClick={handleSubmitFeedback}
-							className={`bg-green-1 font-semibold text-white px-4 py-2 rounded-lg hover:opacity-80 ${
-								isSubmitDisabled &&
+							className={`bg-green-1 font-semibold text-white px-4 py-2 rounded-lg hover:opacity-80 ${isSubmitDisabled &&
 								"!cursor-not-allowed opacity-50 hover:opacity-50"
-							}`}
+								}`}
 							disabled={isSubmitDisabled}
 						>
 							Submit Feedback

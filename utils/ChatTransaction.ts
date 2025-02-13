@@ -33,17 +33,12 @@ export const handleTransaction = async ({
 		};
 		const creator = await getCreatorById(creatorId!);
 		const rate = creator.chatRate;
-		console.log(
-			`Duration: ${roundToNearestThousand(
-				parseInt(duration, 10)
-			)} + rate: ${rate}`
-		);
+
 		const amountToBePaid = (
 			(roundToNearestThousand(parseInt(duration, 10)) / (1000 * 60)) *
 			rate *
 			0.8
 		).toFixed(1);
-		console.log("amount paid", amountToBePaid);
 		// console.log("clientID: ", clientId)
 
 		if (amountToBePaid && clientId) {
@@ -74,9 +69,13 @@ export const handleTransaction = async ({
 					method: "POST",
 					body: JSON.stringify({
 						callId: chatId,
-						amountPaid: amountToBePaid,
-						isDone: true,
-						callDuration: parseInt(duration, 10),
+						callDetails: [
+							{
+								amountPaid: amountToBePaid,
+								isDone: true,
+								callDuration: parseInt(duration, 10),
+							},
+						],
 					}),
 					headers: { "Content-Type": "application/json" },
 				});
@@ -111,6 +110,7 @@ export const handleTransaction = async ({
 			variant: "destructive",
 			title: "Error",
 			description: "An error occurred while processing the Transactions",
+			toastStatus: "negative",
 		});
 		router.push("/home");
 	} finally {

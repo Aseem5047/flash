@@ -2,36 +2,28 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Script from "next/script";
-import { useSearchParams, useRouter } from "next/navigation";
-import {
-	creatorUser,
-	PaymentFailedResponse,
-	PaymentResponse,
-	RazorpayOptions,
-} from "@/types";
-import * as Sentry from "@sentry/nextjs";
+import { useSearchParams } from "next/navigation";
+import { creatorUser } from "@/types";
 import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import Link from "next/link";
-import { useToast } from "@/components/ui/use-toast";
-import { logEvent } from "firebase/analytics";
-import { analytics } from "@/lib/firebase";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { Cursor, Typewriter } from "react-simple-typewriter";
 import ContentLoading from "@/components/shared/ContentLoading";
 import { trackEvent } from "@/lib/mixpanel";
-import { backendBaseIconUrl, backendBaseUrl } from "@/lib/utils";
+import useRecharge from "@/hooks/useRecharge";
+import axios from "axios";
+import { backendBaseUrl } from "@/lib/utils";
 
 const Recharge: React.FC = () => {
-	const { updateWalletBalance } = useWalletBalanceContext();
-	const { currentUser, clientUser } = useCurrentUsersContext();
-	const { toast } = useToast();
 	const [creator, setCreator] = useState<creatorUser>();
 	const [method, setMethod] = useState("");
-	const [loading, setLoading] = useState(false);
+	const [pg, setPg] = useState<string>("");
+	const { updateWalletBalance } = useWalletBalanceContext();
+	const { currentUser, clientUser } = useCurrentUsersContext();
+	const { pgHandler, loading } = useRecharge();
 	const searchParams = useSearchParams();
 	const amount = searchParams.get("amount");
 
-	const router = useRouter();
 	const amountInt: number | null = amount ? parseFloat(amount) : null;
 
 	const subtotal: number | null =
@@ -47,6 +39,16 @@ const Recharge: React.FC = () => {
 			: null;
 
 	useEffect(() => {
+		const getPg = async() => {
+			const response = await axios.get(`${backendBaseUrl}/order/getPg`);
+			const data = response.data;
+			if(data.activePg) setPg(data.activePg)
+		}
+
+		getPg();
+	}, [])
+	
+	useEffect(() => {
 		const storedCreator = localStorage.getItem("currentCreator");
 		if (storedCreator) {
 			const parsedCreator: creatorUser = JSON.parse(storedCreator);
@@ -57,121 +59,15 @@ const Recharge: React.FC = () => {
 	}, []);
 
 	useEffect(() => {
-		trackEvent("Recharge_Page_Cart_review_Impression", {
-			Client_ID: clientUser?._id,
-			User_First_Seen: clientUser?.createdAt?.toString().split("T")[0],
-			Creator_ID: creator?._id,
-			Recharge_value: amount,
-			Walletbalace_Available: clientUser?.walletBalance,
-		});
-	}, []);
-
-	const PaymentHandler = async (
-		e: React.MouseEvent<HTMLButtonElement, MouseEvent>
-	): Promise<void> => {
-		e.preventDefault();
-
-		trackEvent("Recharge_Page_Proceed_Clicked", {
-			Client_ID: clientUser?._id,
-			User_First_Seen: clientUser?.createdAt?.toString().split("T")[0],
-			Creator_ID: creator?._id,
-			Recharge_value: amount,
-			Walletbalace_Available: clientUser?.walletBalance,
-		});
-
-		if (typeof window.Razorpay === "undefined") {
-			console.error("Razorpay SDK is not loaded");
-			setLoading(false);
-			return;
-		}
-
-		const totalPayableInPaise = totalPayable! * 100;
-		const rechargeAmount = parseInt(totalPayableInPaise.toFixed(2));
-		const currency = "INR";
-
-		try {
-			const orderResponse = await fetch("/api/v1/order", {
-				method: "POST",
-				body: JSON.stringify({ amount: rechargeAmount, currency }),
-				headers: { "Content-Type": "application/json" },
+		if (creator)
+			trackEvent("Recharge_Page_Cart_review_Impression", {
+				Client_ID: clientUser?._id,
+				User_First_Seen: clientUser?.createdAt?.toString().split("T")[0],
+				Creator_ID: creator?._id,
+				Recharge_value: amount,
+				Walletbalace_Available: clientUser?.walletBalance,
 			});
-			const order = await orderResponse.json();
-
-			const options: RazorpayOptions = {
-				key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
-				rechargeAmount,
-				currency,
-				name: "FlashCall.me",
-				description: "Wallet Recharge",
-				image: `${backendBaseIconUrl}/logo_icon.png`,
-				order_id: order.id,
-				handler: async (response: PaymentResponse): Promise<void> => {
-					setLoading(true);
-
-					try {
-						await fetch("/api/v1/payment", {
-							method: "POST",
-							body: response.razorpay_order_id,
-							headers: { "Content-Type": "text/plain" },
-						});
-
-						const validateRes = await fetch("/api/v1/order/validate", {
-							method: "POST",
-							body: JSON.stringify(response),
-							headers: { "Content-Type": "application/json" },
-						});
-
-						const userId = currentUser?._id!;
-						await fetch(`${backendBaseUrl}/wallet/addMoney`, {
-							method: "POST",
-							body: JSON.stringify({
-								userId,
-								userType: "Client",
-								amount: parseFloat(amountInt!.toFixed(2)),
-								category: "Recharge",
-							}),
-							headers: { "Content-Type": "application/json" },
-						});
-
-						trackEvent("Recharge_Successful", {
-							Client_ID: clientUser?._id,
-							Recharge_value: amount,
-						});
-
-						router.push("/success");
-					} catch (error) {
-						Sentry.captureException(error);
-						console.error("Validation request failed:", error);
-						setLoading(false);
-					} finally {
-						updateWalletBalance();
-					}
-				},
-				prefill: {
-					name: `${currentUser?.firstName} ${currentUser?.lastName}`,
-					contact: currentUser?.phone as string,
-				},
-				theme: { color: "#50A65C" },
-			};
-
-			const rzp = new window.Razorpay(options);
-			rzp.on("payment.failed", (response: PaymentFailedResponse): void => {
-				alert(response.error.code);
-				setLoading(false);
-			});
-			rzp.open();
-		} catch (error) {
-			Sentry.captureException(error);
-			console.error("Payment request failed:", error);
-			setLoading(false);
-			router.push("/payment");
-			toast({
-				variant: "destructive",
-				title: "Payment Failed",
-				description: "Redirecting ...",
-			});
-		}
-	};
+	}, [creator]);
 
 	const creatorURL = localStorage.getItem("creatorURL");
 
@@ -195,9 +91,6 @@ const Recharge: React.FC = () => {
 				</section>
 			) : (
 				<div className="overflow-y-scroll p-4 pt-0 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col items-center justify-center w-full">
-					<Script src="https://checkout.razorpay.com/v1/checkout.js" />
-					{/* <Script src="https://sdk.cashfree.com/js/v3/cashfree.js" /> */}
-
 					{/* Payment Information */}
 					<section className="w-full py-5 sticky">
 						<section className="flex items-center gap-2 mb-2">
@@ -220,7 +113,7 @@ const Recharge: React.FC = () => {
 									/>
 								</svg>
 							</Link>
-							<h1 className="text-xl md:text-3xl font-bold">
+							<h1 className="text-xl md:text-2xl font-bold">
 								Payment Information{" "}
 							</h1>
 						</section>
@@ -258,9 +151,9 @@ const Recharge: React.FC = () => {
 									<button
 										key={app.name}
 										onClick={() => setMethod(app.name.toLowerCase())}
-										className={`flex flex-col items-center bg-white dark:bg-gray-700 p-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600 ${method === app.name.toLowerCase()
-												? "bg-gray-300 dark:bg-gray-600 !important"
-												: ""
+										className={`flex flex-col items-center bg-white hover:bg-gray-300  ${method === app.name.toLowerCase()
+												? "bg-gray-300"
+												: "bg-white"
 											}`}
 									>
 										<Image
@@ -315,9 +208,8 @@ const Recharge: React.FC = () => {
 
 					{/* Payment Button */}
 					<button
-						className="w-4/5 md:w-1/3 mx-auto py-3 text-black bg-white rounded-lg border-2 border-black hover:bg-green-1 hover:text-white font-semibold fixed bottom-3"
+						className="w-4/5 md:w-1/3 mx-auto py-3 text-black bg-white rounded-lg border-2 border-black font-semibold fixed bottom-3"
 						style={{ boxShadow: "3px 3px black" }}
-						onClick={PaymentHandler}
 						disabled={loading} // Disable the button when loading
 					>
 						Proceed to Payment

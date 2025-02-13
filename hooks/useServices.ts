@@ -1,59 +1,103 @@
 import { useState, useEffect } from "react";
-import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { backendBaseUrl, updateFirestoreCallServices } from "@/lib/utils";
+import { doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase"; // Adjust the import path for your Firebase setup
 import * as Sentry from "@sentry/nextjs";
 import axios from "axios";
 
 export const useServices = () => {
 	const { creatorUser } = useCurrentUsersContext();
 	const [services, setServices] = useState(() => ({
-		myServices:
-			creatorUser && !creatorUser.restricted
-				? creatorUser.videoAllowed ||
-				  creatorUser.audioAllowed ||
-				  creatorUser.chatAllowed
-				: false,
-		videoCall:
-			creatorUser && !creatorUser.restricted ? creatorUser.videoAllowed : false,
-		audioCall:
-			creatorUser && !creatorUser.restricted ? creatorUser.audioAllowed : false,
-		chat:
-			creatorUser && !creatorUser.restricted ? creatorUser.chatAllowed : false,
-		isRestricted: creatorUser ? creatorUser.restricted : false,
+		myServices: false,
+		videoCall: false,
+		audioCall: false,
+		chat: false,
+		isRestricted: false,
 	}));
+	const [isSyncedWithFirebase, setIsSyncedWithFirebase] = useState(false);
 
-	// Initialize services based on creatorUser
+	// Fetch user status and services from Firebase
+
 	useEffect(() => {
-		if (creatorUser) {
-			const isRestricted = creatorUser.restricted || false;
-			setServices({
-				myServices:
-					!isRestricted &&
-					(creatorUser.videoAllowed ||
-						creatorUser.audioAllowed ||
-						creatorUser.chatAllowed),
-				videoCall: !isRestricted && creatorUser.videoAllowed,
-				audioCall: !isRestricted && creatorUser.audioAllowed,
-				chat: !isRestricted && creatorUser.chatAllowed,
-				isRestricted: isRestricted,
-			});
+		const fetchUserStatusAndServices = async () => {
+			if (!creatorUser?._id || !creatorUser?.phone) return;
 
-			// Automatically update Firebase if restricted
-			if (isRestricted) {
-				updateFirestoreCallServices(creatorUser, {
-					myServices: false,
-					videoCall: false,
-					audioCall: false,
-					chat: false,
+			try {
+				const servicesRef = doc(db, "services", creatorUser._id);
+				const statusRef = doc(db, "userStatus", creatorUser.phone);
+
+				// Fetch userStatus document
+				const statusDoc = await getDoc(statusRef);
+				const loginStatus = statusDoc.exists()
+					? statusDoc.data()?.loginStatus
+					: true;
+
+				const unsubscribe = onSnapshot(servicesRef, (snapshot) => {
+					if (snapshot.exists()) {
+						const firebaseServices = snapshot.data()?.services || {};
+						const isRestricted = creatorUser.restricted || false;
+
+						const shouldDisable = loginStatus === false;
+
+						setServices({
+							myServices: shouldDisable
+								? false
+								: !isRestricted &&
+								  (firebaseServices.videoCall ||
+										firebaseServices.audioCall ||
+										firebaseServices.chat),
+							videoCall: shouldDisable
+								? false
+								: !isRestricted && firebaseServices.videoCall,
+							audioCall: shouldDisable
+								? false
+								: !isRestricted && firebaseServices.audioCall,
+							chat: shouldDisable
+								? false
+								: !isRestricted && firebaseServices.chat,
+							isRestricted,
+						});
+
+						setIsSyncedWithFirebase(true);
+					}
 				});
+
+				return () => unsubscribe();
+			} catch (error) {
+				Sentry.captureException(error);
+				console.error("Error fetching user status or services:", error);
 			}
-		}
+		};
+
+		fetchUserStatusAndServices();
 	}, [creatorUser]);
 
+	// Update Firebase when local state changes
 	useEffect(() => {
-		const updateServices = async () => {
+		if (isSyncedWithFirebase && creatorUser?._id) {
+			const servicesRef = doc(db, "services", creatorUser._id);
+
+			setDoc(
+				servicesRef,
+				{
+					services: {
+						videoCall: services.videoCall,
+						audioCall: services.audioCall,
+						chat: services.chat,
+					},
+				},
+				{ merge: true }
+			).catch((error) => {
+				Sentry.captureException(error);
+				console.error("Error syncing services with Firebase:", error);
+			});
+		}
+	}, [services, creatorUser?._id, isSyncedWithFirebase]);
+
+	// Update backend whenever services change
+	useEffect(() => {
+		const updateBackendServices = async () => {
 			try {
 				await axios.put(
 					`${backendBaseUrl}/creator/updateUser/${creatorUser?._id}`,
@@ -65,52 +109,25 @@ export const useServices = () => {
 				);
 			} catch (error) {
 				Sentry.captureException(error);
-				console.error("Error updating services:", error);
+				console.error("Error updating services on backend:", error);
 			}
 		};
 
-		if (creatorUser) {
-			updateServices();
+		if (creatorUser && isSyncedWithFirebase) {
+			updateBackendServices();
 		}
-	}, [creatorUser, services]);
+	}, [
+		services.videoCall,
+		services.audioCall,
+		services.chat,
+		creatorUser,
+		isSyncedWithFirebase,
+	]);
 
-	// Real-time updates from Firebase session trigger and restricted status
-
-	// useEffect(() => {
-	// 	if (creatorUser) {
-	// 		const sessionTriggeredRef = doc(db, "sessionTriggered", creatorUser._id);
-	// 		const unsubscribe = onSnapshot(
-	// 			sessionTriggeredRef,
-	// 			(docSnapshot) => {
-	// 				if (docSnapshot.exists()) {
-	// 					const currentCount = docSnapshot.data().count || 0;
-	// 					if (currentCount >= 3 || creatorUser.restricted) {
-	// 						setServices({
-	// 							myServices: false,
-	// 							videoCall: false,
-	// 							audioCall: false,
-	// 							chat: false,
-	// 							isRestricted: false,
-	// 						});
-	// 					}
-	// 				}
-	// 			},
-	// 			(error) => {
-	// 				console.error("Error fetching session triggered snapshot: ", error);
-	// 				Sentry.captureException(error);
-	// 			}
-	// 		);
-
-	// 		return () => unsubscribe();
-	// 	}
-	// }, [creatorUser]);
-
-	// Toggle handler with restricted check
-
+	// Toggle handler with Firebase sync
 	const handleToggle = (
 		service: "myServices" | "videoCall" | "audioCall" | "chat"
 	) => {
-		// Prevent toggling if restricted
 		if (services.isRestricted) return;
 
 		setServices((prev) => {
@@ -122,7 +139,7 @@ export const useServices = () => {
 					videoCall: newState,
 					audioCall: newState,
 					chat: newState,
-					isRestricted: false, // Not restricted if toggle is allowed
+					isRestricted: false,
 				};
 			} else {
 				updatedServices[service] = !prev[service];
@@ -133,7 +150,6 @@ export const useServices = () => {
 				updatedServices.myServices = isAnyServiceOn;
 			}
 
-			// Update Firestore
 			updateFirestoreCallServices(creatorUser, updatedServices);
 			return updatedServices;
 		});

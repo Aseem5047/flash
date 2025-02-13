@@ -12,9 +12,9 @@ import axios from "axios";
 import { backendBaseUrl } from "@/lib/utils";
 import { clientUser, creatorUser } from "@/types";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
-import CallInvoiceModal from "../client/callInvoiceModal";
 import TransactionInvoice from "../creator/transactionInvoice";
 import FeedbackCheck from "../feedbacks/FeedbackCheck";
+import CallInvoiceModal from "../client/CallInvoiceModal";
 
 const OptionsList = ({
 	callId,
@@ -115,10 +115,10 @@ const OptionsList = ({
 					<DropdownMenuLabel className="!sr-only">
 						Options List
 					</DropdownMenuLabel>
-					<DropdownMenuItem>
+					{userCall.status === "Ended" && <DropdownMenuItem>
 						<button
 							onClick={() => handleOpenInvoice(userCall)}
-							className="w-full flex items-center justify-start gap-2 "
+							className={`w-full flex items-center justify-start gap-2 ${userType === "creator" ? "text-sm tracking-[0.6px]" : ""}`}
 							title="Download Invoice"
 						>
 							<svg
@@ -136,12 +136,13 @@ const OptionsList = ({
 							<span>View Call Invoice</span>
 						</button>
 					</DropdownMenuItem>
-					<DropdownMenuSeparator />
+					}
+					{userCall.status === "Ended" && <DropdownMenuSeparator />}
 					{userType === "creator" && (
 						<DropdownMenuItem>
 							<button
 								onClick={() => handleOpenTransactionInvoice(userCall)}
-								className="w-full flex items-center justify-start gap-2 "
+								className={`w-full flex items-center justify-start gap-2 ${userType === "creator" ? "text-sm tracking-[0.6px]" : ""}`}
 								title="Download Invoice"
 							>
 								<svg
@@ -167,7 +168,7 @@ const OptionsList = ({
 						disabled={reportSubmitted}
 						className={`${reportSubmitted && "cursor-not-allowed"}`}
 					>
-						<section className="w-full flex items-center justify-start gap-2">
+						<section className={`w-full flex items-center justify-start gap-2 ${userType === "creator" ? "text-sm tracking-[0.6px]" : ""}`}>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								fill="none"

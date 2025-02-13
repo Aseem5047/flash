@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React from "react";
 import { useEffect, useState, useMemo, useRef } from "react";
 import {
 	CallParticipantsList,
@@ -15,7 +15,6 @@ import { Users } from "lucide-react";
 import EndCallButton from "../calls/EndCallButton";
 import CallTimer from "../calls/CallTimer";
 import { useToast } from "../ui/use-toast";
-import useWarnOnUnload from "@/hooks/useWarnOnUnload";
 import { VideoToggleButton } from "../calls/VideoToggleButton";
 import { AudioToggleButton } from "../calls/AudioToggleButton";
 import SinglePostLoader from "../shared/SinglePostLoader";
@@ -26,13 +25,13 @@ import CreatorCallTimer from "../creator/CreatorCallTimer";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import * as Sentry from "@sentry/nextjs";
 import { useRouter } from "next/navigation";
-import { backendBaseUrl } from "@/lib/utils";
 import { Cursor, Typewriter } from "react-simple-typewriter";
 import { doc, getFirestore, onSnapshot } from "firebase/firestore";
-import { CallTimerProvider } from "@/lib/context/CallTimerContext";
 import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import TipModal from "../calls/TipModal";
 import MyCallConnectingUI from "./MyCallConnectigUI";
+import { backendBaseUrl } from "@/lib/utils";
+import useWarnOnUnload from "@/hooks/useWarnOnUnload";
 
 type CallLayoutType = "grid" | "speaker-bottom";
 
@@ -66,7 +65,7 @@ const NoParticipantsView = () => (
 const TipAnimation = ({ amount }: { amount: number }) => {
 	return (
 		<div className="absolute top-6 left-6 sm:top-4 sm:left-4 z-40 w-fit rounded-md px-4 py-2 h-10 bg-[#ffffff4d] text-white flex items-center justify-center">
-			<p>Tip ₹ {amount}</p>
+			<p>Tip {`₹ ${amount}`}</p>
 		</div>
 	);
 };
@@ -126,15 +125,7 @@ const MeetingRoom = () => {
 	const [hasVisited, setHasVisited] = useState(false);
 	const firestore = getFirestore();
 
-	const countdownDuration = ongoingCallStatus === "initiated" ? 30 : 15;
-
-	useWarnOnUnload("Are you sure you want to leave the meeting?", () => {
-		navigator.sendBeacon(
-			`${backendBaseUrl}/user/setCallStatus/${currentUser?._id as string}`
-		);
-
-		call?.endCall();
-	});
+	const countdownDuration = 30;
 
 	const isMobile = useScreenSize();
 	const mobileDevice = isMobileDevice();
@@ -142,6 +133,14 @@ const MeetingRoom = () => {
 	const handleCallRejected = async () => {
 		await call?.endCall().catch((err) => console.warn(err));
 	};
+
+	useWarnOnUnload("Are you sure you want to leave the meeting?", () => {
+		if (userType === "client" && currentUser?._id) {
+			navigator.sendBeacon(
+				`${backendBaseUrl}/user/setCallStatus/${currentUser._id}`
+			);
+		}
+	});
 
 	useEffect(() => {
 		if (isMobile) {
@@ -164,21 +163,8 @@ const MeetingRoom = () => {
 				return;
 			}
 			try {
-				const localSessionKey = `meeting_${call.id}_${currentUser._id}`;
-
-				if (localStorage.getItem(localSessionKey) && participants.length > 1) {
-					toast({
-						variant: "destructive",
-						title: "Already in Call",
-						description: "You are already in this meeting in another tab.",
-					});
-					router.replace("/home");
-					return;
-				}
 				if (callingState === CallingState.IDLE) {
-					// userType === "creator" && (await call?.accept());
 					await call?.join();
-					localStorage.setItem(localSessionKey, "joined");
 					hasAlreadyJoined.current = true;
 				}
 			} catch (error) {
@@ -228,7 +214,7 @@ const MeetingRoom = () => {
 			return;
 		}
 
-		if (participants.length === 1) {
+		if (participants.length < 2) {
 			setShowCountdown(true);
 			setCountdown(countdownDuration);
 
@@ -277,30 +263,29 @@ const MeetingRoom = () => {
 	};
 
 	const CallLayout = useMemo(() => {
-		switch (layout) {
-			case "grid":
-				return isVideoCall ? (
-					<PaginatedGridLayout />
-				) : (
-					<PaginatedGridLayout excludeLocalParticipant={true} />
-				);
-			default:
-				return isVideoCall ? (
-					<SpeakerLayout
-						participantsBarPosition="bottom"
-						ParticipantViewUIBar={<CustomParticipantViewUI />}
-						ParticipantViewUISpotlight={<CustomParticipantViewUI />}
-					/>
-				) : (
-					<SpeakerLayout
-						participantsBarPosition="bottom"
-						ParticipantViewUIBar={<CustomParticipantViewUI />}
-						ParticipantViewUISpotlight={<CustomParticipantViewUI />}
-						excludeLocalParticipant={true}
-					/>
-				);
+		if (layout === "grid") {
+			return isVideoCall ? (
+				<PaginatedGridLayout />
+			) : (
+				<PaginatedGridLayout excludeLocalParticipant={true} />
+			);
 		}
-	}, [layout]);
+
+		return isVideoCall ? (
+			<SpeakerLayout
+				participantsBarPosition="bottom"
+				ParticipantViewUIBar={<CustomParticipantViewUI />}
+				ParticipantViewUISpotlight={<CustomParticipantViewUI />}
+			/>
+		) : (
+			<SpeakerLayout
+				participantsBarPosition="bottom"
+				ParticipantViewUIBar={<CustomParticipantViewUI />}
+				ParticipantViewUISpotlight={<CustomParticipantViewUI />}
+				excludeLocalParticipant={true}
+			/>
+		);
+	}, [layout, isVideoCall]);
 
 	const isMeetingOwner = currentUser?._id === call?.state?.createdBy?.id;
 
@@ -322,7 +307,7 @@ const MeetingRoom = () => {
 	return (
 		<section className="relative w-full overflow-hidden pt-4 md:pt-0 text-white bg-dark-2 h-dvh">
 			{call &&
-				participants.length === 1 &&
+				participants.length < 2 &&
 				isMeetingOwner &&
 				ongoingCallStatus === "initiate" && <MyCallConnectingUI call={call} />}
 			{showCountdown && countdown && <CountdownDisplay />}
@@ -342,35 +327,33 @@ const MeetingRoom = () => {
 				<TipAnimation amount={tipAmount} />
 			)}
 
-			<CallTimerProvider
-				isVideoCall={isVideoCall}
-				isMeetingOwner={isMeetingOwner}
-				call={call}
-			>
-				{!callHasEnded && isMeetingOwner && !showCountdown && call ? (
-					<CallTimer
-						handleCallRejected={handleCallRejected}
-						isVideoCall={isVideoCall}
-						callId={call.id}
-					/>
-				) : (
-					!showCountdown &&
-					call &&
-					participants.length > 1 && <CreatorCallTimer callId={call.id} />
-				)}
+			{!callHasEnded && isMeetingOwner && !showCountdown && call ? (
+				<CallTimer
+					handleCallRejected={handleCallRejected}
+					isVideoCall={isVideoCall}
+					call={call}
+					callId={call.id}
+					isMeetingOwner={isMeetingOwner}
+				/>
+			) : (
+				!showCountdown &&
+				call &&
+				participants.length > 1 && <CreatorCallTimer callId={call.id} />
+			)}
 
-				{isMeetingOwner && (
-					<section className="pl-4 absolute bottom-[5.75rem] left-4 z-50 w-fit">
-						<TipModal
-							walletBalance={walletBalance}
-							setWalletBalance={setWalletBalance}
-							updateWalletBalance={updateWalletBalance}
-							isVideoCall={isVideoCall}
-							callId={call?.id as string}
-						/>
-					</section>
-				)}
-			</CallTimerProvider>
+			{isMeetingOwner && (
+				<section className="pl-4 absolute bottom-[5.75rem] left-4 z-50 w-fit">
+					<TipModal
+						walletBalance={walletBalance}
+						setWalletBalance={setWalletBalance}
+						updateWalletBalance={updateWalletBalance}
+						isVideoCall={isVideoCall}
+						call={call!}
+						callId={call?.id as string}
+						isMeetingOwner={isMeetingOwner}
+					/>
+				</section>
+			)}
 
 			{/* Call Controls */}
 
@@ -396,16 +379,12 @@ const MeetingRoom = () => {
 					{isVideoCall && !showCountdown && <VideoToggleButton />}
 
 					{/* Switch Camera */}
-					{isVideoCall &&
-						isMobile &&
-						mobileDevice &&
-						!showCountdown &&
-						mobileDevice && (
-							<SwitchCameraType
-								toggleCamera={toggleCamera}
-								cameraEnabled={call?.camera?.enabled}
-							/>
-						)}
+					{isVideoCall && isMobile && mobileDevice && !showCountdown && (
+						<SwitchCameraType
+							toggleCamera={toggleCamera}
+							cameraEnabled={call?.camera?.enabled}
+						/>
+					)}
 
 					{!showCountdown && (
 						<Tooltip>
@@ -425,7 +404,7 @@ const MeetingRoom = () => {
 					{/* End Call Button */}
 					<Tooltip>
 						<TooltipTrigger>
-							<EndCallButton />
+							<EndCallButton callType={"instant"} />
 						</TooltipTrigger>
 						<TooltipContent className="hidden md:block mb-2 bg-red-500  border-none">
 							<p className="!text-white">End Call</p>

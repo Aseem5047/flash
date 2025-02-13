@@ -1,6 +1,5 @@
 "use client";
 
-import InvoiceModal from "@/components/client/invoiceModal";
 import ContentLoading from "@/components/shared/ContentLoading";
 import { useToast } from "@/components/ui/use-toast";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
@@ -11,18 +10,31 @@ import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { parseISO, isValid, format } from "date-fns";
 import { useInView } from "react-intersection-observer";
+import InvoiceModal from "@/components/client/InvoiceModal";
+
 interface Transaction {
 	_id: string;
 	amount: number;
 	createdAt: string;
 	type: "credit" | "debit";
 	category: string;
+	callCategory: string;
 	callType?: string;
+	global?: boolean;
+}
+
+interface dateRange {
+	startDate: string | null;
+	endDate: string | null;
 }
 
 const Transactions = () => {
 	const [btn, setBtn] = useState<"all" | "credit" | "debit">("all");
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [dateRange, setDateRange] = useState<dateRange>({
+		startDate: "",
+		endDate: "",
+	});
 	const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
 
 	const { currentUser } = useCurrentUsersContext();
@@ -38,7 +50,7 @@ const Transactions = () => {
 		isFetching,
 		isError,
 		isLoading,
-	} = useGetUserTransactionsByType(currentUser?._id as string, btn);
+	} = useGetUserTransactionsByType(currentUser?._id as string, btn, dateRange);
 
 	useEffect(() => {
 		if (inView && hasNextPage && !isFetching) {
@@ -88,6 +100,7 @@ const Transactions = () => {
 				toast({
 					variant: "destructive",
 					title: "Transaction ID Copied",
+					toastStatus: "positive",
 				});
 			})
 			.catch((err) => {
@@ -97,10 +110,10 @@ const Transactions = () => {
 	const creatorURL = localStorage.getItem("creatorURL");
 
 	return (
-		<>
+		<section className="size-full grid grid-cols-1 grid-rows-[auto,auto,1fr]">
 			{/* Transaction History Section */}
 			<section
-				className={`sticky top-0 md:top-[76px] bg-white z-30 p-4 flex flex-col items-start justify-start gap-4 w-full h-fit`}
+				className={`sticky top-0 lg:top-[76px] bg-white z-30 p-4 flex flex-col items-start justify-start gap-4 w-full h-fit`}
 			>
 				<InvoiceModal
 					isOpen={isModalOpen}
@@ -127,16 +140,16 @@ const Transactions = () => {
 							/>
 						</svg>
 					</Link>
-					<h1 className="text-xl md:text-3xl font-bold">Transaction History</h1>
+					<h1 className="text-xl md:text-2xl font-bold">Transaction History</h1>
 				</section>
 			</section>
-			<section className="flex space-x-2 text-xs font-bold leading-4 w-fit px-4 pb-4">
+			<section className="flex space-x-2 text-xs font-bold leading-4 size-full h-fit px-4 pb-4">
 				{["all", "credit", "debit"].map((filter) => (
 					<button
 						key={filter}
 						onClick={() => setBtn(filter as "all" | "credit" | "debit")}
-						className={`capitalize text-sm font-medium px-[20px] py-[7px] rounded-3xl border border-gray-300 hoverScaleDownEffect hover:text-white hover:bg-green-1 ${
-							filter === btn && "bg-green-1 text-white"
+						className={`capitalize text-sm font-medium px-[20px] py-[7px] rounded-3xl border border-gray-300 hoverScaleDownEffect hover:text-white hover:bg-black ${
+							filter === btn && "bg-black text-white"
 						}`}
 					>
 						{filter}
@@ -148,13 +161,13 @@ const Transactions = () => {
 			<ul className="space-y-4 w-full px-4 pt-2 pb-7">
 				{!isLoading || !currentUser ? (
 					isError ? (
-						<div className="size-full h-[60vh] flex flex-col items-center justify-center text-2xl xl:text-2xl font-semibold text-center text-red-500">
+						<div className="size-full  flex flex-col items-center justify-center text-2xl xl:text-2xl font-semibold text-center text-red-500">
 							Failed to fetch Transactions
 							<span className="text-lg">Please try again later.</span>
 						</div>
 					) : Object.keys(groupedTransactions).length === 0 ? (
 						<section
-							className={`size-full h-[60vh] flex flex-col gap-4 items-center justify-center text-xl font-semibold text-center text-gray-500`}
+							className={`size-full  flex flex-col gap-4 items-center justify-center text-xl font-semibold text-center text-gray-500`}
 						>
 							<Image
 								src={"/images/noTransaction.png"}
@@ -212,7 +225,7 @@ const Transactions = () => {
 														/>
 													</svg>
 												</div>
-												<section className="flex items-center justify-start gap-2">
+												<section className="flex flex-wrap items-center justify-start gap-2">
 													{transaction?.category && (
 														<section className="font-normal text-xs sm:text-sm whitespace-nowrap">
 															{transaction?.callType ? (
@@ -269,18 +282,42 @@ const Transactions = () => {
 															)}
 														</section>
 													)}
-
 													{/* Separator */}
 													<span className="text-gray-400 text-xs sm:text-sm">
 														•
 													</span>
-
 													<p className=" text-gray-400 font-normal text-xs sm:text-sm leading-4">
 														{
 															formatDateTime(new Date(transaction.createdAt))
 																.dateTime
 														}
-													</p>
+													</p>{" "}
+													{transaction.category !== "Call Transaction" && (
+														<p
+															className={`
+																	 ${
+																			transaction.category === "Refund" ||
+																			transaction.category === "Tip"
+																				? "bg-[#F0FDF4] text-[#16A34A]"
+																				: "bg-[#DBEAFE] text-[#1E40AF]"
+																		} text-[12px] px-2 py-1 rounded-full`}
+														>
+															{transaction.category}
+														</p>
+													)}
+													{transaction.callCategory &&
+														transaction.category === "Call Transaction" && (
+															<p
+																className={`
+																	 ${
+																			transaction.callCategory === "Scheduled"
+																				? "bg-[#F0FDF4] text-[#16A34A]"
+																				: "bg-[#DBEAFE] text-[#1E40AF]"
+																		} text-[12px] px-2 py-1 rounded-full`}
+															>
+																{transaction.callCategory}
+															</p>
+														)}
 												</section>
 											</div>
 											<section className="flex flex-col gap-2 justify-between items-center">
@@ -292,8 +329,12 @@ const Transactions = () => {
 													} `}
 												>
 													{transaction?.type === "credit"
-														? `+ ₹${transaction?.amount?.toFixed(2)}`
-														: `- ₹${transaction?.amount?.toFixed(2)}`}
+														? `+ ${
+																currentUser?.global ? "$" : "₹"
+														  }${transaction?.amount?.toFixed(2)}`
+														: `- ${
+																currentUser?.global ? "$" : "₹"
+														  }${transaction?.amount?.toFixed(2)}`}
 												</span>
 
 												{transaction.type === "credit" && (
@@ -312,7 +353,7 @@ const Transactions = () => {
 						})
 					)
 				) : (
-					<div className="size-full h-[60vh] flex flex-col gap-2 items-center justify-center">
+					<div className="size-full mt-10 flex flex-col gap-2 items-center justify-center">
 						<ContentLoading />
 					</div>
 				)}
@@ -339,8 +380,8 @@ const Transactions = () => {
 					</div>
 				)}
 
-			{hasNextPage && <div ref={ref} className=" pt-10 w-full" />}
-		</>
+			{hasNextPage && <div ref={ref} className="py-4 w-full" />}
+		</section>
 	);
 };
 

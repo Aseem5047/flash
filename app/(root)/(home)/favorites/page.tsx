@@ -3,7 +3,6 @@
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { creatorUser } from "@/types";
 import React, { useEffect, useState } from "react";
-import { useWalletBalanceContext } from "@/lib/context/WalletBalanceContext";
 import FavoritesGrid from "@/components/creator/FavoritesGrid";
 import SinglePostLoader from "@/components/shared/SinglePostLoader";
 import { trackEvent } from "@/lib/mixpanel";
@@ -19,8 +18,7 @@ const Favorites = () => {
 	const [creator, setCreator] = useState<creatorUser>();
 	const [favorites, setFavorites] = useState<any[]>([]);
 	const [selectedProfession, setSelectedProfession] = useState("All");
-	const { currentUser, clientUser } = useCurrentUsersContext();
-	const { walletBalance } = useWalletBalanceContext();
+	const { currentUser, clientUser, fetchingUser } = useCurrentUsersContext();
 	const { ref, inView } = useInView({
 		threshold: 0.1,
 		triggerOnce: false,
@@ -44,6 +42,7 @@ const Favorites = () => {
 		data: userFavorites,
 		fetchNextPage,
 		hasNextPage,
+		refetch,
 		isFetching,
 		isError,
 		isLoading,
@@ -53,18 +52,23 @@ const Favorites = () => {
 		limit
 	);
 
-	// Flatten paginated data
 	useEffect(() => {
-		const flatFavorites =
-			userFavorites?.pages.flatMap((page: any) => page.paginatedData) || [];
-		setFavorites(flatFavorites);
-	}, [userFavorites]);
+		if (!isLoading && userFavorites?.pages && userFavorites.pages.length > 0) {
+			const flatFavorites =
+				userFavorites.pages.flatMap((page: any) => page.paginatedData) || [];
+			setFavorites(flatFavorites);
 
-	const removeFavorite = (creatorId: string) => {
-		setFavorites((prevFavorites) =>
-			prevFavorites.filter((favorite) => favorite._id !== creatorId)
-		);
-	};
+			// Show toast only if favorites are empty after data fetch
+			if (flatFavorites.length === 0) {
+				toast({
+					variant: "destructive",
+					title: `No creators found in the ${selectedProfession} category`,
+					description: "Try adjusting your filters",
+					toastStatus: "negative",
+				});
+			}
+		}
+	}, [userFavorites, isLoading, selectedProfession, toast]);
 
 	useEffect(() => {
 		if (inView && hasNextPage && !isFetching) {
@@ -74,15 +78,14 @@ const Favorites = () => {
 
 	useEffect(() => {
 		const storedCreator = localStorage.getItem("currentCreator");
+
 		if (storedCreator) {
 			const parsedCreator: creatorUser = JSON.parse(storedCreator);
 			if (parsedCreator) {
 				setCreator(parsedCreator);
 			}
 		}
-	}, []);
 
-	useEffect(() => {
 		trackEvent("Favourites_Impression", {
 			Client_ID: clientUser?._id,
 			User_First_Seen: clientUser?.createdAt?.toString().split("T")[0],
@@ -91,23 +94,12 @@ const Favorites = () => {
 		});
 	}, []);
 
-	useEffect(() => {
-		if (
-			userFavorites &&
-			userFavorites?.pages.flatMap((page: any) => page.totalFavorites)[0] ===
-				0 &&
-			!isLoading
-		) {
-			toast({
-				variant: "destructive",
-				title: `No creators found in the ${selectedProfession} category`,
-				description: "Try adjusting your filters",
-			});
-			// setTimeout(() => {
-			// 	setSelectedProfession("All");
-			// }, 1000);
-		}
-	}, [userFavorites, selectedProfession, isLoading]);
+	const removeFavorite = (creatorId: string) => {
+		refetch();
+		setFavorites((prevFavorites) =>
+			prevFavorites.filter((favorite) => favorite.creatorId !== creatorId)
+		);
+	};
 
 	const handleProfessionChange = (profession: string) => {
 		setSelectedProfession(profession);
@@ -117,8 +109,8 @@ const Favorites = () => {
 
 	return (
 		<section className="flex size-full flex-col">
-			<div
-				className={`sticky flex w-full items-center justify-between top-0 md:top-[76px] bg-white z-30 px-2 lg:pl-0.5 p-4 pb-0 transition-all duration-300`}
+			<section
+				className={`sticky flex w-full items-center justify-between top-0 lg:top-[76px] bg-white z-30 px-2 lg:pl-0.5 p-4 pb-0 transition-all duration-300`}
 			>
 				<section className="flex items-center gap-4">
 					<Link
@@ -140,25 +132,25 @@ const Favorites = () => {
 							/>
 						</svg>
 					</Link>
-					<h1 className="text-xl md:text-3xl font-bold">Favorites</h1>
+					<h1 className="text-xl md:text-2xl font-bold">Favorites</h1>
 				</section>
-			</div>
+			</section>
 
-			{isLoading || (currentUser && walletBalance < 0) ? (
+			{isLoading || fetchingUser ? (
 				<section className={`w-full h-full flex items-center justify-center`}>
 					<SinglePostLoader />
 				</section>
 			) : favorites.length === 0 ? (
 				<div className="size-full flex flex-col gap-4 items-center justify-center text-center text-gray-500">
 					<h2 className="text-2xl font-bold">No Favorites Found</h2>
-					<p className="text-lg text-gray-400">
+					<p className="px-4 text-lg text-gray-400">
 						{selectedProfession !== "All"
 							? `No results found in the "${selectedProfession}" category.`
 							: "You don’t have any favorites yet. Start exploring and add your favorites!"}
 					</p>
 					{selectedProfession !== "All" && (
 						<Button
-							className="px-6 py-2 rounded-lg bg-green-1 text-white font-semibold hoverScaleDownEffect"
+							className="px-6 py-2 rounded-lg bg-black text-white font-semibold hoverScaleDownEffect"
 							onClick={() => setSelectedProfession("All")}
 						>
 							Reset Filters
@@ -178,7 +170,7 @@ const Favorites = () => {
 					/>
 
 					<section
-						className={`grid xs:grid-cols-2 2xl:grid-cols-3 h-auto gap-3.5 lg:gap-5 2xl:gap-7 items-center overflow-hidden`}
+						className={`grid xs:grid-cols-2 xl:grid-cols-3 h-fit gap-3.5 lg:gap-5 2xl:gap-7 items-start overflow-hidden`}
 						style={{
 							WebkitTransform: "translateZ(0)",
 						}}
@@ -206,16 +198,12 @@ const Favorites = () => {
 					className="mx-auto invert my-5 mt-10 z-20"
 				/>
 			)}
-			{currentUser &&
-				walletBalance > 0 &&
-				favorites.length >= 6 &&
-				!hasNextPage &&
-				!isFetching && (
-					<div className="text-center text-gray-500  pb-4">
-						You have reached the end of the list.
-					</div>
-				)}
-			{hasNextPage && <div ref={ref} className="pt-10 w-full" />}
+			{currentUser && favorites.length > 4 && !hasNextPage && !isFetching && (
+				<div className="text-center text-gray-500  pb-4">
+					You have reached the end of the list.
+				</div>
+			)}
+			{hasNextPage && <div ref={ref} className="py-4 w-full" />}
 		</section>
 	);
 };

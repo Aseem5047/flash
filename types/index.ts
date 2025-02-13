@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 // Gender
 export type Gender = "male" | "female" | "other" | undefined;
 
@@ -11,6 +13,19 @@ export type CreateUserParams = {
 	phone: any;
 	role: string;
 	bio?: string;
+};
+
+export type CreateForeignUserParams = {
+	username: string;
+	email: string;
+	fullName?: string;
+	phone?: string;
+	photo: string;
+	role: string;
+	bio?: string;
+	walletBalance: number;
+	global: boolean;
+	fcmToken: string;
 };
 
 export type UpdateUserParams = {
@@ -42,7 +57,8 @@ export type clientUser = {
 	lastName: string;
 	username: string;
 	photo: string;
-	phone: string;
+	phone?: string;
+	email?: string;
 	walletBalance: number;
 	bio: string;
 	gender?: string;
@@ -56,6 +72,8 @@ export type clientUser = {
 	referralAmount?: number;
 	restricted?: boolean;
 	blocked?: any[];
+	global?: boolean;
+	accessToken?: string;
 };
 
 // Creator Params
@@ -67,7 +85,8 @@ export type creatorUser = {
 	lastName: string;
 	username: string;
 	photo: string;
-	phone: string;
+	phone?: string;
+	email?: string;
 	profession: string;
 	themeSelected: string;
 	gender: string;
@@ -76,6 +95,9 @@ export type creatorUser = {
 	videoRate: string;
 	audioRate: string;
 	chatRate: string;
+	globalVideoRate: string;
+	globalAudioRate: string;
+	globalChatRate: string;
 	videoAllowed: boolean;
 	audioAllowed: boolean;
 	chatAllowed: boolean;
@@ -90,6 +112,9 @@ export type creatorUser = {
 	createdAt?: string;
 	restricted?: boolean;
 	blocked?: any[];
+	global?: boolean;
+	commission?: number;
+	accessToken?: string;
 };
 
 export type CreateCreatorParams = {
@@ -218,6 +243,7 @@ export type LinkType = {
 
 export type RegisterCallParams = {
 	callId: string;
+	title?: string;
 	type: string;
 	status: string;
 	creator: string;
@@ -229,6 +255,29 @@ export type RegisterCallParams = {
 	feedbacks?: CreatorFeedback[];
 	creatorDetails?: creatorUser;
 	amount?: number;
+	global?: boolean;
+	amountINR?: number;
+	category?: string;
+};
+
+export type ScheduledCallParams = {
+	_id: string;
+	callId: string;
+	chatId?: string;
+	type: "video" | "audio" | "chat";
+	status: string;
+	meetingOwner: clientUser;
+	expert: creatorUser;
+	description: string;
+	selectedDay: string;
+	selectedSlot: string;
+	startsAt: Date;
+	startedAt?: Date;
+	endedAt?: Date;
+	duration: number;
+	amount: number;
+	currency: string;
+	discounts: AvailabilityService;
 };
 
 export type RegisterChatParams = {
@@ -291,7 +340,7 @@ export interface RazorpayOptions {
 	order_id: string;
 	handler: (response: PaymentResponse) => Promise<void>;
 	prefill: {
-		name: string;
+		name?: string;
 		email?: string;
 		contact: string;
 		method?: string;
@@ -412,4 +461,84 @@ export interface UpdateCallTransactionParams {
 	amountPaid?: number;
 	isDone?: boolean;
 	callDuration?: number;
+}
+
+// Discount Service Type
+
+export interface DiscountRule {
+	_id: string;
+	conditions: [
+		"New User" | "Seasonal Offer" | "30 Minutes Call" | "60 Minutes Call"
+	];
+	discountAmount: number;
+	discountType: "percentage" | "flat";
+}
+
+export interface Service {
+	_id: string;
+	creatorId: string;
+	title: string;
+	description: string;
+	photo: string;
+	type: string[];
+	isActive: boolean;
+	currency: "INR" | "USD";
+	discountRules: DiscountRule[];
+	extraDetails?: string;
+	createdAt: string;
+	updatedAt: string;
+	utilizedBy: Types.ObjectId[];
+	typeLabel?: string;
+}
+
+// Availability Service Type
+
+export interface AvailabilityService {
+	_id: string;
+	creatorId: string;
+	title: string;
+	description: string;
+	photo: string;
+	type: "audio" | "video" | "chat";
+	timeDuration: number;
+	basePrice: number;
+	isActive: boolean;
+	currency: "INR" | "USD";
+	discountRules: {
+		_id: string;
+		conditions: ["30 Minutes Call" | "60 Minutes Call"];
+		discountAmount: number;
+		discountType: "percentage" | "flat";
+	};
+	extraDetails?: string;
+	createdAt: string;
+	updatedAt: string;
+	utilizedBy: Types.ObjectId[];
+}
+
+export interface Chat {
+	callId: string;
+	chatId: string;
+	chatRate: string;
+	clientId: string;
+	clientImg: string;
+	clientName: string;
+	clientPhone?: string;
+	creatorId: string;
+	creatorImg: string;
+	creatorName: string;
+	creatorPhone: string;
+	endedAt?: number;
+	messages: {
+		senderId: string;
+		text: string;
+		createdAt: number;
+		img: string;
+		audio: string;
+		seen: boolean;
+		tip: string;
+	}[];
+	startedAt: number;
+	status: string;
+	timerSet: boolean;
 }

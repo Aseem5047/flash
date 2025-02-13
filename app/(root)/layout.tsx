@@ -1,43 +1,47 @@
 "use client";
 
-import { ChatRequestProvider } from "@/lib/context/ChatRequestContext";
-import { CurrentUsersProvider } from "@/lib/context/CurrentUsersContext";
-import { WalletBalanceProvider } from "@/lib/context/WalletBalanceContext";
+import React, { ReactNode, useEffect, useState } from "react";
+import WalletBalanceProvider from "@/lib/context/WalletBalanceContext";
+import ChatRequestProvider from "@/lib/context/ChatRequestContext";
+import SelectedServiceProvider from "@/lib/context/SelectedServiceContext";
+import StreamVideoProvider from "@/providers/streamClientProvider";
+import CurrentUsersProvider from "@/lib/context/CurrentUsersContext";
+
 import { initMixpanel } from "@/lib/mixpanel";
 import { QueryProvider } from "@/lib/react-query/QueryProvider";
-import StreamVideoProvider from "@/providers/streamClientProvider";
 import axios from "axios";
-import { throttle } from "lodash";
 import Image from "next/image";
-import React, { ReactNode, useEffect, useState } from "react";
 import { Cursor, Typewriter } from "react-simple-typewriter";
+import Script from "next/script";
 
 const ClientRootLayout = ({ children }: { children: ReactNode }) => {
-	const [isOnline, setIsOnline] = useState(true);
 	const [isMounted, setIsMounted] = useState(false);
-
+	const [region, setRegion] = useState<"India" | "Global" | null>(null);
+	const [isSplashVisible, setIsSplashVisible] = useState(true);
 	useEffect(() => {
-		const handleOnline = throttle(() => setIsOnline(true), 500);
-		const handleOffline = throttle(() => setIsOnline(false), 500);
-
-		window.addEventListener("online", handleOnline);
-		window.addEventListener("offline", handleOffline);
-
-		return () => {
-			window.removeEventListener("online", handleOnline);
-			window.removeEventListener("offline", handleOffline);
-		};
+		// Calculate the region based on timezone
+		const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+		setRegion(
+			timezone === "Asia/Calcutta" || timezone === "Asia/Kolkata"
+				? "India"
+				: "Global"
+		);
 	}, []);
 
-	// Set mounted state once the component is mounted
 	useEffect(() => {
 		setIsMounted(true);
-		initMixpanel(); // Initialize Mixpanel
+		initMixpanel();
 		axios.defaults.withCredentials = true;
 	}, []);
 
+	useEffect(() => {
+		if (isMounted) {
+			setIsSplashVisible(false);
+		}
+	}, [isMounted]);
+
 	const renderContent = () => {
-		if (!isMounted) {
+		if (isSplashVisible) {
 			return (
 				<section className="absolute bg-[#121319] top-0 left-0 flex justify-center items-center h-screen w-full z-40">
 					<Image
@@ -46,12 +50,13 @@ const ClientRootLayout = ({ children }: { children: ReactNode }) => {
 						width={500}
 						height={500}
 						className="w-36 h-36 animate-pulse"
+						priority
 					/>
 				</section>
 			);
 		}
 
-		if (!isOnline) {
+		if (!navigator.onLine) {
 			return (
 				<section className="w-full h-screen flex flex-col items-center justify-center gap-4">
 					<div className="flex flex-col justify-center items-start gap-5 rounded-lg p-6 max-w-lg h-fit w-full mx-auto animate-pulse">
@@ -105,16 +110,23 @@ const ClientRootLayout = ({ children }: { children: ReactNode }) => {
 
 	return (
 		<QueryProvider>
-			<CurrentUsersProvider>
-				<StreamVideoProvider>
-					<WalletBalanceProvider>
-						<ChatRequestProvider>
-							<div className="relative min-h-screen w-full">
-								{renderContent()}
-							</div>
-						</ChatRequestProvider>
-					</WalletBalanceProvider>
-				</StreamVideoProvider>
+			<CurrentUsersProvider region={region as string}>
+				<WalletBalanceProvider>
+					<ChatRequestProvider>
+						<SelectedServiceProvider>
+							<StreamVideoProvider>
+								<div className="relative min-h-screen w-full">
+									<Script
+										src={`https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}&currency=USD`}
+									/>
+									<Script src="https://checkout.razorpay.com/v1/checkout.js" />
+									<Script src="https://sdk.cashfree.com/js/v3/cashfree.js" />
+									{renderContent()}
+								</div>
+							</StreamVideoProvider>
+						</SelectedServiceProvider>
+					</ChatRequestProvider>
+				</WalletBalanceProvider>
 			</CurrentUsersProvider>
 		</QueryProvider>
 	);

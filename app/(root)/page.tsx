@@ -8,20 +8,18 @@ import MakingMoney from "@/components/sections/MakingMoney";
 import OwnApp from "@/components/sections/OwnApp";
 import ShareLink from "@/components/sections/ShareLink";
 import SwitchToggle from "@/components/sections/SwitchToggle";
+import Testimonials from "@/components/sections/Testimonials";
 import Footer from "@/components/shared/Footer";
 import NavbarWeb from "@/components/shared/NavbarWeb";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
-import { resetBodyBackgroundColor } from "@/lib/utils";
-import React, { useEffect } from "react";
+import React from "react";
 
 const HomePage = () => {
 	const { currentUser, handleSignout, fetchingUser } = useCurrentUsersContext();
-	useEffect(() => {
-		resetBodyBackgroundColor();
-	}, []);
+
 	return (
 		<main className="grid grid-cols-1 items-center">
-			{/* Navbar web */}
+			{/* Navbar Landing Page */}
 			{
 				<NavbarWeb
 					currentUser={currentUser}
@@ -39,8 +37,8 @@ const HomePage = () => {
 			<CheckoutBanner />
 			{/* Share Link Section */}
 			<ShareLink />
-			{/* Making Money */}
-			<MakingMoney />
+			{/* Testimonials */}
+			<Testimonials />
 			{/* Own App Section */}
 			<OwnApp />
 			{/* Accordion Section */}

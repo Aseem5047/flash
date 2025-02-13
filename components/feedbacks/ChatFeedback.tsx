@@ -4,29 +4,31 @@ import React, { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "../ui/sheet";
 import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
-import { createFeedback } from "@/lib/actions/feedback.actions";
 import { useToast } from "../ui/use-toast";
 import { success } from "@/constants/icons";
 import { Button } from "../ui/button";
-import { usePathname } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import SinglePostLoader from "../shared/SinglePostLoader";
 import useGetChatById from "@/hooks/useGetChatById";
 import { logEvent } from "firebase/analytics";
-import { analytics } from "@/lib/firebase";
+import { analytics, db } from "@/lib/firebase";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
 import { trackEvent } from "@/lib/mixpanel";
 import { creatorUser } from "@/types";
 import axios from "axios";
 import { backendBaseUrl } from "@/lib/utils";
+import { doc, getDoc } from "firebase/firestore";
 
 const ChatFeedback = ({
 	chatId,
 	callId,
+	clientId,
 	isOpen,
 	onOpenChange,
 }: {
 	chatId: string;
 	callId: string;
+	clientId: string;
 	isOpen: boolean;
 	onOpenChange: (isOpen: boolean) => void;
 }) => {
@@ -34,9 +36,11 @@ const ChatFeedback = ({
 	const [feedbackMessage, setFeedbackMessage] = useState("");
 	const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 	const [creator, setCreator] = useState<creatorUser>();
+	const [duration, setDuration] = useState(null);
 	const { toast } = useToast();
 	const pathname = usePathname();
 	const { chat, isChatLoading } = useGetChatById(chatId as string);
+	const { scheduled } = useParams();
 
 	const ratingItems = ["😒", "😞", "😑", "🙂", "😄"];
 	const { currentUser, clientUser } = useCurrentUsersContext();
@@ -71,13 +75,31 @@ const ChatFeedback = ({
 	}, []);
 
 	useEffect(() => {
-		trackEvent("Feedback_bottomsheet_impression", {
-			Client_ID: clientUser?._id,
-			User_First_Seen: clientUser?.createdAt?.toString().split("T")[0],
-			Creator_ID: creator?._id,
-			Walletbalace_Available: clientUser?.walletBalance,
-		});
+		const chatDuration = async () => {
+			const timerDocRef = doc(db, "callTimer", chatId);
+			const docSnap = await getDoc(timerDocRef);
+			if (docSnap.exists()) {
+				setDuration(docSnap.data().timeUtilized);
+			}
+		};
+
+		scheduled === "false" && chatDuration();
 	}, []);
+
+	useEffect(() => {
+		if (
+			clientUser?._id &&
+			clientUser?.createdAt?.toString().split("T")[0] &&
+			creator?._id &&
+			clientUser?.walletBalance
+		)
+			trackEvent("Feedback_bottomsheet_impression", {
+				Client_ID: clientUser?._id,
+				User_First_Seen: clientUser?.createdAt?.toString().split("T")[0],
+				Creator_ID: creator?._id,
+				Walletbalace_Available: clientUser?.walletBalance,
+			});
+	}, [clientUser, creator]);
 
 	const handleSliderChange = (value: any) => {
 		setRating(value);
@@ -100,14 +122,10 @@ const ChatFeedback = ({
 	};
 
 	const handleSubmitFeedback = async () => {
-		console.log("trying to submit feedback");
-		if (!currentUser || !chat) 
-		{
-			console.log("Missing fields");
+		if (!currentUser || !chat) {
 			return;
 		}
 		try {
-			console.log("Inside try block");
 			trackEvent("Feedback_bottomsheet_submitted", {
 				Client_ID: clientUser?._id,
 				User_First_Seen: clientUser?.createdAt?.toString().split("T")[0],
@@ -118,7 +136,7 @@ const ChatFeedback = ({
 			});
 
 			const userId = currentUser?._id as string;
-			
+
 			await axios.post(`${backendBaseUrl}/feedback/call/create`, {
 				creatorId: chat.creatorId as string,
 				clientId: userId,
@@ -136,17 +154,28 @@ const ChatFeedback = ({
 			toast({
 				variant: "destructive",
 				title: "Feedback Submitted Successfully",
+				toastStatus: "positive",
 			});
 		} catch (error: any) {
 			toast({
 				variant: "destructive",
 				title: "Failed to Submit Feedback",
+				toastStatus: "negative",
 			});
 			console.error("Error submitting feedback:", error);
 		} finally {
 			setRating(2);
 			setFeedbackMessage("");
 		}
+	};
+
+	// Calculate duration in seconds and format as MM:SS
+	const formatDuration = (durationInSeconds: number) => {
+		const minutes = Math.floor(durationInSeconds / 60)
+			.toString()
+			.padStart(2, "0");
+		const seconds = (durationInSeconds % 60).toString().padStart(2, "0");
+		return `${minutes}:${seconds}`;
 	};
 
 	if (!currentUser?._id || isChatLoading)
@@ -191,6 +220,16 @@ const ChatFeedback = ({
 				side="bottom"
 				className="flex flex-col items-center justify-center border-none rounded-t-xl px-10 py-7 bg-white min-h-[350px] max-h-fit w-full sm:max-w-[444px] mx-auto"
 			>
+				{/* Display the call duration */}
+				<section className="fixed top-[76px] grid items-center gap-2 text-white">
+					{duration &&
+						<div className="text-center text-2xl font-semibold mt-2">
+							{formatDuration(Math.ceil(Number(duration)))}
+						</div>
+					}
+					<span>Chat Ended</span>
+				</section>
+
 				{!feedbackSubmitted ? (
 					<div className="relative flex flex-col items-center gap-7">
 						<div className="flex items-center absolute -top-20 text-[4rem]">

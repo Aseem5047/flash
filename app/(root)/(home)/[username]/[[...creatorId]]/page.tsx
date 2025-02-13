@@ -1,23 +1,21 @@
 import CreatorCard from "@/components/creator/CreatorCard";
 import { Metadata } from "next";
 import * as Sentry from "@sentry/nextjs";
-import { getUserByUsername } from "@/lib/actions/creator.actions";
 import {
 	getDisplayName,
 	getProfileImagePlaceholder,
 	getImageSource,
+	backendBaseUrl,
 } from "@/lib/utils";
+import axios from "axios";
 
-// Function to generate metadata dynamically
 export async function generateMetadata({
 	params,
 }: {
 	params: { username: string };
 }): Promise<Metadata> {
-	// Decode the URL-encoded username
 	const decodedUsername = decodeURIComponent(params.username as string);
 
-	// Check if the username is valid and avoid processing reserved paths like "_next"
 	if (!decodedUsername || decodedUsername.startsWith("_next")) {
 		return {
 			title: "FlashCall",
@@ -25,12 +23,22 @@ export async function generateMetadata({
 		};
 	}
 
-	// Remove "@" from the beginning if it exists
 	const formattedUsername = decodedUsername.startsWith("@")
 		? decodedUsername.substring(1)
 		: decodedUsername;
+	let creator: any;
+	try {
+		const response = await axios.get(
+			`${backendBaseUrl}/creator/getByUsername/${formattedUsername}`
+		);
 
-	const creator = await getUserByUsername(String(formattedUsername));
+		if (response.status === 200) {
+			creator = response.data;
+		}
+	} catch (error) {
+		console.log(error);
+	}
+
 	const creatorProfile = creator ? creator : null;
 
 	if (!creatorProfile) {
@@ -69,7 +77,6 @@ export async function generateMetadata({
 		};
 	} catch (error) {
 		Sentry.captureException(error);
-		// Log any error that occurs during the API call
 		console.error("Error fetching creator data:", error);
 
 		return {
@@ -81,7 +88,7 @@ export async function generateMetadata({
 
 const CreatorProfile = () => {
 	return (
-		<div className="flex items-start justify-start h-full overflow-scroll no-scrollbar">
+		<div className="flex items-start justify-start h-full">
 			<CreatorCard />
 		</div>
 	);

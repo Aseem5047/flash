@@ -11,12 +11,10 @@ import {
 } from "@/components/ui/sheet";
 import * as Sentry from "@sentry/nextjs";
 import { useToast } from "../ui/use-toast";
-import { useCallTimerContext } from "@/lib/context/CallTimerContext";
 import { creatorUser } from "@/types";
 import { success } from "@/constants/icons";
-import ContentLoading from "../shared/ContentLoading";
 import { useCurrentUsersContext } from "@/lib/context/CurrentUsersContext";
-import { backendBaseUrl } from "@/lib/utils";
+import { backendBaseUrl, fetchExchangeRate } from "@/lib/utils";
 import {
 	getFirestore,
 	doc,
@@ -27,6 +25,10 @@ import {
 } from "firebase/firestore";
 import RechargeModal from "./RechargeModal";
 import SinglePostLoader from "../shared/SinglePostLoader";
+import axios from "axios";
+import { db } from "@/lib/firebase";
+import useCallTimer from "@/lib/context/CallTimerContext";
+import { Call } from "@stream-io/video-react-sdk";
 
 // Custom hook to track screen size
 const useScreenSize = () => {
@@ -62,13 +64,17 @@ const TipModal = ({
 	setWalletBalance,
 	updateWalletBalance,
 	isVideoCall,
+	call,
 	callId,
+	isMeetingOwner,
 }: {
 	walletBalance: number;
 	setWalletBalance: React.Dispatch<React.SetStateAction<number>>;
 	updateWalletBalance: () => Promise<void>;
 	isVideoCall: boolean;
 	callId: string;
+	call: Call;
+	isMeetingOwner: boolean;
 }) => {
 	const [rechargeAmount, setRechargeAmount] = useState("");
 	const [audioRatePerMinute, setAudioRatePerMinute] = useState(0);
@@ -83,7 +89,12 @@ const TipModal = ({
 	const [showRechargeModal, setShowRechargeModal] = useState(false);
 	const { toast } = useToast();
 	const { currentUser } = useCurrentUsersContext();
-	const { totalTimeUtilized, hasLowBalance } = useCallTimerContext();
+	const { totalTimeUtilized, hasLowBalance, pauseTimer, resumeTimer } =
+		useCallTimer({
+			isVideoCall,
+			isMeetingOwner,
+			call,
+		});
 	const isMobile = useScreenSize() && isMobileDevice();
 	const firestore = getFirestore();
 
@@ -92,11 +103,20 @@ const TipModal = ({
 		if (storedCreator) {
 			const parsedCreator: creatorUser = JSON.parse(storedCreator);
 			setCreator(parsedCreator);
-			if (parsedCreator.audioRate) {
-				setAudioRatePerMinute(parseInt(parsedCreator.audioRate, 10));
-			}
-			if (parsedCreator.videoRate) {
-				setVideoRatePerMinute(parseInt(parsedCreator.videoRate, 10));
+			if (currentUser?.global) {
+				if (parsedCreator.globalAudioRate) {
+					setAudioRatePerMinute(parseInt(parsedCreator.globalAudioRate, 10));
+				} else setAudioRatePerMinute(0.5);
+				if (parsedCreator.globalVideoRate) {
+					setVideoRatePerMinute(parseInt(parsedCreator.globalVideoRate, 10));
+				} else setVideoRatePerMinute(0.5);
+			} else {
+				if (parsedCreator.audioRate) {
+					setAudioRatePerMinute(parseInt(parsedCreator.audioRate, 10));
+				} else setAudioRatePerMinute(10);
+				if (parsedCreator.videoRate) {
+					setVideoRatePerMinute(parseInt(parsedCreator.videoRate, 10));
+				} else setVideoRatePerMinute(10);
 			}
 		}
 	}, []);
@@ -132,6 +152,36 @@ const TipModal = ({
 		setShowRechargeModal(false);
 	};
 
+	const fetchActivePg = async (global: boolean) => {
+		try {
+			if (global) return "paypal";
+
+			const pgDocRef = doc(db, "pg", "paymentGatways");
+			const pgDoc = await getDoc(pgDocRef);
+
+			if (pgDoc.exists()) {
+				const { activePg } = pgDoc.data();
+				return activePg;
+			}
+
+			return "razorpay";
+		} catch (error) {
+			return error;
+		}
+	};
+
+	const fetchPgCharges = async (pg: string) => {
+		try {
+			const response = await axios.get(
+				`https://backend.flashcall.me/api/v1/pgCharges/fetch`
+			); // Replace with your API endpoint
+			const data = response.data;
+			return data[pg];
+		} catch (error) {
+			console.error("Error fetching PG Charges", error);
+		}
+	};
+
 	const handleTransaction = async () => {
 		// Check if the user is trying to tip more than the available balance
 		if (parseInt(rechargeAmount) > adjustedWalletBalance) {
@@ -139,6 +189,7 @@ const TipModal = ({
 				variant: "destructive",
 				title: "Insufficient Wallet Balance",
 				description: `Your tip amount exceeds the balance.`,
+				toastStatus: "negative",
 			});
 			setShowRechargeModal(true);
 			setErrorMessage("Insufficient Wallet Balance for this tip.");
@@ -147,14 +198,55 @@ const TipModal = ({
 
 		try {
 			setLoading(true);
+			const response = await axios.get(
+				`${backendBaseUrl}/creator/getUser/${creatorId}`
+			);
+			const exchangeRate = await fetchExchangeRate();
+			const global = currentUser?.global ?? false;
+			const data = response.data;
+			const activePg: string = await fetchActivePg(global);
+			const pgChargesRate: number = await fetchPgCharges(activePg);
+			const commissionRate = Number(data?.commission ?? 20);
+			const commissionAmt = Number(
+				global
+					? (
+							((Number(rechargeAmount) * commissionRate) / 100) *
+							exchangeRate
+					  ).toFixed(2)
+					: ((Number(rechargeAmount) * commissionRate) / 100).toFixed(2)
+			);
+			const pgChargesAmt = Number(
+				global
+					? (
+							((Number(rechargeAmount) * pgChargesRate) / 100) *
+							exchangeRate
+					  ).toFixed(2)
+					: ((Number(rechargeAmount) * pgChargesRate) / 100).toFixed(2)
+			);
+			const gstAmt = Number((commissionAmt * 0.18).toFixed(2));
+			const totalDeduction = Number(
+				(commissionAmt + gstAmt + pgChargesAmt).toFixed(2)
+			);
+			const amountAdded = Number(
+				global
+					? (Number(rechargeAmount) * exchangeRate - totalDeduction).toFixed(2)
+					: (Number(rechargeAmount) - totalDeduction).toFixed(2)
+			);
+
+			const tipId = crypto.randomUUID();
 			await Promise.all([
 				fetch(`${backendBaseUrl}/wallet/payout`, {
 					method: "POST",
 					body: JSON.stringify({
 						userId: clientId,
+						user2Id: creatorId,
+						fcCommission: commissionAmt,
+						PGCharge: pgChargesRate,
 						userType: "Client",
 						amount: rechargeAmount,
 						category: "Tip",
+						global: currentUser?.global ?? false,
+						tipId,
 					}),
 					headers: { "Content-Type": "application/json" },
 				}),
@@ -162,13 +254,23 @@ const TipModal = ({
 					method: "POST",
 					body: JSON.stringify({
 						userId: creatorId,
+						user2Id: clientId,
+						fcCommission: commissionAmt,
+						PGCharge: pgChargesRate,
 						userType: "Creator",
-						amount: (parseInt(rechargeAmount) * 0.8).toFixed(2),
+						amount: amountAdded,
 						category: "Tip",
+						tipId,
 					}),
 					headers: { "Content-Type": "application/json" },
 				}),
 			]);
+
+			await axios.post(`${backendBaseUrl}/tip`, {
+				tipId,
+				amountAdded,
+				amountPaid: rechargeAmount,
+			});
 
 			const userDocRef = doc(firestore, "userTips", creatorId as string);
 
@@ -187,7 +289,6 @@ const TipModal = ({
 				},
 				{ merge: true }
 			);
-			console.log("Latest tip added/updated successfully in Firestore.");
 
 			setWalletBalance((prev) => prev + parseInt(rechargeAmount));
 			setTipPaid(true);
@@ -203,6 +304,7 @@ const TipModal = ({
 				variant: "destructive",
 				title: "Error",
 				description: "An error occurred while processing the Transactions",
+				toastStatus: "negative",
 			});
 		} finally {
 			// Update wallet balance after transaction
@@ -295,7 +397,9 @@ const TipModal = ({
 											hasLowBalance ? "text-red-500" : "text-green-1"
 										}`}
 									>
-										₹ {adjustedWalletBalance.toFixed(2)}
+										{`${
+											currentUser?.global ? "$" : "₹"
+										} ${adjustedWalletBalance.toFixed(2)}`}
 									</span>
 								</SheetDescription>
 							</SheetHeader>
@@ -304,7 +408,9 @@ const TipModal = ({
 									errorMessage ? "py-2 gap-2 " : "py-4 gap-4"
 								} w-full`}
 							>
-								<span className="text-sm">Enter Desired amount in INR</span>
+								<span className="text-sm">{`Enter Desired amount in ${
+									currentUser?.global ? "Dollars" : "INR"
+								}`}</span>
 								<section className="relative flex flex-col justify-center items-center">
 									<Input
 										id="rechargeAmount"
@@ -322,6 +428,8 @@ const TipModal = ({
 												inTipModal={true}
 												walletBalance={walletBalance}
 												setWalletBalance={setWalletBalance}
+												pauseTimer={pauseTimer}
+												resumeTimer={resumeTimer}
 											/>
 										</section>
 									) : (
@@ -369,7 +477,7 @@ const TipModal = ({
 													"bg-green-1 text-white hover:bg-green-1"
 												}`}
 											>
-												₹{amount}
+												{`${currentUser?.global ? "$" : "₹"}${amount}`}
 											</Button>
 										))}
 									</div>

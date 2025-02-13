@@ -29,15 +29,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { UpdateCreatorParams, UpdateUserParams } from "@/types";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
 	UpdateProfileFormSchema,
 	UpdateProfileFormSchemaClient,
 } from "@/lib/validator";
 import { Textarea } from "../ui/textarea";
 import { useToast } from "../ui/use-toast";
-import FileUploader from "../shared/FileUploader";
-import { updateCreatorUser } from "@/lib/actions/creator.actions";
+import FileUploader from "../uploaders/FileUploader";
 import { updateUser } from "@/lib/actions/client.actions";
 import { usePathname } from "next/navigation";
 import axios from "axios";
@@ -62,6 +61,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "../ui/select";
+import { isEqual } from "lodash";
 
 export type EditProfileProps = {
 	userData: UpdateUserParams;
@@ -69,7 +69,6 @@ export type EditProfileProps = {
 	initialState: any;
 	setEditData?: React.Dispatch<React.SetStateAction<boolean>>;
 	userType: string | null;
-	closeButton?: boolean;
 };
 
 const EditProfile = ({
@@ -78,7 +77,6 @@ const EditProfile = ({
 	initialState,
 	setEditData,
 	userType,
-	closeButton,
 }: EditProfileProps) => {
 	const pathname = usePathname();
 	const { toast } = useToast();
@@ -91,6 +89,7 @@ const EditProfile = ({
 	const [selectedColor, setSelectedColor] = useState(
 		userData.themeSelected ?? "#88D8C0"
 	);
+	const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 	const [initialReferralValue, setInitialReferralValue] = useState<boolean>(
 		() => {
 			return Boolean(!userData.referredBy);
@@ -243,16 +242,23 @@ const EditProfile = ({
 
 	const { formState } = form;
 	const { errors, isValid } = formState;
+	const initialValues = useRef(form.getValues());
+	const hasChangesRef = useRef(false);
 
 	// Watch form values to detect changes
 	const watchedValues: any = useWatch({ control: form.control });
 
 	useEffect(() => {
-		const hasChanged = Object.keys(watchedValues).some((key) => {
-			return watchedValues[key] !== initialState[key];
+		const subscription = form.watch((values) => {
+			const currentValues = values;
+			const changes = !isEqual(currentValues, initialValues.current);
+			if (hasChangesRef.current !== changes) {
+				hasChangesRef.current = changes;
+				setIsChanged(changes);
+			}
 		});
-		setIsChanged(hasChanged);
-	}, [watchedValues, initialState]);
+		return () => subscription.unsubscribe();
+	}, [form, isValid]);
 
 	useEffect(() => {
 		if (!selectedFile) {
@@ -277,19 +283,18 @@ const EditProfile = ({
 				`${backendBaseUrl}/user/getAllUsernames?username=${username}`
 			);
 
-			// Check the response status directly
 			if (response.status === 200) {
-				setUsernameError(null); // Username is available
+				setUsernameError(null);
 			} else if (response.status === 409) {
 				setUsernameError("Username is already taken");
 			}
 		} catch (error: any) {
-			// Handle cases where the error is not 409 (e.g., network issues, server errors)
 			if (error.response && error.response.status === 409) {
 				setUsernameError("Username is already taken");
 			} else {
-				console.error("Error checking username availability", error);
-				setUsernameError("Error checking username availability");
+				setUsernameError(
+					error.response.data.error || "Error checking username availability"
+				);
 			}
 		}
 	};
@@ -371,11 +376,14 @@ const EditProfile = ({
 
 			let response;
 			if (userType === "creator") {
-				response = await updateCreatorUser(userData.id!, {
-					...commonValues,
-					...creatorProfileDetails,
-					creatorId: `@${values.username || userData.username}`,
-				} as UpdateCreatorParams);
+				response = await axios.put(
+					`${backendBaseUrl}/creator/updateUser/${userData.id}`,
+					{
+						...commonValues,
+						...creatorProfileDetails,
+						creatorId: `@${values.username || userData.username}`,
+					} as UpdateCreatorParams
+				);
 			} else {
 				response = await updateUser(
 					userData.id!,
@@ -384,15 +392,20 @@ const EditProfile = ({
 			}
 
 			if (response.error) {
+				console.log("Error Found");
 				// Display the error if an existing user is found
 				setFormError(response.error);
 				toast({
 					variant: "destructive",
 					title: "Unable to Edit Details",
 					description: `${response.error}`,
+					toastStatus: "negative",
 				});
 			} else {
-				const updatedUser = response.updatedUser;
+				const updatedUser =
+					userType === "creator"
+						? response.data.updatedUser
+						: response.updatedUser;
 				const newUserDetails = {
 					...userData,
 					fullName: `${updatedUser.firstName} ${updatedUser.lastName}`,
@@ -406,14 +419,13 @@ const EditProfile = ({
 					dob: updatedUser.dob,
 				};
 
-				console.log(userData);
-
 				setUserData(newUserDetails);
 
 				toast({
 					variant: "destructive",
 					title: "Details Edited Successfully",
 					description: "Changes are now visible ...",
+					toastStatus: "positive",
 				});
 
 				setEditData && setEditData((prev) => !prev);
@@ -425,6 +437,7 @@ const EditProfile = ({
 				variant: "destructive",
 				title: "Unable to Edit Details",
 				description: "Try Again Editing your Details",
+				toastStatus: "negative",
 			});
 		} finally {
 			setLoading(false);
@@ -444,38 +457,6 @@ const EditProfile = ({
 
 	return (
 		<Form {...form}>
-			<section
-				className={`sticky top-0 md:top-[76px] bg-white z-30 p-4 flex flex-col items-start justify-start gap-4 w-full h-fit`}
-			>
-				<section className="flex items-center gap-4">
-					{pathname.includes("/profile") && (
-						<section
-							onClick={() => {
-								form.reset();
-								setEditData && setEditData((prev) => !prev);
-							}}
-							className="text-xl font-bold hoverScaleDownEffect cursor-pointer"
-						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								fill="none"
-								viewBox="0 0 24 24"
-								strokeWidth={1.5}
-								stroke="currentColor"
-								className="size-6"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									d="M15.75 19.5 8.25 12l7.5-7.5"
-								/>
-							</svg>
-						</section>
-					)}
-					<h1 className="text-xl md:text-3xl font-bold">Edit User Details</h1>
-				</section>
-			</section>
-
 			<form
 				onSubmit={form.handleSubmit(onSubmit)}
 				className="relative space-y-8 w-full flex flex-col items-center"
@@ -514,7 +495,7 @@ const EditProfile = ({
 					render={({ field }) => (
 						<FormItem className="w-full">
 							<FormLabel className="text-sm text-gray-400 ml-1">
-								Username
+								Username <span className="text-red-500">*</span>
 							</FormLabel>
 							<FormControl>
 								<div
@@ -522,6 +503,7 @@ const EditProfile = ({
 										userType === "creator" ? " w-fit gap-2.5" : "w-full"
 									}`}
 								>
+									{/* empty placeholder for creator's username */}
 									{userType === "creator" && (
 										<span className="text-gray-400 pl-2">
 											https://flashcall.me/
@@ -561,7 +543,8 @@ const EditProfile = ({
 									<FormLabel className="font-medium text-sm text-gray-400 ml-1">
 										{field.name
 											.replace(/([a-z])([A-Z])/g, "$1 $2")
-											.replace(/^\w/, (c) => c.toUpperCase())}
+											.replace(/^\w/, (c) => c.toUpperCase())}{" "}
+										<span className="text-red-500">*</span>
 									</FormLabel>
 									<FormControl>
 										<Input
@@ -617,7 +600,10 @@ const EditProfile = ({
 						render={({ field }) => (
 							<FormItem className="w-full">
 								<FormLabel className="text-sm text-gray-400 ml-1">
-									Profession
+									Profession{" "}
+									{userType === "creator" && (
+										<span className="text-red-500">*</span>
+									)}
 								</FormLabel>
 								<section className="w-full flex gap-2.5 items-center justify-start">
 									<FormControl>
@@ -814,7 +800,10 @@ const EditProfile = ({
 						render={({ field }) => (
 							<FormItem className="w-full ">
 								<FormLabel className="text-sm text-gray-400 ml-1">
-									{field.name.charAt(0).toUpperCase() + field.name.slice(1)}
+									{field.name.charAt(0).toUpperCase() + field.name.slice(1)}{" "}
+									{userType === "creator" && (
+										<span className="text-red-500">*</span>
+									)}
 								</FormLabel>
 								<FormControl>
 									<div className="flex items-center justify-start gap-4">
@@ -867,8 +856,13 @@ const EditProfile = ({
 						name="dob"
 						render={({ field }) => (
 							<FormItem className="flex flex-col w-full">
-								<FormLabel className="text-gray-400">Date of birth</FormLabel>
-								<Popover>
+								<FormLabel className="text-gray-400">
+									Date of birth{" "}
+									{userType === "creator" && (
+										<span className="text-red-500">*</span>
+									)}
+								</FormLabel>
+								<Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
 									<PopoverTrigger asChild>
 										<FormControl>
 											<Button
@@ -880,7 +874,7 @@ const EditProfile = ({
 												style={{ paddingBottom: "0px !important" }}
 											>
 												{field.value ? (
-													format(new Date(field.value), "PPP") // Format the stored string value back to a readable format
+													format(new Date(field.value), "PPP")
 												) : (
 													<span>Pick a date</span>
 												)}
@@ -939,10 +933,12 @@ const EditProfile = ({
 											selected={selectedDate}
 											onSelect={(date) => {
 												setSelectedDate(date);
-												// Convert the date to a string format before setting it in the form
+
 												field.onChange(
 													format(date as Date | string, "yyyy-MM-dd")
-												); // Format as 'yyyy-MM-dd' (ISO format)
+												);
+
+												setIsPopoverOpen(false);
 											}}
 											month={new Date(selectedYear, selectedMonth)}
 											disabled={(date) =>
@@ -1070,23 +1066,12 @@ const EditProfile = ({
 				)}
 				<section
 					className={`${
-						isChanged && isValid && !formError && !usernameError
+						isChanged && isValid && !formError
 							? "grid-cols-1 w-full"
 							: "grid-cols-1 w-3/4 lg:w-1/2"
 					} sticky bottom-2 right-0 grid  gap-4 items-center justify-center `}
 				>
-					{/* {closeButton && (
-						<Button
-							className="text-base rounded-lg border border-gray-300  hoverScaleDownEffect bg-gray-400 text-white"
-							onClick={() => {
-								form.reset();
-								setEditData && setEditData((prev) => !prev);
-							}}
-						>
-							Close
-						</Button>
-					)} */}
-					{isChanged && isValid && !formError && !usernameError && (
+					{isChanged && isValid && !formError && (
 						<Button
 							className="text-base bg-green-1 hoverScaleDownEffect w-full mx-auto text-white"
 							type="submit"

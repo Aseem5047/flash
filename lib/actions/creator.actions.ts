@@ -65,7 +65,7 @@ export async function createCreatorUser(user: CreateCreatorParams) {
 			}
 		}
 		Sentry.captureException(error);
-		console.log(error);
+
 		return { error: "An unexpected error occurred" };
 	}
 }
@@ -80,7 +80,6 @@ export async function getUsers() {
 		return JSON.parse(JSON.stringify(users));
 	} catch (error) {
 		Sentry.captureException(error);
-		console.log(error);
 	}
 }
 
@@ -121,7 +120,6 @@ export async function getCreatorById(userId: string) {
 		return JSON.parse(JSON.stringify(user));
 	} catch (error) {
 		Sentry.captureException(error);
-		console.log(error);
 	}
 }
 
@@ -135,7 +133,6 @@ export async function getUserByPhone(phone: string) {
 		return JSON.parse(JSON.stringify(user));
 	} catch (error) {
 		Sentry.captureException(error);
-		console.log(error);
 	}
 }
 
@@ -182,7 +179,6 @@ export async function updateCreatorUser(
 
 		// Construct the update object
 		const updateObject: any = { ...updates };
-		console.log(updateObject);
 
 		// If the updates object contains a link to add, use $push to add it to the links array
 		if (updates.link) {
@@ -231,6 +227,8 @@ export async function updateCreatorUser(
 
 export async function deleteCreatorLink(userId: string, link: LinkType) {
 	try {
+		await connectToDatabase();
+		
 		const { title, url } = link;
 
 		// Update the creator document by pulling (removing) the matching link
@@ -243,6 +241,8 @@ export async function deleteCreatorLink(userId: string, link: LinkType) {
 			},
 			{ new: true } // Return the updated document
 		);
+
+		console.log(updatedCreator);
 
 		return updatedCreator;
 	} catch (error) {
@@ -271,7 +271,7 @@ export async function deleteCreatorUser(userId: string) {
 			: { error: "Failed to delete user" };
 	} catch (error) {
 		Sentry.captureException(error);
-		console.log(error);
+
 		return { error: "An unexpected error occurred" };
 	}
 }
